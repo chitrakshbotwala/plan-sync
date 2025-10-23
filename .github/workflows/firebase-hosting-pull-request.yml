@@ -28,7 +28,12 @@ jobs:
         run: |
           echo "${{ secrets.PROD_ENV_FILE }}" > ./client-app/env/.prod.env
 
-      - run: flutter clean ; flutter build web --release
+      - name: Build Flutter Web App
+        run: |
+          cd client-app
+          flutter clean
+          flutter build web --release
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}

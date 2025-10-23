@@ -11,22 +11,27 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
       - uses: subosito/flutter-action@v2
         name: Set up Flutter
         with:
           channel: stable
           flutter-version: 3.32.5
           cache: true
-          cache-sdk: true
 
       - name: Verify Flutter Version
         run: flutter --version
 
       - name: Create .prod.env file
         run: |
-          echo "${{secrets.PROD_ENV_FILE}}" > client-app/env/.prod.env
+          echo "${{ secrets.PROD_ENV_FILE }}" > ./client-app/env/.prod.env
 
-      - run: flutter clean ; flutter build web --release
+      - name: Build Flutter Web App
+        run: |
+          cd client-app
+          flutter clean
+          flutter build web --release
+
       - uses: FirebaseExtended/action-hosting-deploy@v0
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
