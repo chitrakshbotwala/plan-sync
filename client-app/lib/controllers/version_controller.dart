@@ -109,6 +109,11 @@ class VersionController extends ChangeNotifier {
   }
 
   Future<bool> checkForUpdate({required BuildContext context}) async {
+    // skip if web
+    if (kIsWeb) {
+      return false;
+    }
+
     // handle iOS case separately
     if (Platform.isIOS) {
       return await checkIosUpdate(context: context);
@@ -185,6 +190,11 @@ class VersionController extends ChangeNotifier {
   /// to ensure incompatible apps do not break with live version of
   /// remote data.
   Future<void> verifyMinimumVersion({required BuildContext context}) async {
+    // skip if web
+    if (kIsWeb) {
+      return;
+    }
+
     final git = Provider.of<GitService>(context, listen: false);
     final perfs = Provider.of<AppPreferencesController>(context, listen: false);
 

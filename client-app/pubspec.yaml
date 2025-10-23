@@ -61,7 +61,7 @@ dependencies:
   in_app_update: ^4.2.2
   dio_cache_interceptor: ^3.5.0
   dio_cache_interceptor_hive_store: ^4.0.0
-  path_provider: ^2.1.1
+  path_provider: ^2.1.5
   hive: ^2.2.3
   tutorial_coach_mark: ^1.2.12
   mockito: ^5.4.4
