@@ -246,8 +246,8 @@ String? redirectHandler(BuildContext context, GoRouterState state) {
     VersionController.forcedRedirectPath = null; // Clear after redirect
     return versionControllerForcedPath;
   }
-
   Auth auth = Provider.of<Auth>(context, listen: false);
+
   if (auth.activeUser != null && state.matchedLocation == '/login') {
     return '/';
   }

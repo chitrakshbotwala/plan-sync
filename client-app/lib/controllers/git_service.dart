@@ -1,21 +1,22 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:dio_cache_interceptor_hive_store/dio_cache_interceptor_hive_store.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:provider/provider.dart';
 
 class GitService extends ChangeNotifier {
   late String branch;
 
-  late final CacheOptions cacheOptions;
+  CacheOptions? cacheOptions;
   late final Dio dio;
 
   // normal schedule years
@@ -120,8 +121,20 @@ class GitService extends ChangeNotifier {
   /// Implemented to enable offline functionality, to fetch schedules
   /// once it's cached in temp storage.
   Future<void> startCachingService() async {
+    dio = Dio(
+      BaseOptions(
+        connectTimeout: const Duration(seconds: 15),
+        headers: {'Cache-Control': 'no-cache'},
+        contentType: "application/json",
+      ),
+    );
+
+    if (kIsWeb) {
+      return;
+    }
     try {
-      final dir = await getApplicationCacheDirectory();
+      // Continue caching only for non-web platforms
+      Directory dir = await getApplicationCacheDirectory();
 
       cacheOptions = CacheOptions(
         store: HiveCacheStore(
@@ -136,14 +149,7 @@ class GitService extends ChangeNotifier {
         allowPostMethod: false,
       );
 
-      dio = Dio(
-        BaseOptions(
-          connectTimeout: const Duration(seconds: 15),
-          headers: {'Cache-Control': 'no-cache'},
-          contentType: "application/json",
-        ),
-      );
-      dio.interceptors.add(DioCacheInterceptor(options: cacheOptions));
+      dio.interceptors.add(DioCacheInterceptor(options: cacheOptions!));
 
       return;
     } on DioException catch (e) {
@@ -180,7 +186,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cacheResponse = cacheData.toResponse(options);
         final cachedYears = jsonDecode(cacheResponse.data).keys;
@@ -269,7 +275,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cacheResponse = cacheData.toResponse(options);
         final cachedSemesters =
@@ -361,7 +367,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cachedResponse = cacheData.toResponse(options);
 
@@ -437,7 +443,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cache = await cacheOptions.store?.get(key);
+      final cache = await cacheOptions?.store?.get(key);
 
       if (cache != null) {
         final cachedResponse = cache.toResponse(options);
@@ -532,7 +538,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cachedResponse = cacheData.toResponse(options);
 
@@ -619,7 +625,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cachedResponse = cacheData.toResponse(options);
         electivesSemesters = List.from(
@@ -719,7 +725,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cachedResponse = cacheData.toResponse(options);
         electiveSchemes = Map.from(
@@ -817,7 +823,7 @@ class GitService extends ChangeNotifier {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
 
-      final cacheData = await cacheOptions.store?.get(key);
+      final cacheData = await cacheOptions?.store?.get(key);
       if (cacheData != null) {
         final cachedResponse = cacheData.toResponse(options);
         Logger.i("Sending Elective from cache");
