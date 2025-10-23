@@ -12,6 +12,22 @@ jobs:
     if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
     steps:
+      - uses: subosito/flutter-action@v2
+        name: Set up Flutter
+        with:
+          channel: stable
+          flutter-version: 3.32.5
+          cache: true
+          cache-sdk: true
+
+      - name: Verify Flutter Version
+        run: flutter --version
+
+      - name: Create .prod.env file
+        run: |
+          echo "${{secrets.PROD_ENV_FILE}}" > client-app/env/.prod.env
+
+      - run: flutter clean ; flutter build web --release
       - uses: actions/checkout@v4
       - run: flutter clean ; flutter build web --release
       - uses: FirebaseExtended/action-hosting-deploy@v0
