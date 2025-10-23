@@ -25,7 +25,7 @@ jobs:
 
       - name: Create .prod.env file
         run: |
-          echo "${{secrets.PROD_ENV_FILE}}" > client-app/env/.prod.env
+          echo "${{ secrets.PROD_ENV_FILE }}" > ./client-app/env/.prod.env
 
       - run: flutter clean ; flutter build web --release
       - uses: actions/checkout@v4
