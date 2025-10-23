@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/util/snackbar.dart';
@@ -26,10 +27,16 @@ class Auth extends ChangeNotifier {
 
   Future<void> loginWithGoogle(BuildContext context) async {
     Logger.i("login using google");
-    // Trigger the authentication flow
+    if (kIsWeb) {
+      await FirebaseAuth.instance.signInWithPopup(GoogleAuthProvider());
+      return;
+    }
+
+    // Trigger non web authentication flow
     try {
       final GoogleSignInAccount? googleUser = await GoogleSignIn(
         scopes: ["profile", "email"],
+        clientId: dotenv.env['WEB_FIREBASE_OPTIONS_CLIENT_ID'],
       ).signIn();
 
       // Obtain the auth details from the request

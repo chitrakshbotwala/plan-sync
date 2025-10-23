@@ -18,11 +18,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
+
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
         return android;
@@ -57,6 +55,16 @@ class DefaultFirebaseOptions {
         dotenv.env['ANDROID_FIREBASE_OPTIONS_MESSAGING_SENDER_ID']!,
     projectId: dotenv.env['ANDROID_FIREBASE_OPTIONS_PROJECT_ID']!,
     storageBucket: dotenv.env['ANDROID_FIREBASE_OPTIONS_STORAGE_BUCKET']!,
+  );
+
+  static FirebaseOptions web = FirebaseOptions(
+    apiKey: dotenv.env['WEB_FIREBASE_OPTIONS_API_KEY']!,
+    appId: dotenv.env['WEB_FIREBASE_OPTIONS_APP_ID']!,
+    messagingSenderId: dotenv.env['WEB_FIREBASE_OPTIONS_MESSAGING_SENDER_ID']!,
+    projectId: dotenv.env['WEB_FIREBASE_OPTIONS_PROJECT_ID']!,
+    storageBucket: dotenv.env['WEB_FIREBASE_OPTIONS_STORAGE_BUCKET']!,
+    authDomain: dotenv.env['WEB_FIREBASE_OPTIONS_AUTH_DOMAIN']!,
+    measurementId: dotenv.env['WEB_FIREBASE_OPTIONS_MEASUREMENT_ID']!,
   );
 
   static FirebaseOptions ios = FirebaseOptions(
