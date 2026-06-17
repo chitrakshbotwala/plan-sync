@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/widgets/dropdowns/year_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import 'package:get/get.dart';
 
 void main() {
   Future<void> pumpBaseWidget(

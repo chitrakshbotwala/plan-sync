@@ -3,7 +3,6 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/widgets/bottom-sheets/report_error.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 void main() {

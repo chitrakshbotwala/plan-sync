@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/bottom-sheets/contribute_schedule.dart';
 import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
