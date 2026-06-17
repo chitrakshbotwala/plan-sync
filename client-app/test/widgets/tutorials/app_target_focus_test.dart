@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/views/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
@@ -11,19 +10,16 @@ import '../../mock_controllers/app_preferences_controller_mock.dart';
 void main() {
   Future<void> pumpTutorialWidget(WidgetTester tester) async {
     await tester.pumpFrames(
-      GetMaterialApp(
-        theme: AppThemeController.lightTheme,
-        home: const HomeScreen(),
-      ),
+      testApp(child: const HomeScreen()),
       const Duration(seconds: 3),
     );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({
       'app-tutorial-status': true,
     });
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets(

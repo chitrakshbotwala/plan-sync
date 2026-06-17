@@ -14,8 +14,7 @@ import '../mock_controllers/git_service_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(WidgetTester tester) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: SingleChildScrollView(
           child: TimeTableWidget(),
         ),
@@ -23,9 +22,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('TimeTableWidget renders schedule if available',
@@ -37,28 +36,30 @@ void main() {
 
     filterController.weekday = Weekday.monday;
     await pumpBaseWidget(tester);
-    await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Monday'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('Monday', skipOffstage: false), findsOneWidget);
 
     filterController.weekday = Weekday.tuesday;
     await pumpBaseWidget(tester);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Tuesday'), findsOneWidget);
+    expect(find.text('Tuesday', skipOffstage: false), findsOneWidget);
 
     filterController.weekday = Weekday.wednesday;
     await pumpBaseWidget(tester);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Wednesday'), findsOneWidget);
+    expect(find.text('Wednesday', skipOffstage: false), findsOneWidget);
 
     filterController.weekday = Weekday.thursday;
     await pumpBaseWidget(tester);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Thursday'), findsOneWidget);
+    expect(find.text('Thursday', skipOffstage: false), findsOneWidget);
 
     filterController.weekday = Weekday.friday;
     await pumpBaseWidget(tester);
     await tester.pump(const Duration(seconds: 1));
-    expect(find.text('Friday'), findsOneWidget);
+    expect(find.text('Friday', skipOffstage: false), findsOneWidget);
+
+    await tester.pumpAndSettle(const Duration(seconds: 3));
   });
 
   testWidgets('TimeTableWidget renders info page if schedule is updating',

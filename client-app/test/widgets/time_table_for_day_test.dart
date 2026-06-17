@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
+import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/widgets/time_table_for_day.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +15,7 @@ void main() {
     Timetable data,
     String day,
   ) async {
-    return tester.pumpWidget(GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: SingleChildScrollView(
           child: TimeTableForDay(
             data: data,
@@ -26,9 +26,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('TimeTableForDay Horizontal schedule is rendered', (
@@ -36,8 +36,9 @@ void main() {
   ) async {
     final controller = Get.find<GitService>() as MockGitService;
     controller.stage = MockGitServiceStages.success;
+    final filter = Get.find<FilterController>();
 
-    final data = controller.getTimeTable();
+    final data = controller.getTimeTable(filter);
     const day = 'monday';
 
     await pumpBaseWidget(tester, (await data.first)!, day);

@@ -8,7 +8,7 @@ import 'package:plan_sync/widgets/bottom-sheets/share_app.dart';
 import 'package:provider/provider.dart';
 
 class BottomSheets {
-  static changeSectionPreference({
+  static void changeSectionPreference({
     required BuildContext context,
     bool save = false,
   }) {
@@ -24,7 +24,7 @@ class BottomSheets {
     );
   }
 
-  static reportError({
+  static void reportError({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -36,7 +36,7 @@ class BottomSheets {
     );
   }
 
-  static contributeTimeTable({
+  static void contributeTimeTable({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -48,7 +48,7 @@ class BottomSheets {
     );
   }
 
-  static changeElectiveSchemePreference({
+  static void changeElectiveSchemePreference({
     required BuildContext context,
     bool save = false,
   }) {
@@ -64,7 +64,7 @@ class BottomSheets {
     );
   }
 
-  static shareAppBottomSheet({
+  static void shareAppBottomSheet({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;

@@ -31,7 +31,7 @@ class _TopNoticeHudState extends State<TopNoticeHud> {
   Future<void> _fetchNotices() async {
     final remoteConfig =
         Provider.of<RemoteConfigController>(context, listen: false);
-    final result = await remoteConfig.getNotices();
+    final result = remoteConfig.getNotices();
     // Remove items that should not be shown
     result.removeWhere((item) => !item.shouldShow(context));
     // Update the state

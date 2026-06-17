@@ -1,21 +1,20 @@
-import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 
-class MockRemoteConfigController extends GetxController
-    with Mock
+class MockRemoteConfigController extends Mock
+    with ChangeNotifier
     implements RemoteConfigController {
   @override
-  Future<void> onReady() async {
-    // TODO: implement onReady
-    return super.onReady();
-  }
+  Future<void> onReady() async {}
 
-  /// fetches all configs from firebase, and makes models only
-  /// for notices shown in-app
   @override
-  Future<List<HudNoticeModel>> getNotices() async {
-    return [];
-  }
+  List<HudNoticeModel> getNotices() => [];
+
+  @override
+  String? latestIosVersion() => null;
+
+  @override
+  bool canShowSigmaEmoji() => false;
 }

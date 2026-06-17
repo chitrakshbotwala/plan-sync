@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/bottom-sheets/contribute_schedule.dart';
 import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
@@ -11,9 +10,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 
 void main() {
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
   testWidgets(
     'BottomSheetsWrapper.changeSectionPreference returns correct widget',
@@ -21,8 +20,7 @@ void main() {
       late BuildContext savedContext;
 
       await tester.pumpWidget(
-        GetMaterialApp(
-          home: Scaffold(
+        testApp(child: Scaffold(
             body: Builder(
               builder: (context) {
                 savedContext = context;
@@ -51,8 +49,7 @@ void main() {
       late BuildContext savedContext;
 
       await tester.pumpWidget(
-        GetMaterialApp(
-          home: Scaffold(
+        testApp(child: Scaffold(
             body: Builder(
               builder: (context) {
                 savedContext = context;
@@ -79,8 +76,7 @@ void main() {
       late BuildContext savedContext;
 
       await tester.pumpWidget(
-        GetMaterialApp(
-          home: Scaffold(
+        testApp(child: Scaffold(
             body: Builder(
               builder: (context) {
                 savedContext = context;
@@ -107,8 +103,7 @@ void main() {
       late BuildContext savedContext;
 
       await tester.pumpWidget(
-        GetMaterialApp(
-          home: Scaffold(
+        testApp(child: Scaffold(
             body: Builder(
               builder: (context) {
                 savedContext = context;

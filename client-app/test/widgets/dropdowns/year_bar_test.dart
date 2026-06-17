@@ -3,15 +3,13 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/widgets/dropdowns/year_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import 'package:get/get.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
     WidgetTester tester,
   ) async {
     return tester.pumpWidget(
-      const GetMaterialApp(
-        home: Scaffold(
+      testApp(child: Scaffold(
           body: Center(
             child: YearBar(),
           ),
@@ -20,9 +18,9 @@ void main() {
     );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('Year Bar loads properly', (WidgetTester tester) async {

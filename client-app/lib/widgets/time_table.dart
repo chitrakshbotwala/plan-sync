@@ -333,7 +333,7 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
     });
   }
 
-  onSort(int columnIndex, bool ascending) {
+  void onSort(int columnIndex, bool ascending) {
     setState(() {
       sortColumnIndex = columnIndex;
       sortAscending = ascending;
