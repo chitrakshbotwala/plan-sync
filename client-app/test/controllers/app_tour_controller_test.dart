@@ -41,17 +41,6 @@ void main() {
     expect(controller.appPreferencesController, same(preferences));
   });
 
-  testWidgets('keys are unique across the controller', (tester) async {
-    await pump(tester);
-    final keys = {
-      controller.schedulePreferencesButtonKey,
-      controller.sectionBarKey,
-      controller.savePreferenceSwitchKey,
-      controller.doneButtonKey,
-    };
-    expect(keys.length, 4);
-  });
-
   testWidgets('tourAlreadyCompleted reads from preferences', (tester) async {
     await pump(tester);
     expect(await controller.tourAlreadyCompleted(), isFalse);

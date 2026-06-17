@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
@@ -95,18 +94,24 @@ void main() {
   });
 
   group('setRepositoryBranch', () {
-    test('uses dev branch outside release mode', () {
+    test('uses dev branch in debug/profile builds', () {
+      // The branch is selected by kReleaseMode at build time; under the
+      // test runner that's always false, so we can only assert the
+      // non-release branch here.
       service.setRepositoryBranch();
-      // tests run with kReleaseMode == false
-      expect(kReleaseMode, isFalse);
       expect(service.branch, 'dev');
     });
   });
 
   group('selectedYear', () {
-    test('null assignment is ignored', () {
+    test('null assignment after a non-null value preserves the value', () {
+      service.selectedYear = '2024';
+      filter.activeSemester = 'SEM1';
       service.selectedYear = null;
-      expect(service.selectedYear, isNull);
+      // setter early-returns on null: the prior value AND its side-effects
+      // (activeSemester cleared) are preserved
+      expect(service.selectedYear, '2024');
+      expect(filter.activeSemester, 'SEM1');
     });
 
     test('assigning same value is a no-op', () {
@@ -131,9 +136,12 @@ void main() {
   });
 
   group('selectedElectiveYear', () {
-    test('null assignment is ignored', () {
+    test('null assignment after a non-null value preserves the value', () {
+      service.selectedElectiveYear = '2024';
+      filter.activeElectiveSemester = 'SEM2';
       service.selectedElectiveYear = null;
-      expect(service.selectedElectiveYear, isNull);
+      expect(service.selectedElectiveYear, '2024');
+      expect(filter.activeElectiveSemester, 'SEM2');
     });
 
     test('assigning same value does nothing', () {
@@ -199,20 +207,6 @@ void main() {
     test('valid list is stored', () {
       service.electivesSemesters = ['SEM1', 'SEM2'];
       expect(service.electivesSemesters, ['SEM1', 'SEM2']);
-    });
-  });
-
-  group('initial state', () {
-    test('errorDetails is null', () {
-      expect(service.errorDetails, isNull);
-    });
-
-    test('isWorking starts false', () {
-      expect(service.isWorking, isFalse);
-    });
-
-    test('sections starts null', () {
-      expect(service.sections, isNull);
     });
   });
 

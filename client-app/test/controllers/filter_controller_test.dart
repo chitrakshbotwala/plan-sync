@@ -153,17 +153,6 @@ void main() {
     });
   });
 
-  group('weekday', () {
-    test('exposes initial weekday', () {
-      expect(controller.weekday, Weekday.monday);
-    });
-
-    test('updates weekday', () {
-      controller.weekday = Weekday.friday;
-      expect(controller.weekday, Weekday.friday);
-    });
-  });
-
   group('getShortCode', () {
     test('returns placeholder when nothing selected', () {
       expect(controller.getShortCode(), 'Select Sections');

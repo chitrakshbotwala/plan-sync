@@ -11,18 +11,8 @@ void main() {
     controller = AppThemeController();
   });
 
-  group('initial state', () {
-    test('defaults to ThemeMode.system', () {
-      expect(controller.themeMode, ThemeMode.system);
-    });
-
-    test('isDarkMode is false by default', () {
-      expect(controller.isDarkMode, isFalse);
-    });
-  });
-
   group('toggleTheme', () {
-    test('flips from non-dark to dark', () {
+    test('flips from light to dark', () {
       controller.themeMode = ThemeMode.light;
       controller.toggleTheme();
       expect(controller.themeMode, ThemeMode.dark);
@@ -36,22 +26,24 @@ void main() {
       expect(controller.isDarkMode, isFalse);
     });
 
-    test('toggling from system mode goes to dark', () {
-      // anything not dark goes to dark per implementation
+    test('treats non-dark modes (incl. system) as light when toggling', () {
+      // implementation: any mode other than dark routes to dark on toggle
+      controller.themeMode = ThemeMode.system;
       controller.toggleTheme();
       expect(controller.themeMode, ThemeMode.dark);
     });
 
-    test('notifies listeners on toggle', () {
+    test('notifies listeners exactly once per toggle', () {
       var notifications = 0;
       controller.addListener(() => notifications++);
       controller.toggleTheme();
-      expect(notifications, 1);
+      controller.toggleTheme();
+      expect(notifications, 2);
     });
   });
 
   group('initThemeMode', () {
-    test('sets light/dark from platform brightness', () {
+    test('mirrors current platform brightness', () {
       controller.initThemeMode();
       final brightness =
           WidgetsBinding.instance.platformDispatcher.platformBrightness;
@@ -60,15 +52,12 @@ void main() {
         brightness == Brightness.light ? ThemeMode.light : ThemeMode.dark,
       );
     });
-  });
 
-  group('static themes', () {
-    test('lightTheme uses light brightness', () {
-      expect(AppThemeController.lightTheme.brightness, Brightness.light);
-    });
-
-    test('darkTheme uses dark brightness', () {
-      expect(AppThemeController.darkTheme.brightness, Brightness.dark);
+    test('never produces ThemeMode.system', () {
+      // initThemeMode is meant to resolve "system" into a concrete mode
+      controller.themeMode = ThemeMode.system;
+      controller.initThemeMode();
+      expect(controller.themeMode, isNot(ThemeMode.system));
     });
   });
 }

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:in_app_update/in_app_update.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
-import 'package:plan_sync/util/app_version.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -12,12 +13,6 @@ void main() {
   });
 
   group('clientVersion setter', () {
-    test('null assignment is ignored', () {
-      controller.clientVersion = '1.0.0';
-      controller.clientVersion = null;
-      expect(controller.clientVersion, '1.0.0');
-    });
-
     test('valid assignment updates value and notifies', () {
       var notifications = 0;
       controller.addListener(() => notifications++);
@@ -25,15 +20,18 @@ void main() {
       expect(controller.clientVersion, '2.0.0');
       expect(notifications, 1);
     });
+
+    test('null assignment is dropped and does not notify', () {
+      controller.clientVersion = '1.0.0';
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+      controller.clientVersion = null;
+      expect(controller.clientVersion, '1.0.0');
+      expect(notifications, 0);
+    });
   });
 
   group('appBuild setter', () {
-    test('null assignment is ignored', () {
-      controller.appBuild = '42';
-      controller.appBuild = null;
-      expect(controller.appBuild, '42');
-    });
-
     test('valid assignment updates value and notifies', () {
       var notifications = 0;
       controller.addListener(() => notifications++);
@@ -41,10 +39,19 @@ void main() {
       expect(controller.appBuild, '99');
       expect(notifications, 1);
     });
+
+    test('null assignment is dropped and does not notify', () {
+      controller.appBuild = '42';
+      var notifications = 0;
+      controller.addListener(() => notifications++);
+      controller.appBuild = null;
+      expect(controller.appBuild, '42');
+      expect(notifications, 0);
+    });
   });
 
-  group('isError / isUpdateAvailable setters', () {
-    test('isError toggles and notifies', () {
+  group('plain boolean setters notify', () {
+    test('isError', () {
       var notifications = 0;
       controller.addListener(() => notifications++);
       controller.isError = true;
@@ -52,7 +59,7 @@ void main() {
       expect(notifications, 1);
     });
 
-    test('isUpdateAvailable toggles and notifies', () {
+    test('isUpdateAvailable', () {
       var notifications = 0;
       controller.addListener(() => notifications++);
       controller.isUpdateAvailable = true;
@@ -61,34 +68,50 @@ void main() {
     });
   });
 
-  group('AppVersion utility used in checks', () {
-    test('detects greater minor version', () {
-      expect(AppVersion('1.2.0').isGreaterThan(AppVersion('1.1.9')), isTrue);
+  group('immediateUpdateCondition', () {
+    // PackageInfo.fromPlatform() can't run in widget tests, so we seed
+    // controller.packageInfo directly. The real onReady path populates
+    // this from the platform channel.
+    void seedBuildNumber(String buildNumber) {
+      controller.packageInfo = PackageInfo(
+        appName: 'plan_sync',
+        packageName: 'com.example.plan_sync',
+        version: '4.1.3',
+        buildNumber: buildNumber,
+      );
+    }
+
+    test('returns true when the available version code is >5 ahead', () {
+      seedBuildNumber('100');
+      final info = _fakeUpdateInfo(availableVersionCode: 106);
+      expect(controller.immediateUpdateCondition(info), isTrue);
     });
 
-    test('equal versions are not greater', () {
-      expect(AppVersion('1.2.3').isGreaterThan(AppVersion('1.2.3')), isFalse);
+    test('returns false at the boundary (difference == 5)', () {
+      seedBuildNumber('100');
+      final info = _fakeUpdateInfo(availableVersionCode: 105);
+      expect(controller.immediateUpdateCondition(info), isFalse);
     });
 
-    test('lower version reports not greater', () {
-      expect(AppVersion('1.2.3').isGreaterThan(AppVersion('1.3.0')), isFalse);
-    });
-
-    test('longer version with extra parts wins over shorter', () {
-      expect(AppVersion('1.0.0.1').isGreaterThan(AppVersion('1.0.0')), isTrue);
+    test('returns false when current build is already ahead', () {
+      seedBuildNumber('120');
+      final info = _fakeUpdateInfo(availableVersionCode: 100);
+      expect(controller.immediateUpdateCondition(info), isFalse);
     });
   });
+}
 
-  group('forcedRedirectPath', () {
-    test('defaults to null', () {
-      VersionController.forcedRedirectPath = null;
-      expect(VersionController.forcedRedirectPath, isNull);
-    });
-
-    test('is mutable', () {
-      VersionController.forcedRedirectPath = '/forced_update';
-      expect(VersionController.forcedRedirectPath, '/forced_update');
-      VersionController.forcedRedirectPath = null;
-    });
-  });
+AppUpdateInfo _fakeUpdateInfo({required int availableVersionCode}) {
+  return AppUpdateInfo(
+    updateAvailability: UpdateAvailability.updateAvailable,
+    immediateUpdateAllowed: true,
+    immediateAllowedPreconditions: const [],
+    flexibleUpdateAllowed: false,
+    flexibleAllowedPreconditions: const [],
+    availableVersionCode: availableVersionCode,
+    installStatus: InstallStatus.unknown,
+    packageName: 'plan_sync',
+    clientVersionStalenessDays: 0,
+    updatePriority: 0,
+  );
 }

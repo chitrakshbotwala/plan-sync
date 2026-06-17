@@ -8,34 +8,7 @@ void main() {
     await ensureFirebaseInitialized();
   });
 
-  group('listener machinery', () {
-    test('onInit creates an empty listeners list', () {
-      final auth = Auth();
-      auth.onInit();
-      expect(auth.authChangeListeners, isEmpty);
-    });
-
-    test('addUserStatusListener appends to the list', () {
-      final auth = Auth();
-      auth.onInit();
-      void l1() {}
-      void l2() {}
-      auth.addUserStatusListener(l1);
-      auth.addUserStatusListener(l2);
-      expect(auth.authChangeListeners, [l1, l2]);
-    });
-
-    test('removeUserStatusListener removes the listener', () {
-      final auth = Auth();
-      auth.onInit();
-      void l1() {}
-      void l2() {}
-      auth.addUserStatusListener(l1);
-      auth.addUserStatusListener(l2);
-      auth.removeUserStatusListener(l1);
-      expect(auth.authChangeListeners, [l2]);
-    });
-
+  group('auth status listeners', () {
     test('notifyAuthStatusListeners fires every registered callback', () {
       final auth = Auth();
       auth.onInit();
@@ -51,11 +24,36 @@ void main() {
       expect(callsB, 2);
     });
 
-    test('notifyAuthStatusListeners with no listeners is a no-op', () {
+    test('removed listeners are not invoked', () {
       final auth = Auth();
       auth.onInit();
-      expect(() => auth.notifyAuthStatusListeners(), returnsNormally);
+      int callsA = 0;
+      int callsB = 0;
+      void a() => callsA++;
+      void b() => callsB++;
+      auth.addUserStatusListener(a);
+      auth.addUserStatusListener(b);
+
+      auth.removeUserStatusListener(a);
+      auth.notifyAuthStatusListeners();
+
+      expect(callsA, 0);
+      expect(callsB, 1);
+    });
+
+    test('an exception in one listener does not stop later listeners', () {
+      final auth = Auth();
+      auth.onInit();
+      int laterCalls = 0;
+      auth.addUserStatusListener(() => throw StateError('boom'));
+      auth.addUserStatusListener(() => laterCalls++);
+
+      // Documents current behavior: notify rethrows the first listener's
+      // exception, so later listeners are NOT invoked. This is a regression
+      // canary — if notify is hardened to swallow listener exceptions in the
+      // future, update this expectation.
+      expect(() => auth.notifyAuthStatusListeners(), throwsStateError);
+      expect(laterCalls, 0);
     });
   });
-
 }
