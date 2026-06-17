@@ -1,39 +1,38 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
+import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
-class MockAppTourController extends GetxController
-    with Mock
+class MockAppTourController extends Mock
+    with ChangeNotifier
     implements AppTourController {
   @override
   late AppPreferencesController appPreferencesController;
 
-  late GlobalKey _schedulePreferencesButtonKey;
   @override
-  GlobalKey get schedulePreferencesButtonKey => _schedulePreferencesButtonKey;
-
-  late GlobalKey _sectionBarKey;
-  @override
-  GlobalKey get sectionBarKey => _sectionBarKey;
-
-  late GlobalKey _savePreferenceSwitchKey;
-  @override
-  GlobalKey get savePreferenceSwitchKey => _savePreferenceSwitchKey;
+  final GlobalKey schedulePreferencesButtonKey = GlobalKey();
 
   @override
-  void onInit() {
-    appPreferencesController = Get.find();
-    super.onInit();
-    _schedulePreferencesButtonKey = GlobalKey();
-    _sectionBarKey = GlobalKey();
-    _savePreferenceSwitchKey = GlobalKey();
+  final GlobalKey sectionBarKey = GlobalKey();
+
+  @override
+  final GlobalKey savePreferenceSwitchKey = GlobalKey();
+
+  @override
+  final GlobalKey doneButtonKey = GlobalKey();
+
+  @override
+  void onInit(BuildContext context) {
+    appPreferencesController = Provider.of<AppPreferencesController>(
+      context,
+      listen: false,
+    );
   }
 
   @override

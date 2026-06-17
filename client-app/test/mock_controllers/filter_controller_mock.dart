@@ -1,123 +1,109 @@
-import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/util/enums.dart';
+import 'package:provider/provider.dart';
 
-import 'app_preferences_controller_mock.dart';
-import 'git_service_mock.dart';
-
-class MockFilterController extends GetxController
-    with Mock
+class MockFilterController extends Mock
+    with ChangeNotifier
     implements FilterController {
   @override
-  final preferences =
-      Get.find<AppPreferencesController>() as MockAppPreferencesController;
-  @override
-  final service = Get.find<GitService>() as MockGitService;
+  late GitService service;
 
-  RxString? _activeSectionCode;
+  @override
+  late AppPreferencesController preferences;
+
+  @override
+  void onInit(BuildContext context) {
+    service = Provider.of<GitService>(context, listen: false);
+    preferences = Provider.of<AppPreferencesController>(
+      context,
+      listen: false,
+    );
+  }
+
+  String? _activeSectionCode;
   @override
   set activeSectionCode(String? newSectionCode) {
-    newSectionCode != null
-        ? _activeSectionCode = newSectionCode.obs
-        : _activeSectionCode = null;
-    update();
+    _activeSectionCode = newSectionCode;
+    notifyListeners();
   }
 
   @override
-  String? get activeSectionCode => _activeSectionCode?.value;
+  String? get activeSectionCode => _activeSectionCode;
 
-  RxString? _activeElectiveScheme;
+  String? _activeElectiveScheme;
   @override
   set activeElectiveScheme(String? newValue) {
     if (newValue == null) {
       _activeElectiveScheme = null;
-      update();
+      notifyListeners();
       return;
     }
-    _activeElectiveScheme = newValue.obs;
-    update();
-    return;
+    _activeElectiveScheme = newValue;
+    notifyListeners();
   }
 
   @override
-  String? get activeElectiveScheme => _activeElectiveScheme?.value;
+  String? get activeElectiveScheme => _activeElectiveScheme;
 
-  RxString? _activeElectiveSchemeCode;
+  String? _activeElectiveSchemeCode;
 
   @override
-  String? get activeElectiveSchemeCode => _activeElectiveSchemeCode?.value;
+  String? get activeElectiveSchemeCode => _activeElectiveSchemeCode;
   @override
   set activeElectiveSchemeCode(String? newValue) {
-    if (newValue == null) {
-      _activeElectiveSchemeCode = null;
-      update();
-      return;
-    }
-    _activeElectiveSchemeCode = newValue.obs;
-    update();
-    return;
+    _activeElectiveSchemeCode = newValue;
+    notifyListeners();
   }
 
-  RxString? _activeElectiveSemester;
+  String? _activeElectiveSemester;
 
   @override
   set activeElectiveSemester(String? newValue) {
-    if (newValue == null) {
-      _activeElectiveSemester = null;
-      update();
-      return;
-    }
-    _activeElectiveSemester = newValue.obs;
-    update();
-    return;
+    _activeElectiveSemester = newValue;
+    notifyListeners();
   }
 
-  late Weekday _weekday;
+  @override
+  String? get activeElectiveSemester => _activeElectiveSemester;
+
+  Weekday _weekday = Weekday.today();
   @override
   Weekday get weekday => _weekday;
   @override
   set weekday(Weekday newWeekday) {
     _weekday = newWeekday;
-    update();
+    notifyListeners();
   }
 
-  @override
-  String? get activeElectiveSemester => _activeElectiveSemester?.value;
-
-  RxString? _activeSection;
+  String? _activeSection;
   @override
   set activeSection(String? newSection) {
-    if (newSection == null) {
-      _activeSection = null;
-      update();
-      return;
-    }
-    _activeSection = newSection.obs;
-    update();
-    return;
+    _activeSection = newSection;
+    notifyListeners();
   }
 
   @override
-  String? get activeSection => _activeSection?.value;
+  String? get activeSection => _activeSection;
 
-  RxString? _activeSemester;
+  String? _activeSemester;
   @override
   set activeSemester(String? newValue) {
     if (activeSemester == newValue) {
       return;
     }
-    _activeSemester = newValue?.obs;
-    update();
+    _activeSemester = newValue;
+    notifyListeners();
   }
 
   @override
-  String? get activeSemester => _activeSemester?.value;
+  String? get activeSemester => _activeSemester;
 
   @override
-  Future<String> getShortCode() async {
+  String getShortCode() {
     String? section = activeSectionCode;
     String? semester = activeSemester;
 
@@ -133,101 +119,82 @@ class MockFilterController extends GetxController
   }
 
   @override
-  void onInit() {
-    super.onInit();
-    _weekday = Weekday.today();
-  }
-
-  @override
-  Future<void> storePrimarySection() async {
+  Future<void> storePrimarySection(BuildContext context) async {
     if (activeSectionCode == null) {
       return;
     }
-
     final res =
         await preferences.savePrimarySectionPreference(activeSectionCode!);
-
     if (res == false) {
       return Future.error('Couldnt save');
     }
-
-    update();
+    notifyListeners();
   }
 
   @override
-  Future<void> storePrimarySemester() async {
+  Future<void> storePrimarySemester(BuildContext context) async {
     if (activeSemester == null) {
       return;
     }
     final res =
         await preferences.savePrimarySemesterPreference(activeSemester!);
-
     if (res == false) {
       return Future.error('Couldnt save');
     }
-
-    update();
+    notifyListeners();
   }
 
   @override
-  Future<void> storePrimaryYear() async {
+  Future<void> storePrimaryYear(BuildContext context) async {
     if (service.selectedYear == null) {
       return;
     }
     final res = await preferences.savePrimaryYearPreference(
       service.selectedYear!.toString(),
     );
-
     if (res == false) {
       return Future.error('Couldnt save');
     }
-
-    update();
+    notifyListeners();
   }
 
   @override
-  Future<void> storePrimaryElectiveScheme() async {
+  Future<void> storePrimaryElectiveScheme(BuildContext context) async {
     if (activeElectiveSchemeCode == null) {
       return Future.error('error');
     }
-
     final res = await preferences
         .savePrimaryElectiveSchemePreference(activeElectiveSchemeCode!);
-
     if (res == false) {
       return;
     }
-
-    update();
+    notifyListeners();
   }
 
   @override
-  Future<void> storePrimaryElectiveSemester() async {
+  Future<void> storePrimaryElectiveSemester(BuildContext context) async {
     if (activeElectiveSemester == null) {
       return;
     }
     final res = await preferences
         .savePrimaryElectiveSemesterPreference(activeElectiveSemester!);
-
     if (res == false) {
       return;
     }
-
-    update();
+    notifyListeners();
   }
 
   @override
-  Future<void> storePrimaryElectiveYear() async {
+  Future<void> storePrimaryElectiveYear(BuildContext context) async {
     if (service.selectedElectiveYear == null) {
       return;
     }
     final res = await preferences.savePrimaryElectiveYearPreference(
       service.selectedElectiveYear!.toString(),
     );
-
     if (res == false) {
       return;
     }
-    update();
+    notifyListeners();
   }
 }

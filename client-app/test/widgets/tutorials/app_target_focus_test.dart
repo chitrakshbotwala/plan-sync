@@ -11,19 +11,16 @@ import '../../mock_controllers/app_preferences_controller_mock.dart';
 void main() {
   Future<void> pumpTutorialWidget(WidgetTester tester) async {
     await tester.pumpFrames(
-      GetMaterialApp(
-        theme: AppThemeController.lightTheme,
-        home: const HomeScreen(),
-      ),
+      testApp(child: const HomeScreen()),
       const Duration(seconds: 3),
     );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({
       'app-tutorial-status': true,
     });
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets(

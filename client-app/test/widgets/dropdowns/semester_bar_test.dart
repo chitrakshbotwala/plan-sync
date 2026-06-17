@@ -13,9 +13,8 @@ void main() {
     WidgetTester tester,
   ) async {
     return tester.pumpWidget(
-      GetMaterialApp(
-        theme: AppThemeController.lightTheme,
-        home: const Scaffold(
+      testApp(
+        child: const Scaffold(
           body: Center(
             child: SemesterBar(),
           ),
@@ -24,9 +23,9 @@ void main() {
     );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('SemesterBar loads properly', (WidgetTester tester) async {

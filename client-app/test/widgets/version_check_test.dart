@@ -10,8 +10,7 @@ import '../mock_controllers/version_controller_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(WidgetTester tester) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: Center(
           child: VersionCheckWidget(),
         ),
@@ -19,9 +18,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('VersionCheckWidget renders when update is available',

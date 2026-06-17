@@ -13,8 +13,7 @@ void main() {
   Future<void> pumpBaseWidget(
     WidgetTester tester,
   ) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: Center(
           child: ElectiveSchemeBar(),
         ),
@@ -22,9 +21,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets(
@@ -48,7 +47,7 @@ void main() {
       gitController.electiveSchemes = {
         "a": "Scheme A",
         "b": "Scheme B",
-      }.obs;
+      };
 
       // initial state
       await pumpBaseWidget(tester);
@@ -68,7 +67,7 @@ void main() {
       gitController.electiveSchemes = {
         "a": "Scheme A",
         "b": "Scheme B",
-      }.obs;
+      };
 
       // initial state
       await pumpBaseWidget(tester);

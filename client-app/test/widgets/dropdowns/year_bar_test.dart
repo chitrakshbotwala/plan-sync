@@ -10,8 +10,7 @@ void main() {
     WidgetTester tester,
   ) async {
     return tester.pumpWidget(
-      const GetMaterialApp(
-        home: Scaffold(
+      testApp(child: Scaffold(
           body: Center(
             child: YearBar(),
           ),
@@ -20,9 +19,9 @@ void main() {
     );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('Year Bar loads properly', (WidgetTester tester) async {

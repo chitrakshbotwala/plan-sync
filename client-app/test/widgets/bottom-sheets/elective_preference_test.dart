@@ -43,17 +43,21 @@ void main() {
         )
       ],
     );
-    return tester.pumpWidget(GetMaterialApp.router(
-      theme: AppThemeController.lightTheme,
-      routeInformationParser: router.routeInformationParser,
-      routeInformationProvider: router.routeInformationProvider,
-      routerDelegate: router.routerDelegate,
-    ));
+    return tester.pumpWidget(
+      wrapWithProviders(
+        child: MaterialApp.router(
+          theme: AppThemeController.lightTheme,
+          routeInformationParser: router.routeInformationParser,
+          routeInformationProvider: router.routeInformationProvider,
+          routerDelegate: router.routerDelegate,
+        ),
+      ),
+    );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
   testWidgets('ElectivePreferenceBottomSheet switch toggles when clicked',
       (WidgetTester tester) async {
@@ -118,7 +122,9 @@ void main() {
     gitController.electiveSchemes = {
       "a": "Scheme A",
       "b": "Scheme B",
-    }.obs;
+    };
+    // ElectiveSchemeBar is disabled until an elective semester is selected.
+    filterController.activeElectiveSemester = 'SEM1';
 
     await pumpBaseWidget(tester);
     await tester.pump();
@@ -150,6 +156,10 @@ void main() {
     perfs.resetPreferencesToNull();
 
     gitController.selectedElectiveYear = '2024';
+    gitController.electiveSchemes = {
+      "a": "Scheme A",
+      "b": "Scheme B",
+    };
     filterController.activeElectiveSemester = 'SEM1';
     filterController.activeElectiveScheme = 'Scheme B';
     filterController.activeElectiveSchemeCode = 'b';
@@ -196,6 +206,10 @@ void main() {
     perfs.resetPreferencesToNull();
 
     gitController.selectedElectiveYear = '2024';
+    gitController.electiveSchemes = {
+      "a": "Scheme A",
+      "b": "Scheme B",
+    };
     filterController.activeElectiveSemester = 'SEM1';
     filterController.activeElectiveScheme = 'Scheme B';
     filterController.activeElectiveSchemeCode = 'b';
@@ -224,7 +238,9 @@ void main() {
 
     // save
     await tester.tap(find.text('Done'));
-    Get.closeAllSnackbars();
+    // Toast from exitBottomSheet auto-closes after 5s; pump past it
+    // so no toastification timers are left pending at teardown.
+    await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
 
     // verify post saving perfs

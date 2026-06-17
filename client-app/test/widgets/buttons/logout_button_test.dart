@@ -11,8 +11,7 @@ void main() {
   Future<void> pumpBaseWidget(
     WidgetTester tester,
   ) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: Center(
           child: LogoutButton(),
         ),
@@ -20,9 +19,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('LogoutButton loads with icon', (WidgetTester tester) async {
@@ -38,7 +37,8 @@ void main() {
     await tester.pumpAndSettle();
 
     final controller = Get.find<Auth>() as MockAuth;
-    await controller.loginWithGoogle();
+    final ctx = tester.element(find.byType(Scaffold));
+    await controller.loginWithGoogle(ctx);
 
     expect(controller.activeUser, isNotNull);
 

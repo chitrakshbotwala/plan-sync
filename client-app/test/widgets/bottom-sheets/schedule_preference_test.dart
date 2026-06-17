@@ -44,17 +44,21 @@ void main() {
         )
       ],
     );
-    return tester.pumpWidget(GetMaterialApp.router(
-      theme: AppThemeController.lightTheme,
-      routeInformationParser: router.routeInformationParser,
-      routeInformationProvider: router.routeInformationProvider,
-      routerDelegate: router.routerDelegate,
-    ));
+    return tester.pumpWidget(
+      wrapWithProviders(
+        child: MaterialApp.router(
+          theme: AppThemeController.lightTheme,
+          routeInformationParser: router.routeInformationParser,
+          routeInformationProvider: router.routeInformationProvider,
+          routerDelegate: router.routerDelegate,
+        ),
+      ),
+    );
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
   testWidgets('SchedulePreferenceBottomSheet switch toggles',
       (WidgetTester tester) async {
@@ -93,8 +97,16 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet opens SemestersBar',
       (WidgetTester tester) async {
+    final gitController = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
+
+    // Pre-seed sections so the SectionsBar does not flip to its
+    // loading state (which spins an infinite animation) once a
+    // semester is selected — pumpAndSettle would otherwise time out.
+    gitController.sections = {
+      "b13": "B13 CSE",
+    };
 
     await pumpBaseWidget(tester);
 
@@ -121,6 +133,8 @@ void main() {
       "b16": "B16 CSE",
       "b18": "B18 CSE",
     };
+    // SectionsBar is disabled until a semester is selected.
+    filterController.activeSemester = 'SEM1';
 
     await pumpBaseWidget(tester);
     await tester.pump();
@@ -181,7 +195,9 @@ void main() {
 
     // save
     await tester.tap(find.text('Done'));
-    Get.closeAllSnackbars();
+    // Toast from exitBottomSheet auto-closes after 5s; pump past it
+    // so no toastification timers are left pending at teardown.
+    await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
 
     // verify post saving perfs
