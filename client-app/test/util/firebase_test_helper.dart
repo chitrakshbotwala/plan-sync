@@ -1,7 +1,5 @@
 import 'package:firebase_core/firebase_core.dart';
-// ignore: implementation_imports
 import 'package:firebase_core_platform_interface/src/pigeon/messages.pigeon.dart';
-// ignore: implementation_imports
 import 'package:firebase_core_platform_interface/src/pigeon/test_api.dart';
 import 'package:flutter_test/flutter_test.dart';
 

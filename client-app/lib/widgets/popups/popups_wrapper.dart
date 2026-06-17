@@ -23,7 +23,7 @@ class PopupsWrapper {
     );
   }
 
-  static deleteAccount({
+  static void deleteAccount({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;

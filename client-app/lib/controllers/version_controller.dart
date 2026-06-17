@@ -65,7 +65,7 @@ class VersionController extends ChangeNotifier {
     verifyMinimumVersion(context: context);
   }
 
-  printCurrentVersion() {
+  void printCurrentVersion() {
     Logger.i("App version: v${packageInfo.version}");
     clientVersion = packageInfo.version;
     appBuild = packageInfo.buildNumber;

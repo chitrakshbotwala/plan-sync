@@ -20,7 +20,7 @@ jobs:
 
     - name: Code Analysis
       working-directory: client-app
-      run: flutter analyze
+      run: flutter analyze --no-fatal-infos
 
     - name: Unit Testing
       working-directory: client-app

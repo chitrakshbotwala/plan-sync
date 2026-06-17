@@ -4,7 +4,7 @@ import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 class AppTargetFocus {
   AppTargetFocus();
 
-  static schedulePreferencesButton({
+  static TargetFocus schedulePreferencesButton({
     required ColorScheme colorScheme,
     required GlobalKey buttonKey,
   }) {
@@ -43,7 +43,7 @@ class AppTargetFocus {
     );
   }
 
-  static sectionBarButton({
+  static TargetFocus sectionBarButton({
     required ColorScheme colorScheme,
     required GlobalKey buttonKey,
   }) {
@@ -84,7 +84,7 @@ class AppTargetFocus {
     );
   }
 
-  static doneButton({
+  static TargetFocus doneButton({
     required ColorScheme colorScheme,
     required GlobalKey buttonKey,
   }) {
@@ -125,7 +125,7 @@ class AppTargetFocus {
     );
   }
 
-  static savePreferenceSwitch({
+  static TargetFocus savePreferenceSwitch({
     required ColorScheme colorScheme,
     required GlobalKey buttonKey,
   }) {
