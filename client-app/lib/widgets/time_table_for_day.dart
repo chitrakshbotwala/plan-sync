@@ -77,52 +77,37 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
         },
       );
     });
-    setState(() {
-      filteredSchedule = _getFilteredSchedule();
-      _sortElectives();
-    });
+    filteredSchedule = _getFilteredSchedule();
+    _sortElectives();
   }
 
-  Future<void> _sortElectives() async {
-    if (widget.data.meta.type != 'electives') {
-      return;
-    }
+  void _sortElectives() {
+    if (widget.data.meta.type != 'electives') return;
 
-    final prefs = Provider.of<AppPreferencesController>(context, listen: false);
-    final academicYear =
-        Provider.of<GitService>(context, listen: false).selectedElectiveYear ??
-            '';
-    final semester = Provider.of<FilterController>(context, listen: false)
-            .activeElectiveSemester ??
-        '';
-    final scheme = Provider.of<FilterController>(context, listen: false)
-            .activeElectiveScheme ??
-        '';
+    final academicYear = gitService.selectedElectiveYear ?? '';
+    final semester = filterProvider.activeElectiveSemester ?? '';
+    final scheme = filterProvider.activeElectiveScheme ?? '';
 
-    final starredIds = await prefs.getStarredElectives();
-    setState(() {
-      filteredSchedule.sort((a, b) {
-        final aId = AppPreferencesController.electiveId(
-          academicYear: academicYear,
-          semester: semester,
-          scheme: scheme,
-          subjectName: a.subject ?? '',
-        );
-        final bId = AppPreferencesController.electiveId(
-          academicYear: academicYear,
-          semester: semester,
-          scheme: scheme,
-          subjectName: b.subject ?? '',
-        );
-        final aStarred = starredIds.contains(aId);
-        final bStarred = starredIds.contains(bId);
+    filteredSchedule.sort((a, b) {
+      final aId = AppPreferencesController.electiveId(
+        academicYear: academicYear,
+        semester: semester,
+        scheme: scheme,
+        subjectName: a.subject ?? '',
+      );
+      final bId = AppPreferencesController.electiveId(
+        academicYear: academicYear,
+        semester: semester,
+        scheme: scheme,
+        subjectName: b.subject ?? '',
+      );
+      final aStarred = appPreferencesController.isElectiveStarred(aId);
+      final bStarred = appPreferencesController.isElectiveStarred(bId);
 
-        if (aStarred == bStarred) {
-          // If both are starred or both are unstarred, sort alphabetically by subject
-          return (a.subject ?? '').compareTo(b.subject ?? '');
-        }
-        return aStarred ? -1 : 1;
-      });
+      if (aStarred == bStarred) {
+        return (a.subject ?? '').compareTo(b.subject ?? '');
+      }
+      return aStarred ? -1 : 1;
     });
   }
 

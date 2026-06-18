@@ -84,6 +84,7 @@ class FilterController extends ChangeNotifier {
   late AppPreferencesController preferences;
 
   String? get activeYear => service.selectedYear;
+  String? get activeElectiveYear => service.selectedElectiveYear;
 
   void onInit(BuildContext context) {
     service = Provider.of<GitService>(context, listen: false);

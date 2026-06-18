@@ -13,6 +13,9 @@ import 'package:plan_sync/controllers/auth.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/controllers/notification_controller.dart';
+import 'package:plan_sync/features/electives/repository/electives_repository.dart';
+import 'package:plan_sync/features/electives/repository/electives_repository_impl.dart';
+import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
@@ -87,6 +90,11 @@ class AppProvider extends StatelessWidget {
         ),
         Provider<ScheduleRepository>(
           create: (context) => ScheduleRepositoryImpl(
+            gitService: context.read<GitService>(),
+          ),
+        ),
+        Provider<ElectivesRepository>(
+          create: (context) => ElectivesRepositoryImpl(
             gitService: context.read<GitService>(),
           ),
         ),
@@ -210,7 +218,13 @@ final _router = GoRouter(
             GoRoute(
               path: '/electives',
               name: 'electives_screen',
-              builder: (context, state) => const ElectiveScreen(),
+              builder: (context, state) => ChangeNotifierProvider<ElectivesViewModel>(
+                create: (ctx) => ElectivesViewModel(
+                  repository: ctx.read<ElectivesRepository>(),
+                  filterController: ctx.read<FilterController>(),
+                ),
+                child: const ElectiveScreen(),
+              ),
             ),
           ],
         ),
