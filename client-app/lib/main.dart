@@ -27,7 +27,8 @@ import 'package:plan_sync/features/campus_navigator/view/campus_navigator_view.d
 import 'package:plan_sync/views/electives_screen.dart';
 import 'package:plan_sync/views/forced_update_screen.dart';
 import 'package:plan_sync/views/home_screen.dart';
-import 'package:plan_sync/views/login_screen.dart';
+import 'package:plan_sync/features/auth/view/login_screen.dart';
+import 'package:plan_sync/features/auth/viewmodel/login_view_model.dart';
 import 'package:plan_sync/features/settings/view/settings_screen.dart';
 import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:plan_sync/widgets/scaffold_with_nav_bar.dart';
@@ -259,7 +260,11 @@ final _router = GoRouter(
     GoRoute(
       path: '/login',
       name: 'login_screen',
-      builder: (context, state) => const LoginScreen(),
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) =>
+            LoginViewModel(auth: context.read<Auth>()),
+        child: const LoginScreen(),
+      ),
     ),
     GoRoute(
       path: '/forced_update',
