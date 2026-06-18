@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:plan_sync/util/constants.dart';
 import 'package:plan_sync/util/external_links.dart';
 import 'package:plan_sync/util/snackbar.dart';
@@ -11,33 +10,12 @@ import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/buttons/logout_button.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
-import '../controllers/auth.dart';
 
-class SettingsPage extends StatefulWidget {
+class SettingsPage extends StatelessWidget {
   const SettingsPage({super.key});
 
-  @override
-  State<SettingsPage> createState() => _SettingsPageState();
-}
-
-class _SettingsPageState extends State<SettingsPage> {
-  void setPrimarySections(BuildContext context) {
-    BottomSheets.changeSectionPreference(context: context, save: true);
-  }
-
-  late Auth auth;
-  late VersionController versionController;
-  bool isPunActivated = false;
-
-  @override
-  void initState() {
-    super.initState();
-    auth = Provider.of<Auth>(context, listen: false);
-    versionController = Provider.of<VersionController>(context, listen: false);
-  }
-
-  void copyUID(BuildContext context) async {
-    final uid = auth.activeUser?.uid;
+  Future<void> _copyUID(BuildContext context) async {
+    final uid = context.read<SettingsViewModel>().uid;
 
     if (uid == null) {
       CustomSnackbar.error(
@@ -49,21 +27,22 @@ class _SettingsPageState extends State<SettingsPage> {
     }
 
     await Clipboard.setData(ClipboardData(text: uid));
+    if (!context.mounted) return;
     CustomSnackbar.info(
       'Copied',
       'Your UID has been copied into the clipboard.',
       context,
     );
-    return;
   }
 
   @override
   Widget build(BuildContext context) {
+    final vm = context.watch<SettingsViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
 
     final userImage = CachedNetworkImageProvider(
-      auth.activeUser?.photoURL ?? DEFAULT_USER_IMAGE,
-      cacheKey: auth.activeUser?.uid ?? 'DEFAULT_USER_IMAGE',
+      vm.photoUrl ?? DEFAULT_USER_IMAGE,
+      cacheKey: vm.uid ?? 'DEFAULT_USER_IMAGE',
     );
 
     const chillGuyImage = CachedNetworkImageProvider(
@@ -103,21 +82,18 @@ class _SettingsPageState extends State<SettingsPage> {
 
                 // TODO: maybe remove this pun?
                 GestureDetector(
-                  onLongPress: () => setState(() {
-                    isPunActivated = !isPunActivated;
-                  }),
+                  onLongPress: vm.togglePun,
                   child: CircleAvatar(
                     radius: 64,
-                    // main image
-                    foregroundImage: isPunActivated ? chillGuyImage : userImage,
-                    // fallback image
+                    foregroundImage:
+                        vm.isPunActivated ? chillGuyImage : userImage,
                     backgroundImage: const AssetImage('assets/favicon.png'),
                     backgroundColor: colorScheme.surface,
                   ),
                 ),
                 const SizedBox(height: 24),
                 Text(
-                  auth.activeUser!.displayName ?? "Plan Sync Wizard",
+                  vm.displayName ?? "Plan Sync Wizard",
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontSize: 18,
@@ -125,7 +101,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   ),
                 ),
                 Text(
-                  auth.activeUser!.email ?? "connect@plansync.in",
+                  vm.email ?? "connect@plansync.in",
                   style: TextStyle(
                     color: colorScheme.onSurface.withOpacity(0.72),
                   ),
@@ -134,7 +110,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Plan Sync v${versionController.clientVersion} | ',
+                      'Plan Sync v${vm.clientVersion} | ',
                       style: TextStyle(
                         color: colorScheme.onSurface.withOpacity(0.72),
                       ),
@@ -147,7 +123,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                     const SizedBox(width: 8),
                     InkWell(
-                      onTap: () => copyUID(context),
+                      onTap: () => _copyUID(context),
                       enableFeedback: true,
                       child: Icon(
                         Icons.copy,
@@ -178,7 +154,10 @@ class _SettingsPageState extends State<SettingsPage> {
                     Icons.keyboard_arrow_right_rounded,
                     color: colorScheme.onSurface,
                   ),
-                  onTap: () => setPrimarySections(context),
+                  onTap: () => BottomSheets.changeSectionPreference(
+                    context: context,
+                    save: true,
+                  ),
                 ),
                 ListTile(
                   shape: RoundedRectangleBorder(
@@ -244,14 +223,8 @@ class _SettingsPageState extends State<SettingsPage> {
                     color: colorScheme.onSurface,
                   ),
                   onTap: () {
-                    BottomSheets.shareAppBottomSheet(
-                      context: context,
-                    );
-
-                    Provider.of<AnalyticsController>(
-                      context,
-                      listen: false,
-                    ).logShareSheetOpen();
+                    BottomSheets.shareAppBottomSheet(context: context);
+                    vm.logShareSheetOpen();
                   },
                 ),
                 Padding(
@@ -282,7 +255,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       await ExternalLinks.termsAndConditions();
                     } catch (e) {
                       if (!context.mounted) return;
-
                       CustomSnackbar.error(
                         'Failed to open link',
                         'Could not open Terms of Service. Please try again.',
@@ -315,7 +287,6 @@ class _SettingsPageState extends State<SettingsPage> {
                       await ExternalLinks.privacyPolicy();
                     } catch (e) {
                       if (!context.mounted) return;
-
                       CustomSnackbar.error(
                         'Failed to open link',
                         'Could not open Privacy Policy. Please try again.',

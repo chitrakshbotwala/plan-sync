@@ -28,7 +28,8 @@ import 'package:plan_sync/views/electives_screen.dart';
 import 'package:plan_sync/views/forced_update_screen.dart';
 import 'package:plan_sync/views/home_screen.dart';
 import 'package:plan_sync/views/login_screen.dart';
-import 'package:plan_sync/views/settings_screen.dart';
+import 'package:plan_sync/features/settings/view/settings_screen.dart';
+import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:plan_sync/widgets/scaffold_with_nav_bar.dart';
 import 'package:provider/provider.dart';
 import 'package:toastification/toastification.dart';
@@ -242,7 +243,14 @@ final _router = GoRouter(
             GoRoute(
               path: '/settings',
               name: 'settings_screen',
-              builder: (context, state) => const SettingsPage(),
+              builder: (context, state) => ChangeNotifierProvider(
+                create: (context) => SettingsViewModel(
+                  auth: context.read(),
+                  version: context.read(),
+                  analytics: context.read(),
+                ),
+                child: const SettingsPage(),
+              ),
             ),
           ],
         ),
