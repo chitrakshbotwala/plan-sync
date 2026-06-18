@@ -23,7 +23,7 @@ import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
 import 'package:plan_sync/router_refresh_stream.dart';
-import 'package:plan_sync/views/campus_navigator/campus_navigator_view.dart';
+import 'package:plan_sync/features/campus_navigator/view/campus_navigator_view.dart';
 import 'package:plan_sync/views/electives_screen.dart';
 import 'package:plan_sync/views/forced_update_screen.dart';
 import 'package:plan_sync/views/home_screen.dart';

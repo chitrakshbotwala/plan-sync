@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/views/campus_navigator/models/campus_navigation_model.dart';
+import 'package:plan_sync/features/campus_navigator/model/campus_navigation_model.dart';
 
 class CampusLocationCard extends StatelessWidget {
   final CampusNavigationModel item;
-  final ColorScheme colorScheme;
   final VoidCallback onLaunch;
 
   const CampusLocationCard({
     super.key,
     required this.item,
-    required this.colorScheme,
     required this.onLaunch,
   });
 
@@ -40,7 +38,7 @@ class CampusLocationCard extends StatelessWidget {
         item.title ?? 'No Title',
         style: TextStyle(color: colorScheme.onSurface),
       ),
-      onTap: () => onLaunch.call(),
+      onTap: onLaunch,
       trailing: IconButton(
         icon: Icon(Icons.launch, color: colorScheme.secondary),
         onPressed: onLaunch,
