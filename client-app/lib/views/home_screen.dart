@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/notification_controller.dart';
 import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
 import 'package:plan_sync/widgets/date_widget.dart';
@@ -17,13 +16,11 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late FilterController filterController;
   late AppTourController appTourController;
 
   @override
   void initState() {
     super.initState();
-    filterController = Provider.of<FilterController>(context, listen: false);
     appTourController = Provider.of<AppTourController>(context, listen: false);
 
     WidgetsBinding.instance.addPostFrameCallback((_) {

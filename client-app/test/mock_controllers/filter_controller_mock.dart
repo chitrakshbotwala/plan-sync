@@ -16,12 +16,16 @@ class MockFilterController extends Mock
   late AppPreferencesController preferences;
 
   @override
+  String? get activeYear => service.selectedYear;
+
+  @override
   void onInit(BuildContext context) {
     service = Provider.of<GitService>(context, listen: false);
     preferences = Provider.of<AppPreferencesController>(
       context,
       listen: false,
     );
+    service.addListener(notifyListeners);
   }
 
   String? _activeSectionCode;

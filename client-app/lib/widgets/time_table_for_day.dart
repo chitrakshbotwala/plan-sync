@@ -127,6 +127,17 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
   }
 
   @override
+  void didUpdateWidget(TimeTableForDay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.day != widget.day || oldWidget.data != widget.data) {
+      setState(() {
+        filteredSchedule = _getFilteredSchedule();
+        _sortElectives();
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();

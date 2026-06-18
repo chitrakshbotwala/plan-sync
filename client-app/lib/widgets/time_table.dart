@@ -3,6 +3,7 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/git_service.dart';
+import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:plan_sync/widgets/time_table_for_day.dart';
@@ -175,162 +176,308 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    return Consumer<FilterController>(builder: (ctx, filterController, child) {
-      GitService service = Provider.of<GitService>(context, listen: false);
-      FilterController filterController =
-          Provider.of<FilterController>(context);
+    if (widget.isElective) {
+      // TODO(mvvm): migrate to ElectiveViewModel in a future pass.
+      return Consumer<FilterController>(builder: (ctx, filterController, child) {
+        GitService service = Provider.of<GitService>(context, listen: false);
+        FilterController fc = Provider.of<FilterController>(context);
 
-      return StreamBuilder(
-        key: ValueKey(widget.isElective
-            ? filterController.getElectiveShortCode()
-            : filterController.getShortCode()),
-        stream: widget.isElective
-            ? service.getElectives()
-            : service.getTimeTable(filterController),
-        builder: (context, AsyncSnapshot<Timetable?> snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const SizedBox(height: 32),
-                Center(
-                    child: CircularProgressIndicator(
-                  color: colorScheme.secondary,
-                )),
-              ],
-            );
-          } else if (snapshot.hasError) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 32),
-                Icon(
-                  Icons.error,
-                  color: colorScheme.error,
-                  size: 40,
-                ),
-                const SizedBox(height: 16),
-                Flexible(child: MarkdownBody(data: "```${snapshot.error}```")),
-                const SizedBox(height: 16),
-                Text(
-                  "A status report has been sent, this issue will be looked into.",
-                  style: TextStyle(
-                    color: colorScheme.error,
-                  ),
-                )
-              ],
-            );
-          } else if (!snapshot.hasData) {
-            return Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
+        return StreamBuilder(
+          key: ValueKey(fc.getElectiveShortCode()),
+          stream: service.getElectives(),
+          builder: (context, AsyncSnapshot<Timetable?> snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return Column(
                 mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 32),
+                  Center(
+                      child: CircularProgressIndicator(
+                    color: colorScheme.secondary,
+                  )),
+                ],
+              );
+            } else if (snapshot.hasError) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const SizedBox(height: 32),
                   Icon(
-                    Icons.info,
-                    color: colorScheme.secondary,
+                    Icons.error,
+                    color: colorScheme.error,
                     size: 40,
                   ),
                   const SizedBox(height: 16),
+                  Flexible(
+                      child: MarkdownBody(data: "```${snapshot.error}```")),
+                  const SizedBox(height: 16),
                   Text(
-                    "No section selected.",
+                    "A status report has been sent, this issue will be looked into.",
                     style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
+                      color: colorScheme.error,
                     ),
                   )
                 ],
-              ),
-            );
-          } else if (snapshot.data?.meta.isTimetableUpdating ?? false) {
-            return Center(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 32),
-                  Icon(
-                    Icons.settings_outlined,
-                    color: colorScheme.secondary,
-                    size: 40,
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    "We're working on this timetable,",
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                  Text(
-                    "Check back in soon!",
-                    style: TextStyle(
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ],
-              ),
-            );
-          } else {
-            return Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Flexible(
-                  child: Text(
-                    "Effective from ${snapshot.data!.meta.effectiveDate}",
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.onSurface,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
+              );
+            } else if (!snapshot.hasData) {
+              return Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.start,
                   children: [
-                    InkWell(
-                      onTap: () => showMoreInfo(snapshot.data!, colorScheme),
-                      child: Row(
-                        children: [
-                          Icon(Icons.info_rounded, color: colorScheme.tertiary),
-                          const SizedBox(width: 8),
-                          Text(
-                            'More Info',
-                            style: TextStyle(color: colorScheme.tertiary),
-                          ),
-                        ],
-                      ),
+                    const SizedBox(height: 32),
+                    Icon(
+                      Icons.info,
+                      color: colorScheme.secondary,
+                      size: 40,
                     ),
-                    const Spacer(),
-                    TextButton.icon(
-                      onPressed: () => reportError(),
-                      label: Text(
-                        'Report Error',
-                        style: TextStyle(color: colorScheme.error),
-                      ),
-                      icon: Icon(
-                        Icons.flag_rounded,
-                        color: colorScheme.error,
+                    const SizedBox(height: 16),
+                    Text(
+                      "No section selected.",
+                      style: TextStyle(
+                        color: colorScheme.onSurfaceVariant,
                       ),
                     )
                   ],
                 ),
-                const SizedBox(height: 16),
-                TimeTableForDay(
-                  day: filterController.weekday.key,
-                  data: snapshot.data!,
-                  searchEnabled: widget.isElective,
+              );
+            } else if (snapshot.data?.meta.isTimetableUpdating ?? false) {
+              return Center(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const SizedBox(height: 32),
+                    Icon(
+                      Icons.settings_outlined,
+                      color: colorScheme.secondary,
+                      size: 40,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      "We're working on this timetable,",
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    Text(
+                      "Check back in soon!",
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            );
-          }
-        },
+              );
+            } else {
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Flexible(
+                    child: Text(
+                      "Effective from ${snapshot.data!.meta.effectiveDate}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      InkWell(
+                        onTap: () =>
+                            showMoreInfo(snapshot.data!, colorScheme),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_rounded,
+                                color: colorScheme.tertiary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'More Info',
+                              style: TextStyle(color: colorScheme.tertiary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton.icon(
+                        onPressed: () => reportError(),
+                        label: Text(
+                          'Report Error',
+                          style: TextStyle(color: colorScheme.error),
+                        ),
+                        icon: Icon(
+                          Icons.flag_rounded,
+                          color: colorScheme.error,
+                        ),
+                      )
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  TimeTableForDay(
+                    day: fc.weekday.key,
+                    data: snapshot.data!,
+                    searchEnabled: true,
+                  ),
+                ],
+              );
+            }
+          },
+        );
+      });
+    }
+
+    // Non-elective: ScheduleViewModel owns the subscription.
+    final vm = context.watch<ScheduleViewModel>();
+    final filterController = context.watch<FilterController>();
+
+    if (vm.isLoading && !vm.hasData) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const SizedBox(height: 32),
+          Center(
+              child: CircularProgressIndicator(
+            color: colorScheme.secondary,
+          )),
+        ],
       );
-    });
+    } else if (vm.errorMessage != null && !vm.hasData) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const SizedBox(height: 32),
+          Icon(
+            Icons.error,
+            color: colorScheme.error,
+            size: 40,
+          ),
+          const SizedBox(height: 16),
+          Flexible(child: MarkdownBody(data: "```${vm.errorMessage}```")),
+          const SizedBox(height: 16),
+          Text(
+            "A status report has been sent, this issue will be looked into.",
+            style: TextStyle(
+              color: colorScheme.error,
+            ),
+          )
+        ],
+      );
+    } else if (!vm.hasData) {
+      return Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 32),
+            Icon(
+              Icons.info,
+              color: colorScheme.secondary,
+              size: 40,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "No section selected.",
+              style: TextStyle(
+                color: colorScheme.onSurfaceVariant,
+              ),
+            )
+          ],
+        ),
+      );
+    } else if (vm.timetable!.meta.isTimetableUpdating ?? false) {
+      return Center(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: 32),
+            Icon(
+              Icons.settings_outlined,
+              color: colorScheme.secondary,
+              size: 40,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              "We're working on this timetable,",
+              style: TextStyle(
+                color: colorScheme.onSurface,
+              ),
+            ),
+            Text(
+              "Check back in soon!",
+              style: TextStyle(
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ],
+        ),
+      );
+    } else {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Flexible(
+            child: Text(
+              "Effective from ${vm.timetable!.meta.effectiveDate}",
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: colorScheme.onSurface,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              InkWell(
+                onTap: () => showMoreInfo(vm.timetable!, colorScheme),
+                child: Row(
+                  children: [
+                    Icon(Icons.info_rounded, color: colorScheme.tertiary),
+                    const SizedBox(width: 8),
+                    Text(
+                      'More Info',
+                      style: TextStyle(color: colorScheme.tertiary),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () => reportError(),
+                label: Text(
+                  'Report Error',
+                  style: TextStyle(color: colorScheme.error),
+                ),
+                icon: Icon(
+                  Icons.flag_rounded,
+                  color: colorScheme.error,
+                ),
+              )
+            ],
+          ),
+          const SizedBox(height: 16),
+          TimeTableForDay(
+            day: filterController.weekday.key,
+            data: vm.timetable!,
+            searchEnabled: false,
+          ),
+        ],
+      );
+    }
   }
 
   void onSort(int columnIndex, bool ascending) {

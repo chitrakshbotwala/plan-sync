@@ -13,6 +13,9 @@ import 'package:plan_sync/controllers/auth.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/controllers/notification_controller.dart';
+import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
+import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.dart';
+import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
@@ -81,6 +84,11 @@ class AppProvider extends StatelessWidget {
             return controller;
           },
           lazy: false,
+        ),
+        Provider<ScheduleRepository>(
+          create: (context) => ScheduleRepositoryImpl(
+            gitService: context.read<GitService>(),
+          ),
         ),
       ],
       child: const MainApp(),
@@ -187,7 +195,13 @@ final _router = GoRouter(
             GoRoute(
               path: '/',
               name: 'home_screen',
-              builder: (context, state) => const HomeScreen(),
+              builder: (context, state) => ChangeNotifierProvider<ScheduleViewModel>(
+                create: (ctx) => ScheduleViewModel(
+                  repository: ctx.read<ScheduleRepository>(),
+                  filterController: ctx.read<FilterController>(),
+                ),
+                child: const HomeScreen(),
+              ),
             ),
           ],
         ),

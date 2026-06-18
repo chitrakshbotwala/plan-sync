@@ -83,10 +83,21 @@ class FilterController extends ChangeNotifier {
   late GitService service;
   late AppPreferencesController preferences;
 
+  String? get activeYear => service.selectedYear;
+
   void onInit(BuildContext context) {
     service = Provider.of<GitService>(context, listen: false);
     preferences = Provider.of<AppPreferencesController>(context, listen: false);
     _weekday = Weekday.today();
+    // Propagate GitService changes (e.g. selectedYear) so ScheduleViewModel
+    // only needs to listen to FilterController.
+    service.addListener(notifyListeners);
+  }
+
+  @override
+  void dispose() {
+    service.removeListener(notifyListeners);
+    super.dispose();
   }
 
   /// Returns a short code for selected noraml schedule configuration

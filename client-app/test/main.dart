@@ -10,6 +10,8 @@ import 'package:plan_sync/controllers/notification_controller.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
+import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:provider/provider.dart';
 import 'mock_controllers/analytics_controller_mock.dart';
 import 'mock_controllers/app_preferences_controller_mock.dart';
@@ -19,6 +21,7 @@ import 'mock_controllers/filter_controller_mock.dart';
 import 'mock_controllers/git_service_mock.dart';
 import 'mock_controllers/notification_controller_mock.dart';
 import 'mock_controllers/remote_config_controller_mock.dart';
+import 'mock_controllers/schedule_repository_mock.dart';
 import 'mock_controllers/version_controller_mock.dart';
 
 Future<void> injectMockDependencies() async {
@@ -30,6 +33,7 @@ Future<void> injectMockDependencies() async {
   Get.put<AppPreferencesController>(preferences);
   Get.put<GitService>(MockGitService());
   Get.put<FilterController>(MockFilterController());
+  Get.put<ScheduleRepository>(MockScheduleRepository());
   Get.put<VersionController>(MockVersionController());
   Get.put<AnalyticsController>(MockAnalyticsController());
   Get.put<AppTourController>(MockAppTourController());
@@ -71,12 +75,21 @@ Widget wrapWithProviders({required Widget child}) {
       ChangeNotifierProvider<AppThemeController>.value(
         value: Get.find<AppThemeController>(),
       ),
+      Provider<ScheduleRepository>.value(
+        value: Get.find<ScheduleRepository>(),
+      ),
     ],
     child: Builder(
       builder: (ctx) {
         Get.find<AppTourController>().onInit(ctx);
         Get.find<FilterController>().onInit(ctx);
-        return child;
+        return ChangeNotifierProvider<ScheduleViewModel>(
+          create: (_) => ScheduleViewModel(
+            repository: Get.find<ScheduleRepository>(),
+            filterController: Get.find<FilterController>(),
+          ),
+          child: child,
+        );
       },
     ),
   );
