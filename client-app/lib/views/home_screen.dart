@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/notification_controller.dart';
+import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
 import 'package:plan_sync/widgets/date_widget.dart';
 import 'package:plan_sync/widgets/hud/top_notice_hud.dart';
@@ -16,39 +14,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late AppTourController appTourController;
-
   @override
   void initState() {
     super.initState();
-    appTourController = Provider.of<AppTourController>(context, listen: false);
-
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Future.delayed(const Duration(milliseconds: 500), () {
-        // ignore: use_build_context_synchronously
-        appTourController.startAppTour(context);
-      });
-    });
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if ((Provider.of<AppPreferencesController>(context, listen: false)
-                  .getTutorialStatus() ??
-              false) ==
-          false) {
-        return;
-      }
-
-      final notificationController = Provider.of<NotificationController>(
-        context,
-        listen: false,
-      );
-      notificationController.initialize(context);
+      context.read<HomeViewModel>().onReady(context);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    final schedulePrefsKey =
+        context.read<HomeViewModel>().schedulePreferencesButtonKey;
 
     return Scaffold(
         extendBodyBehindAppBar: true,
@@ -70,9 +48,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
           actions: [
-            SchedulePreferenceButton(
-              key: appTourController.schedulePreferencesButtonKey,
-            ),
+            SchedulePreferenceButton(key: schedulePrefsKey),
             const SizedBox(width: 16),
           ],
         ),

@@ -18,6 +18,7 @@ import 'package:plan_sync/features/electives/repository/electives_repository_imp
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.dart';
+import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
@@ -205,11 +206,22 @@ final _router = GoRouter(
             GoRoute(
               path: '/',
               name: 'home_screen',
-              builder: (context, state) => ChangeNotifierProvider<ScheduleViewModel>(
-                create: (ctx) => ScheduleViewModel(
-                  repository: ctx.read<ScheduleRepository>(),
-                  filterController: ctx.read<FilterController>(),
-                ),
+              builder: (context, state) => MultiProvider(
+                providers: [
+                  ChangeNotifierProvider<ScheduleViewModel>(
+                    create: (ctx) => ScheduleViewModel(
+                      repository: ctx.read<ScheduleRepository>(),
+                      filterController: ctx.read<FilterController>(),
+                    ),
+                  ),
+                  ChangeNotifierProvider<HomeViewModel>(
+                    create: (ctx) => HomeViewModel(
+                      appTour: ctx.read<AppTourController>(),
+                      appPreferences: ctx.read<AppPreferencesController>(),
+                      notifications: ctx.read<NotificationController>(),
+                    ),
+                  ),
+                ],
                 child: const HomeScreen(),
               ),
             ),
