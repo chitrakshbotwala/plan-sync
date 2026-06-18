@@ -12,7 +12,7 @@ import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/auth.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/git_service.dart';
-import 'package:plan_sync/controllers/notification_controller.dart';
+import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository_impl.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
@@ -82,7 +82,7 @@ class AppProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => RemoteConfigController()),
         ChangeNotifierProvider(create: (_) => VersionController()),
         ChangeNotifierProvider(create: (_) => AppThemeController()),
-        ChangeNotifierProvider(create: (_) => NotificationController()),
+        Provider(create: (_) => NotificationService()),
         ChangeNotifierProvider(
           create: (context) {
             final controller = AppReviewController();
@@ -218,7 +218,7 @@ final _router = GoRouter(
                     create: (ctx) => HomeViewModel(
                       appTour: ctx.read<AppTourController>(),
                       appPreferences: ctx.read<AppPreferencesController>(),
-                      notifications: ctx.read<NotificationController>(),
+                      notifications: ctx.read<NotificationService>(),
                     ),
                   ),
                 ],
@@ -288,9 +288,9 @@ final _router = GoRouter(
 
 String? redirectHandler(BuildContext context, GoRouterState state) {
   // Handle notification route from terminated state
-  final notifRoute = NotificationController.initialNotificationRoute;
+  final notifRoute = NotificationService.initialNotificationRoute;
   if (notifRoute != null && notifRoute != state.matchedLocation) {
-    NotificationController.initialNotificationRoute = null; // Clear after use
+    NotificationService.initialNotificationRoute = null; // Clear after use
     return notifRoute;
   }
 
