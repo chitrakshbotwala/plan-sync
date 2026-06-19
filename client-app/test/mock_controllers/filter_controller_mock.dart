@@ -2,31 +2,76 @@ import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/util/enums.dart';
-import 'package:provider/provider.dart';
 
 class MockFilterController extends Mock
     with ChangeNotifier
     implements FilterController {
-  @override
-  late GitService service;
-
-  @override
   late AppPreferencesController preferences;
 
-  @override
-  String? get activeYear => service.selectedYear;
+  // --- Schedule metadata ---
 
   @override
-  void onInit(BuildContext context) {
-    service = Provider.of<GitService>(context, listen: false);
-    preferences = Provider.of<AppPreferencesController>(
-      context,
-      listen: false,
-    );
-    service.addListener(notifyListeners);
+  List<String>? years = const ['2024', '2023', '2022'];
+
+  String? _selectedYear;
+  @override
+  String? get selectedYear => _selectedYear;
+  @override
+  set selectedYear(String? newYear) {
+    if (newYear == null || _selectedYear == newYear) return;
+    _selectedYear = newYear;
+    notifyListeners();
   }
+
+  final List<String> _semesters = const ['SEM1', 'SEM2'];
+  @override
+  List<String>? get semesters => _semesters;
+
+  Map<String, String>? _sections;
+  @override
+  Map<String, String>? get sections => _sections;
+  set sections(Map<String, String>? newSections) {
+    _sections = newSections;
+    notifyListeners();
+  }
+
+  // --- Elective metadata ---
+
+  @override
+  List<String>? electiveYears = const ['2024', '2023', '2022'];
+
+  String? _selectedElectiveYear;
+  @override
+  String? get selectedElectiveYear => _selectedElectiveYear;
+  @override
+  set selectedElectiveYear(String? newYear) {
+    if (newYear == null || _selectedElectiveYear == newYear) return;
+    _selectedElectiveYear = newYear;
+    notifyListeners();
+  }
+
+  List<String>? _electivesSemesters = const ['SEM1', 'SEM2'];
+  @override
+  List<String>? get electivesSemesters => _electivesSemesters;
+  set electivesSemesters(List<String>? value) {
+    _electivesSemesters = value;
+    notifyListeners();
+  }
+
+  Map<String, String>? _electiveSchemes = const {
+    'a': 'Sch. A (BTECH-CSE)',
+    'b': 'Sch. B (BTECH-CSE)',
+  };
+  @override
+  Map<String, String>? get electiveSchemes => _electiveSchemes;
+  @override
+  set electiveSchemes(Map<String, String>? newSchemes) {
+    _electiveSchemes = newSchemes;
+    notifyListeners();
+  }
+
+  // --- Selection state ---
 
   String? _activeSectionCode;
   @override
@@ -41,11 +86,6 @@ class MockFilterController extends Mock
   String? _activeElectiveScheme;
   @override
   set activeElectiveScheme(String? newValue) {
-    if (newValue == null) {
-      _activeElectiveScheme = null;
-      notifyListeners();
-      return;
-    }
     _activeElectiveScheme = newValue;
     notifyListeners();
   }
@@ -54,7 +94,6 @@ class MockFilterController extends Mock
   String? get activeElectiveScheme => _activeElectiveScheme;
 
   String? _activeElectiveSchemeCode;
-
   @override
   String? get activeElectiveSchemeCode => _activeElectiveSchemeCode;
   @override
@@ -64,7 +103,6 @@ class MockFilterController extends Mock
   }
 
   String? _activeElectiveSemester;
-
   @override
   set activeElectiveSemester(String? newValue) {
     _activeElectiveSemester = newValue;
@@ -96,9 +134,7 @@ class MockFilterController extends Mock
   String? _activeSemester;
   @override
   set activeSemester(String? newValue) {
-    if (activeSemester == newValue) {
-      return;
-    }
+    if (_activeSemester == newValue) return;
     _activeSemester = newValue;
     notifyListeners();
   }
@@ -107,98 +143,80 @@ class MockFilterController extends Mock
   String? get activeSemester => _activeSemester;
 
   @override
+  String? get activeYear => _selectedYear;
+
+  @override
+  String? get activeElectiveYear => _selectedElectiveYear;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
   String getShortCode() {
-    String? section = activeSectionCode;
-    String? semester = activeSemester;
+    final section = _activeSectionCode;
+    final semester = _activeSemester;
+    if (section == null && semester == null) return 'Select Sections';
+    if (section == null) return semester!;
+    if (semester == null) return section;
+    return '$section | $semester'.toUpperCase();
+  }
 
-    if (section == null && semester == null) {
-      return 'Select Sections';
-    } else if (section == null && semester != null) {
-      return semester;
-    } else if (semester == null && section != null) {
-      return section;
-    }
-
+  @override
+  String getElectiveShortCode() {
+    final section = _activeElectiveSchemeCode;
+    final semester = _activeElectiveSemester;
+    if (section == null && semester == null) return 'Select Elective';
+    if (section == null) return semester!;
+    if (semester == null) return section;
     return '$section | $semester'.toUpperCase();
   }
 
   @override
   Future<void> storePrimarySection(BuildContext context) async {
-    if (activeSectionCode == null) {
-      return;
-    }
-    final res =
-        await preferences.savePrimarySectionPreference(activeSectionCode!);
-    if (res == false) {
-      return Future.error('Couldnt save');
-    }
+    if (_activeSectionCode == null) return;
     notifyListeners();
   }
 
   @override
   Future<void> storePrimarySemester(BuildContext context) async {
-    if (activeSemester == null) {
-      return;
-    }
-    final res =
-        await preferences.savePrimarySemesterPreference(activeSemester!);
-    if (res == false) {
-      return Future.error('Couldnt save');
-    }
+    if (_activeSemester == null) return;
     notifyListeners();
   }
 
   @override
   Future<void> storePrimaryYear(BuildContext context) async {
-    if (service.selectedYear == null) {
-      return;
-    }
-    final res = await preferences.savePrimaryYearPreference(
-      service.selectedYear!.toString(),
-    );
-    if (res == false) {
-      return Future.error('Couldnt save');
-    }
+    if (_selectedYear == null) return;
     notifyListeners();
   }
 
   @override
   Future<void> storePrimaryElectiveScheme(BuildContext context) async {
-    if (activeElectiveSchemeCode == null) {
-      return Future.error('error');
-    }
-    final res = await preferences
-        .savePrimaryElectiveSchemePreference(activeElectiveSchemeCode!);
-    if (res == false) {
-      return;
-    }
+    if (_activeElectiveSchemeCode == null) return Future.error('error');
     notifyListeners();
   }
 
   @override
   Future<void> storePrimaryElectiveSemester(BuildContext context) async {
-    if (activeElectiveSemester == null) {
-      return;
-    }
-    final res = await preferences
-        .savePrimaryElectiveSemesterPreference(activeElectiveSemester!);
-    if (res == false) {
-      return;
-    }
+    if (_activeElectiveSemester == null) return Future.error('error');
     notifyListeners();
   }
 
   @override
   Future<void> storePrimaryElectiveYear(BuildContext context) async {
-    if (service.selectedElectiveYear == null) {
-      return;
-    }
-    final res = await preferences.savePrimaryElectiveYearPreference(
-      service.selectedElectiveYear!.toString(),
-    );
-    if (res == false) {
-      return;
-    }
+    if (_selectedElectiveYear == null) return Future.error('error');
     notifyListeners();
   }
+
+  @override
+  String? get primarySection => null;
+  @override
+  String? get primarySemester => null;
+  @override
+  String? get primaryYear => null;
+  @override
+  String? get primaryElectiveScheme => null;
+  @override
+  String? get primaryElectiveSemester => null;
+  @override
+  String? get primaryElectiveYear => null;
 }

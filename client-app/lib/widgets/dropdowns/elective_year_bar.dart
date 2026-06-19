@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:plan_sync/controllers/git_service.dart';
+import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:provider/provider.dart';
@@ -39,17 +39,15 @@ class _ElectiveYearBarState extends State<ElectiveYearBar> {
         width: 128,
         height: 48,
         child: DropdownButtonHideUnderline(
-          child: Consumer<GitService>(
-            builder: (ctx, serviceController, child) {
-              // Reset snackbar flag when data arrives
-              if (serviceController.electiveYears != null &&
-                  serviceController.electiveYears!.isNotEmpty) {
+          child: Consumer<FilterController>(
+            builder: (ctx, filterController, child) {
+              if (filterController.electiveYears != null &&
+                  filterController.electiveYears!.isNotEmpty) {
                 _hasShownSnackbar = false;
               }
 
-              // Check if data is missing and show snackbar if tapped
-              if (serviceController.electiveYears == null ||
-                  serviceController.electiveYears!.isEmpty) {
+              if (filterController.electiveYears == null ||
+                  filterController.electiveYears!.isEmpty) {
                 return GestureDetector(
                   onTap: _showNetworkError,
                   child: Container(
@@ -58,9 +56,9 @@ class _ElectiveYearBarState extends State<ElectiveYearBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                        color: Colors.black,
-                        size: 24,
-                      ),
+                          color: Colors.black,
+                          size: 24,
+                        ),
                         Icon(
                           Icons.arrow_drop_down,
                           color: colorScheme.surface,
@@ -80,32 +78,20 @@ class _ElectiveYearBarState extends State<ElectiveYearBar> {
                   Icons.arrow_drop_down,
                   color: colorScheme.surface,
                 ),
-                value: serviceController.selectedElectiveYear?.toString(),
+                value: filterController.selectedElectiveYear,
                 dropdownColor: colorScheme.onSurface,
                 hint: Text(
-                  "Year",
-                  style: TextStyle(
-                    color: colorScheme.surface,
-                    fontSize: 16,
-                  ),
+                  'Year',
+                  style: TextStyle(color: colorScheme.surface, fontSize: 16),
                 ),
                 menuMaxHeight: 376,
-                items: serviceController.electiveYears
-                    ?.map((year) => buildMenuItem(
-                          year,
-                          colorScheme.surface,
-                        ))
+                items: filterController.electiveYears
+                    ?.map((year) => _buildMenuItem(year, colorScheme.surface))
                     .toList(),
                 onChanged: (String? newSelection) {
-                  if (newSelection == null) {
-                    return;
-                  }
+                  if (newSelection == null) return;
                   Logger.i(newSelection);
-                  serviceController.selectedElectiveYear = newSelection;
-                  Provider.of<GitService>(
-                    context,
-                    listen: false,
-                  ).getElectiveSemesters(context);
+                  filterController.selectedElectiveYear = newSelection;
                 },
               );
             },
@@ -116,12 +102,9 @@ class _ElectiveYearBarState extends State<ElectiveYearBar> {
   }
 }
 
-DropdownMenuItem<String> buildMenuItem(String year, Color color) {
+DropdownMenuItem<String> _buildMenuItem(String year, Color color) {
   return DropdownMenuItem(
     value: year,
-    child: Text(
-      year,
-      style: TextStyle(color: color),
-    ),
+    child: Text(year, style: TextStyle(color: color)),
   );
 }

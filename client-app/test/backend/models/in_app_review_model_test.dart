@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/backend/models/in_app_review_model.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/core/services/api_client.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -43,7 +44,7 @@ void main() {
       SharedPreferences.setMockInitialValues({});
       preferences = AppPreferencesController();
       await preferences.onInit();
-      version = VersionController();
+      version = VersionController(apiClient: ApiClient());
       version.clientVersion = '4.1.3';
     });
 

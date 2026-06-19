@@ -3,17 +3,15 @@ import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
-import 'package:plan_sync/controllers/git_service.dart';
+import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/util/logger.dart';
 
-// Transitional: borrows Dio/cache from GitService until ApiClient + CacheService
-// are extracted in a later pass.
 class ScheduleRepositoryImpl implements ScheduleRepository {
-  ScheduleRepositoryImpl({required GitService gitService})
-      : _gitService = gitService;
+  ScheduleRepositoryImpl({required ApiClient apiClient})
+      : _apiClient = apiClient;
 
-  final GitService _gitService;
+  final ApiClient _apiClient;
 
   @override
   Stream<Timetable?> getSchedule({
@@ -21,18 +19,15 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     required String semester,
     required String section,
   }) async* {
-    final Dio dio = _gitService.dio;
-    final CacheOptions? cacheOptions = _gitService.cacheOptions;
-    final String branch = _gitService.branch;
     final url =
-        'https://gitlab.com/delwinn/plan-sync/-/raw/$branch/res/$year/$semester/$section.json';
+        'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/res/$year/$semester/$section.json';
 
     bool emittedFromCache = false;
 
     try {
       final options = RequestOptions(path: url);
       final key = CacheOptions.defaultCacheKeyBuilder(options);
-      final cache = await cacheOptions?.store?.get(key);
+      final cache = await _apiClient.cacheOptions?.store?.get(key);
 
       if (cache != null) {
         emittedFromCache = true;
@@ -42,7 +37,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
         );
       }
 
-      final response = await dio.get(url);
+      final response = await _apiClient.dio.get(url);
 
       if ((response.statusCode ?? 0) >= 400) {
         if (!emittedFromCache) {

@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/widgets/bottom-sheets/schedule_preference.dart';
 import 'package:plan_sync/widgets/dropdowns/sections_bar.dart';
@@ -15,7 +14,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../mock_controllers/app_preferences_controller_mock.dart';
 import '../../mock_controllers/filter_controller_mock.dart';
-import '../../mock_controllers/git_service_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -77,7 +75,8 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet opens yearbar',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
+    final filterController =
+        Get.find<FilterController>() as MockFilterController;
 
     await pumpBaseWidget(tester);
 
@@ -92,19 +91,18 @@ void main() {
     await tester.tap(find.text('2024'));
     await tester.pumpAndSettle();
 
-    expect(gitController.selectedYear, '2024');
+    expect(filterController.selectedYear, '2024');
   });
 
   testWidgets('SchedulePreferenceBottomSheet opens SemestersBar',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
 
     // Pre-seed sections so the SectionsBar does not flip to its
     // loading state (which spins an infinite animation) once a
     // semester is selected — pumpAndSettle would otherwise time out.
-    gitController.sections = {
+    filterController.sections = {
       "b13": "B13 CSE",
     };
 
@@ -124,11 +122,10 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet opens SectionBar',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
 
-    gitController.sections = {
+    filterController.sections = {
       "b13": "B13 CSE",
       "b16": "B16 CSE",
       "b18": "B18 CSE",
@@ -156,18 +153,17 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet saves config to SharedPreferences',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final perfs =
         Get.find<AppPreferencesController>() as MockAppPreferencesController;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
 
-    gitController.sections = {
+    filterController.sections = {
       "b13": "B13 CSE",
       "b16": "B16 CSE",
       "b18": "B18 CSE",
     };
-    gitController.selectedYear = '2023';
+    filterController.selectedYear = '2023';
     filterController.activeSection = 'B18 CSE';
     filterController.activeSectionCode = 'b18';
     filterController.activeSemester = 'SEM2';
@@ -186,7 +182,7 @@ void main() {
     expect(filterController.activeSection, 'B18 CSE');
     expect(filterController.activeSectionCode, 'b18');
     expect(filterController.activeSemester, 'SEM2');
-    expect(gitController.selectedYear, '2023');
+    expect(filterController.selectedYear, '2023');
 
     // verify existing perfs
     expect(perfs.getPrimarySectionPreference(), isNull);
@@ -206,11 +202,9 @@ void main() {
     expect(perfs.getPrimaryYearPreference(), '2023');
   });
 
-  //
   testWidgets(
       'SchedulePreferenceBottomSheet does not save config to SharedPreferences',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final perfs =
         Get.find<AppPreferencesController>() as MockAppPreferencesController;
     final filterController =
@@ -219,12 +213,12 @@ void main() {
     // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();
 
-    gitController.sections = {
+    filterController.sections = {
       "b13": "B13 CSE",
       "b16": "B16 CSE",
       "b18": "B18 CSE",
     };
-    gitController.selectedYear = '2023';
+    filterController.selectedYear = '2023';
     filterController.activeSection = 'B18 CSE';
     filterController.activeSectionCode = 'b18';
     filterController.activeSemester = 'SEM2';
@@ -242,7 +236,7 @@ void main() {
     expect(filterController.activeSection, 'B18 CSE');
     expect(filterController.activeSectionCode, 'b18');
     expect(filterController.activeSemester, 'SEM2');
-    expect(gitController.selectedYear, '2023');
+    expect(filterController.selectedYear, '2023');
 
     // verify existing perfs
     expect(perfs.getPrimarySectionPreference(), isNull);

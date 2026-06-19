@@ -5,7 +5,6 @@ import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
 
 import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/util/extensions.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:plan_sync/widgets/no_schedule_widget.dart';
@@ -46,17 +45,12 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
   List<ScheduleEntry> filteredSchedule = [];
 
   late FilterController filterProvider;
-  late GitService gitService;
   late AppPreferencesController appPreferencesController;
 
   @override
   void initState() {
     super.initState();
     appPreferencesController = Provider.of<AppPreferencesController>(
-      context,
-      listen: false,
-    );
-    gitService = Provider.of<GitService>(
       context,
       listen: false,
     );
@@ -84,7 +78,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
   void _sortElectives() {
     if (widget.data.meta.type != 'electives') return;
 
-    final academicYear = gitService.selectedElectiveYear ?? '';
+    final academicYear = filterProvider.selectedElectiveYear ?? '';
     final semester = filterProvider.activeElectiveSemester ?? '';
     final scheme = filterProvider.activeElectiveScheme ?? '';
 
@@ -259,7 +253,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (context, index) {
               final electiveId = AppPreferencesController.electiveId(
-                academicYear: gitService.selectedElectiveYear ?? '',
+                academicYear: filterProvider.selectedElectiveYear ?? '',
                 semester: filterProvider.activeElectiveSemester ?? '',
                 scheme: filterProvider.activeElectiveScheme ?? '',
                 subjectName: filteredSchedule[index].subject ?? '',
@@ -269,7 +263,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
                 starred: appPreferencesController.isElectiveStarred(electiveId),
                 showStar: widget.data.meta.type == 'electives',
                 entry: filteredSchedule[index],
-                academicYear: gitService.selectedElectiveYear ?? '',
+                academicYear: filterProvider.selectedElectiveYear ?? '',
                 semester: filterProvider.activeElectiveSemester ?? '',
                 scheme: filterProvider.activeElectiveScheme ?? '',
                 onStarToggle: (newValue) {

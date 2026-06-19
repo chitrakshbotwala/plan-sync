@@ -1,13 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
+import 'package:plan_sync/backend/models/timetable_meta.dart';
+import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
 import 'package:plan_sync/widgets/time_table_for_day.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
-import '../mock_controllers/git_service_mock.dart';
+
+Timetable _buildMockTimetable() {
+  return Timetable(
+    meta: TimetableMeta(section: 'B13', type: 'schedule'),
+    data: {
+      'monday': [
+        ScheduleEntry(subject: 'Sc LS.', room: 'Room 101', time: '9:00 AM'),
+        ScheduleEntry(subject: 'Math', room: 'Room 201', time: '10:00 AM'),
+        ScheduleEntry(subject: 'Physics', room: 'Room 301', time: '11:00 AM'),
+      ],
+      'tuesday': [],
+      'wednesday': [],
+      'thursday': [],
+      'friday': [],
+    },
+  );
+}
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -34,14 +49,10 @@ void main() {
   testWidgets('TimeTableForDay Horizontal schedule is rendered', (
     WidgetTester tester,
   ) async {
-    final controller = Get.find<GitService>() as MockGitService;
-    controller.stage = MockGitServiceStages.success;
-    final filter = Get.find<FilterController>();
-
-    final data = controller.getTimeTable(filter);
+    final data = _buildMockTimetable();
     const day = 'monday';
 
-    await pumpBaseWidget(tester, (await data.first)!, day);
+    await pumpBaseWidget(tester, data, day);
     await tester.pump(const Duration(seconds: 1));
 
     // drag until last element is visible

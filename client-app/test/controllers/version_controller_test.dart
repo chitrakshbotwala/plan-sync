@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/core/services/api_client.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -9,7 +10,7 @@ void main() {
   late VersionController controller;
 
   setUp(() {
-    controller = VersionController();
+    controller = VersionController(apiClient: ApiClient());
   });
 
   group('clientVersion setter', () {

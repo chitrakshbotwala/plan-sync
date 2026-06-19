@@ -3,7 +3,6 @@ import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:plan_sync/widgets/time_table.dart';
@@ -11,7 +10,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
 import '../mock_controllers/filter_controller_mock.dart';
-import '../mock_controllers/git_service_mock.dart';
 import '../mock_controllers/schedule_repository_mock.dart';
 
 void main() {
@@ -31,14 +29,13 @@ void main() {
 
   testWidgets('TimeTableWidget renders schedule if available',
       (WidgetTester tester) async {
-    final gitService = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
     final scheduleRepo =
         Get.find<ScheduleRepository>() as MockScheduleRepository;
 
     scheduleRepo.stage = MockScheduleRepositoryStage.success;
-    gitService.selectedYear = '2024';
+    filterController.selectedYear = '2024';
     filterController.activeSemester = 'SEM1';
     filterController.activeSectionCode = 'A';
 
@@ -72,14 +69,13 @@ void main() {
 
   testWidgets('TimeTableWidget renders info page if schedule is updating',
       (WidgetTester tester) async {
-    final gitService = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
     final scheduleRepo =
         Get.find<ScheduleRepository>() as MockScheduleRepository;
 
     scheduleRepo.stage = MockScheduleRepositoryStage.scheduleUpdating;
-    gitService.selectedYear = '2024';
+    filterController.selectedYear = '2024';
     filterController.activeSemester = 'SEM1';
     filterController.activeSectionCode = 'A';
 
@@ -101,14 +97,13 @@ void main() {
   /// Skipping as we've added offline support using caching
   testWidgets('TimeTableWidget renders error if no internet', skip: true,
       (WidgetTester tester) async {
-    final gitService = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
     final scheduleRepo =
         Get.find<ScheduleRepository>() as MockScheduleRepository;
 
     scheduleRepo.stage = MockScheduleRepositoryStage.noInternet;
-    gitService.selectedYear = '2024';
+    filterController.selectedYear = '2024';
     filterController.activeSemester = 'SEM1';
     filterController.activeSectionCode = 'A';
 

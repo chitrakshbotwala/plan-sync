@@ -6,8 +6,8 @@ import 'package:flutter/services.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/util/app_version.dart';
 import 'package:plan_sync/util/external_links.dart';
 import 'package:plan_sync/util/snackbar.dart';
@@ -16,6 +16,10 @@ import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
 
 class VersionController extends ChangeNotifier {
+  VersionController({required ApiClient apiClient}) : _apiClient = apiClient;
+
+  final ApiClient _apiClient;
+
   late PackageInfo packageInfo;
 
   // Static variable to store forced redirect path
@@ -181,26 +185,32 @@ class VersionController extends ChangeNotifier {
     return difference > 5;
   }
 
-  //TODO: verifyMinimumVersion still uses git, migrate
-  // to remoteConfig
-
   /// Verifies if the current app version is less than the
   /// version code mentioned in the remote version file.
-  /// This is used to ensure that a minimum app version is maintained
-  /// to ensure incompatible apps do not break with live version of
-  /// remote data.
   Future<void> verifyMinimumVersion({required BuildContext context}) async {
-    // skip if web
-    if (kIsWeb) {
+    if (kIsWeb) return;
+
+    final perfs = Provider.of<AppPreferencesController>(context, listen: false);
+
+    String? minVersion;
+    try {
+      final url =
+          'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/min.version';
+      final response = await _apiClient.dio.get(url);
+      if ((response.statusCode ?? 0) >= 400 || response.data == '') {
+        Logger.w('min.version from remote returned empty');
+        perfs.saveIsAppBelowMinVersion(false);
+        return;
+      }
+      minVersion = response.data as String;
+    } catch (e) {
+      Logger.w('min.version fetch failed: $e');
+      perfs.saveIsAppBelowMinVersion(false);
       return;
     }
 
-    final git = Provider.of<GitService>(context, listen: false);
-    final perfs = Provider.of<AppPreferencesController>(context, listen: false);
-
-    final minVersion = await git.fetchMininumVersion();
-    if (minVersion == null || clientVersion == null) {
-      Logger.w('min.version from remote retuned null!');
+    if (clientVersion == null) {
+      Logger.w('clientVersion is null, skipping min version check');
       perfs.saveIsAppBelowMinVersion(false);
       return;
     }

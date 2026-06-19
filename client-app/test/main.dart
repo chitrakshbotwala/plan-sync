@@ -5,11 +5,10 @@ import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/auth.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
-import 'package:plan_sync/controllers/notification_controller.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +17,6 @@ import 'mock_controllers/app_preferences_controller_mock.dart';
 import 'mock_controllers/app_tour_controller_mock.dart';
 import 'mock_controllers/auth_mock.dart';
 import 'mock_controllers/filter_controller_mock.dart';
-import 'mock_controllers/git_service_mock.dart';
 import 'mock_controllers/notification_controller_mock.dart';
 import 'mock_controllers/remote_config_controller_mock.dart';
 import 'mock_controllers/schedule_repository_mock.dart';
@@ -31,14 +29,13 @@ Future<void> injectMockDependencies() async {
 
   Get.put<Auth>(MockAuth());
   Get.put<AppPreferencesController>(preferences);
-  Get.put<GitService>(MockGitService());
   Get.put<FilterController>(MockFilterController());
   Get.put<ScheduleRepository>(MockScheduleRepository());
   Get.put<VersionController>(MockVersionController());
   Get.put<AnalyticsController>(MockAnalyticsController());
   Get.put<AppTourController>(MockAppTourController());
   Get.put<RemoteConfigController>(MockRemoteConfigController());
-  Get.put<NotificationController>(MockNotificationController());
+  Get.put<NotificationService>(MockNotificationService());
   Get.put<AppThemeController>(AppThemeController());
 }
 
@@ -53,7 +50,6 @@ Widget wrapWithProviders({required Widget child}) {
       ChangeNotifierProvider<AppPreferencesController>.value(
         value: Get.find<AppPreferencesController>(),
       ),
-      ChangeNotifierProvider<GitService>.value(value: Get.find<GitService>()),
       ChangeNotifierProvider<FilterController>.value(
         value: Get.find<FilterController>(),
       ),
@@ -69,8 +65,8 @@ Widget wrapWithProviders({required Widget child}) {
       ChangeNotifierProvider<RemoteConfigController>.value(
         value: Get.find<RemoteConfigController>(),
       ),
-      ChangeNotifierProvider<NotificationController>.value(
-        value: Get.find<NotificationController>(),
+      Provider<NotificationService>.value(
+        value: Get.find<NotificationService>(),
       ),
       ChangeNotifierProvider<AppThemeController>.value(
         value: Get.find<AppThemeController>(),
@@ -82,7 +78,6 @@ Widget wrapWithProviders({required Widget child}) {
     child: Builder(
       builder: (ctx) {
         Get.find<AppTourController>().onInit(ctx);
-        Get.find<FilterController>().onInit(ctx);
         return ChangeNotifierProvider<ScheduleViewModel>(
           create: (_) => ScheduleViewModel(
             repository: Get.find<ScheduleRepository>(),

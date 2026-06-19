@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/notification_controller.dart';
+import 'package:plan_sync/core/services/notification_service.dart';
 
-class MockNotificationController extends Mock
-    with ChangeNotifier
-    implements NotificationController {
+class MockNotificationService extends Mock implements NotificationService {
   @override
   Future<void> initialize(BuildContext context) async {}
 }

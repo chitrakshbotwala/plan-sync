@@ -11,13 +11,15 @@ import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/auth.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
+import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository_impl.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.dart';
+import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
+import 'package:plan_sync/features/schedule/repository/sections_repository_impl.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
@@ -73,14 +75,31 @@ class AppProvider extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => GitService()),
-        ChangeNotifierProvider(create: (_) => FilterController()),
-        ChangeNotifierProvider(create: (_) => AnalyticsController()),
+        // Core infra — registered first; nothing depends on them in constructors
+        Provider(create: (_) => ApiClient()),
         ChangeNotifierProvider(create: (_) => AppPreferencesController()),
+        // SectionsRepository needs ApiClient
+        Provider<SectionsRepository>(
+          create: (context) => SectionsRepositoryImpl(
+            apiClient: context.read<ApiClient>(),
+          ),
+        ),
+        // FilterController needs SectionsRepository + AppPreferencesController
+        ChangeNotifierProvider(
+          create: (context) => FilterController(
+            sectionsRepository: context.read<SectionsRepository>(),
+            preferences: context.read<AppPreferencesController>(),
+          ),
+        ),
+        ChangeNotifierProvider(create: (_) => AnalyticsController()),
         ChangeNotifierProvider(create: (_) => AppTourController()),
         ChangeNotifierProvider(create: (_) => Auth()),
         ChangeNotifierProvider(create: (_) => RemoteConfigController()),
-        ChangeNotifierProvider(create: (_) => VersionController()),
+        ChangeNotifierProvider(
+          create: (context) => VersionController(
+            apiClient: context.read<ApiClient>(),
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => AppThemeController()),
         Provider(create: (_) => NotificationService()),
         ChangeNotifierProvider(
@@ -93,12 +112,12 @@ class AppProvider extends StatelessWidget {
         ),
         Provider<ScheduleRepository>(
           create: (context) => ScheduleRepositoryImpl(
-            gitService: context.read<GitService>(),
+            apiClient: context.read<ApiClient>(),
           ),
         ),
         Provider<ElectivesRepository>(
           create: (context) => ElectivesRepositoryImpl(
-            gitService: context.read<GitService>(),
+            apiClient: context.read<ApiClient>(),
           ),
         ),
       ],

@@ -2,12 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/widgets/dropdowns/electives_sem_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../mock_controllers/filter_controller_mock.dart';
-import '../../mock_controllers/git_service_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -31,10 +29,9 @@ void main() {
     (WidgetTester tester) async {
       final filterController =
           Get.find<FilterController>() as MockFilterController;
-      final gitController = Get.find<GitService>() as MockGitService;
 
       filterController.activeElectiveSemester = null;
-      gitController.electivesSemesters = null;
+      filterController.electivesSemesters = null;
       // initial state
       await pumpBaseWidget(tester);
       await tester.pumpAndSettle();
@@ -45,9 +42,10 @@ void main() {
   testWidgets(
     'ElectiveSemesterBar loads when data is availble but not selected',
     (WidgetTester tester) async {
-      final gitController = Get.find<GitService>() as MockGitService;
+      final filterController =
+          Get.find<FilterController>() as MockFilterController;
 
-      gitController.electivesSemesters = ["SEM1", "SEM2"];
+      filterController.electivesSemesters = ["SEM1", "SEM2"];
       // initial state
       await pumpBaseWidget(tester);
       await tester.pumpAndSettle();
@@ -58,10 +56,10 @@ void main() {
   testWidgets(
     'ElectiveSemesterBar updates data when clicked on item',
     (WidgetTester tester) async {
-      final gitController = Get.find<GitService>() as MockGitService;
       final filterController =
           Get.find<FilterController>() as MockFilterController;
-      gitController.electivesSemesters = ["SEM1", "SEM2"];
+
+      filterController.electivesSemesters = ["SEM1", "SEM2"];
 
       // initial state
       await pumpBaseWidget(tester);

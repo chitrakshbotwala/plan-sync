@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:provider/provider.dart';
 
@@ -13,7 +12,6 @@ class ElectiveSchemeBar extends StatefulWidget {
 }
 
 class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
-  String? selectedValue;
   bool _hasShownSnackbar = false;
 
   void _showNetworkError() {
@@ -41,21 +39,17 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
         width: 128,
         height: 48,
         child: DropdownButtonHideUnderline(
-          child: Consumer<GitService>(
-            builder: (ctx, serviceController, child) =>
-                Consumer<FilterController>(
-                    builder: (ctx, filterController, child) {
-              // Reset snackbar flag when data arrives
+          child: Consumer<FilterController>(
+            builder: (ctx, filterController, child) {
               if (filterController.activeElectiveSemester != null &&
-                  serviceController.electiveSchemes != null &&
-                  serviceController.electiveSchemes!.isNotEmpty) {
+                  filterController.electiveSchemes != null &&
+                  filterController.electiveSchemes!.isNotEmpty) {
                 _hasShownSnackbar = false;
               }
 
-              // Check if data is missing and show snackbar if tapped
               if (filterController.activeElectiveSemester != null &&
-                  (serviceController.electiveSchemes == null ||
-                      serviceController.electiveSchemes!.isEmpty)) {
+                  (filterController.electiveSchemes == null ||
+                      filterController.electiveSchemes!.isEmpty)) {
                 return GestureDetector(
                   onTap: _showNetworkError,
                   child: Container(
@@ -64,9 +58,9 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                        color: Colors.black,
-                        size: 24,
-                      ),
+                          color: Colors.black,
+                          size: 24,
+                        ),
                         Icon(
                           Icons.arrow_drop_down,
                           color: colorScheme.surface,
@@ -89,37 +83,34 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
                 value: filterController.activeElectiveScheme,
                 dropdownColor: colorScheme.onSurface,
                 disabledHint: Text(
-                  "Select Semester First",
-                  style: TextStyle(
-                    color: colorScheme.surface,
-                  ),
+                  'Select Semester First',
+                  style: TextStyle(color: colorScheme.surface),
                 ),
                 hint: Text(
-                  "Scheme",
+                  'Scheme',
                   style: TextStyle(color: colorScheme.surface, fontSize: 16),
                 ),
                 menuMaxHeight: 256,
-                items: serviceController.electiveSchemes?.keys
+                items: filterController.electiveSchemes?.keys
                     .toList()
-                    .map((e) => buildMenuItem(
-                          serviceController.electiveSchemes?[e],
+                    .map((e) => _buildMenuItem(
+                          filterController.electiveSchemes?[e] ?? e,
                           colorScheme.surface,
                         ))
                     .toList(),
                 onChanged: filterController.activeElectiveSemester == null
                     ? null
                     : (String? newSelection) {
-                        serviceController.electiveSchemes
+                        filterController.electiveSchemes
                             ?.forEach((key, value) {
                           if (value == newSelection) {
                             filterController.activeElectiveScheme = value;
                             filterController.activeElectiveSchemeCode = key;
-                            serviceController.getElectives();
                           }
                         });
                       },
               );
-            }),
+            },
           ),
         ),
       ),
@@ -127,12 +118,9 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
   }
 }
 
-DropdownMenuItem<String> buildMenuItem(String scheme, Color color) {
+DropdownMenuItem<String> _buildMenuItem(String scheme, Color color) {
   return DropdownMenuItem(
     value: scheme,
-    child: Text(
-      scheme,
-      style: TextStyle(color: color),
-    ),
+    child: Text(scheme, style: TextStyle(color: color)),
   );
 }

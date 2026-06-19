@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:provider/provider.dart';
@@ -41,20 +40,17 @@ class _SemesterBarState extends State<SemesterBar> {
         width: 128,
         height: 48,
         child: DropdownButtonHideUnderline(
-          child: Consumer<GitService>(builder: (ctx, serviceController, child) {
-            return Consumer<FilterController>(
-                builder: (ctx, filterController, child) {
-              // Reset snackbar flag when data arrives
-              if (serviceController.selectedYear != null &&
-                  serviceController.semesters != null &&
-                  serviceController.semesters!.isNotEmpty) {
+          child: Consumer<FilterController>(
+            builder: (ctx, filterController, child) {
+              if (filterController.selectedYear != null &&
+                  filterController.semesters != null &&
+                  filterController.semesters!.isNotEmpty) {
                 _hasShownSnackbar = false;
               }
 
-              // Check if data is missing and show snackbar if tapped
-              if (serviceController.selectedYear != null &&
-                  (serviceController.semesters == null ||
-                      serviceController.semesters!.isEmpty)) {
+              if (filterController.selectedYear != null &&
+                  (filterController.semesters == null ||
+                      filterController.semesters!.isEmpty)) {
                 return GestureDetector(
                   onTap: _showNetworkError,
                   child: Container(
@@ -63,9 +59,9 @@ class _SemesterBarState extends State<SemesterBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                        color: Colors.black,
-                        size: 24,
-                      ),
+                          color: Colors.black,
+                          size: 24,
+                        ),
                         Icon(
                           Icons.arrow_drop_down,
                           color: colorScheme.surface,
@@ -89,34 +85,27 @@ class _SemesterBarState extends State<SemesterBar> {
                 dropdownColor: colorScheme.onSurface,
                 menuMaxHeight: 256,
                 disabledHint: Text(
-                  "Select Year First",
-                  style: TextStyle(
-                    color: colorScheme.surface,
-                    fontSize: 16,
-                  ),
+                  'Select Year First',
+                  style: TextStyle(color: colorScheme.surface, fontSize: 16),
                 ),
-                hint: serviceController.semesters == null
+                hint: filterController.semesters == null
                     ? LoadingAnimationWidget.progressiveDots(
-                        color: colorScheme.onPrimary,
-                        size: 18,
-                      )
+                        color: colorScheme.onPrimary, size: 18)
                     : Text(
-                        "Semester",
+                        'Semester',
                         style: TextStyle(
-                          color: colorScheme.surface,
-                          fontSize: 16,
-                        ),
+                            color: colorScheme.surface, fontSize: 16),
                       ),
-                items: serviceController.semesters
+                items: filterController.semesters
                     ?.map((e) => _buildMenuItem(e, colorScheme.surface))
                     .toList(),
                 onChanged: (String? newSelection) {
-                  Logger.i("new semester: $newSelection");
+                  Logger.i('new semester: $newSelection');
                   filterController.activeSemester = newSelection;
                 },
               );
-            });
-          }),
+            },
+          ),
         ),
       ),
     );
@@ -126,9 +115,6 @@ class _SemesterBarState extends State<SemesterBar> {
 DropdownMenuItem<String> _buildMenuItem(String semester, Color color) {
   return DropdownMenuItem(
     value: semester,
-    child: Text(
-      semester,
-      style: TextStyle(color: color),
-    ),
+    child: Text(semester, style: TextStyle(color: color)),
   );
 }

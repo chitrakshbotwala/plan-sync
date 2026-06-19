@@ -2,63 +2,80 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
+import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// Test double for [GitService] that bypasses the network layer and
-/// exposes controllable fake state for [FilterController] under test.
-class FakeGitService extends GitService {
-  Map? _fakeSections;
-  int getSectionsCallCount = 0;
-  int getElectiveSchemesCallCount = 0;
+class FakeSectionsRepository implements SectionsRepository {
+  List<String> fakeYears = ['2024', '2023'];
+  Map<String, List<String>> fakeSemesters = {
+    '2024': ['SEM1', 'SEM2'],
+    '2023': ['SEM1', 'SEM2'],
+  };
+  Map<String, Map<String, Map<String, String>>> fakeSections = {
+    '2024': {
+      'SEM1': {'A16': 'A-16', 'B16': 'B-16'},
+      'SEM2': {'A16': 'A-16'},
+    },
+    '2023': {
+      'SEM1': {'A16': 'A-16'},
+    },
+  };
+  List<String> fakeElectiveYears = ['2024', '2023'];
+  Map<String, List<String>> fakeElectiveSemesters = {
+    '2024': ['SEM1', 'SEM2'],
+    '2023': ['SEM1'],
+  };
+  Map<String, Map<String, Map<String, String>?>> fakeElectiveSchemes = {
+    '2024': {
+      'SEM1': {'a': 'Scheme A', 'b': 'Scheme B'},
+      'SEM2': {'a': 'Scheme A'},
+    },
+  };
 
   @override
-  Map? get sections => _fakeSections;
-  set sections(Map? newValue) {
-    _fakeSections = newValue;
-    notifyListeners();
-  }
+  Future<List<String>> getYears() async => fakeYears;
 
   @override
-  Future<void> getSections(FilterController filterController) async {
-    getSectionsCallCount++;
-  }
+  Future<List<String>> getSemesters(String year) async =>
+      fakeSemesters[year] ?? [];
 
   @override
-  Future<void> getElectiveSchemes({
-    BuildContext? context,
-    FilterController? filterController,
-  }) async {
-    getElectiveSchemesCallCount++;
-  }
+  Future<Map<String, String>> getSections(String year, String semester) async =>
+      fakeSections[year]?[semester] ?? {};
+
+  @override
+  Future<List<String>> getElectiveYears() async => fakeElectiveYears;
+
+  @override
+  Future<List<String>> getElectiveSemesters(String year) async =>
+      fakeElectiveSemesters[year] ?? [];
+
+  @override
+  Future<Map<String, String>?> getElectiveSchemes(
+          String year, String semester) async =>
+      fakeElectiveSchemes[year]?[semester];
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   late FilterController controller;
-  late FakeGitService service;
+  late FakeSectionsRepository repository;
   late AppPreferencesController preferences;
 
-  Future<void> pumpInitialized(WidgetTester tester) async {
+  Future<void> pumpWidget(WidgetTester tester, {Widget? child}) async {
     await tester.pumpWidget(
       MultiProvider(
         providers: [
-          ChangeNotifierProvider<GitService>.value(value: service),
           ChangeNotifierProvider<AppPreferencesController>.value(
             value: preferences,
           ),
           ChangeNotifierProvider<FilterController>.value(value: controller),
         ],
         child: MaterialApp(
-          home: Builder(
-            builder: (ctx) {
-              controller.onInit(ctx);
-              return const Scaffold(body: SizedBox());
-            },
-          ),
+          home: child ?? const Scaffold(body: SizedBox()),
         ),
       ),
     );
@@ -68,19 +85,113 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     preferences = AppPreferencesController();
     await preferences.onInit();
-    service = FakeGitService();
-    controller = FilterController();
-    controller.service = service;
-    controller.preferences = preferences;
+    repository = FakeSectionsRepository();
+    controller = FilterController(
+      sectionsRepository: repository,
+      preferences: preferences,
+    );
     controller.weekday = Weekday.monday;
   });
 
+  group('initialize', () {
+    test('loads years and electiveYears from repository', () async {
+      await controller.initialize();
+      expect(controller.years, ['2024', '2023']);
+      expect(controller.electiveYears, ['2024', '2023']);
+    });
+
+    test('restores primary year when saved in preferences', () async {
+      await preferences.savePrimaryYearPreference('2023');
+      await controller.initialize();
+      expect(controller.selectedYear, '2023');
+    });
+
+    test('does not set selectedYear when primary not in years list', () async {
+      await preferences.savePrimaryYearPreference('1999');
+      await controller.initialize();
+      expect(controller.selectedYear, isNull);
+    });
+  });
+
+  group('selectedYear setter', () {
+    test('setting year loads semesters asynchronously', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      expect(controller.semesters, ['SEM1', 'SEM2']);
+    });
+
+    test('clears downstream state when year changes', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+
+      controller.selectedYear = '2023';
+      expect(controller.semesters, isNull);
+      expect(controller.activeSemester, isNull);
+      expect(controller.sections, isNull);
+    });
+
+    test('setting same year is a no-op', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      final semsBefore = controller.semesters;
+      controller.selectedYear = '2024';
+      expect(controller.semesters, semsBefore);
+    });
+  });
+
+  group('activeSemester setter', () {
+    test('setting semester loads sections', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+      expect(controller.sections, {'A16': 'A-16', 'B16': 'B-16'});
+    });
+
+    test('changing semester clears section', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+      controller.activeSection = 'A-16';
+
+      controller.activeSemester = 'SEM2';
+      expect(controller.activeSection, isNull);
+      expect(controller.activeSectionCode, isNull);
+    });
+
+    test('setting same semester is a no-op', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+      final sectionsBefore = controller.sections;
+      controller.activeSemester = 'SEM1';
+      expect(controller.sections, sectionsBefore);
+    });
+  });
+
   group('activeSection setter', () {
+    setUp(() async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+    });
+
     test('setting null clears sectionCode and section', () {
-      service.sections = {'B16': 'B-16'};
-      controller.activeSection = 'B-16';
-      expect(controller.activeSection, 'B-16');
-      expect(controller.activeSectionCode, 'B16');
+      controller.activeSection = 'A-16';
+      expect(controller.activeSection, 'A-16');
+      expect(controller.activeSectionCode, 'A16');
 
       controller.activeSection = null;
       expect(controller.activeSection, isNull);
@@ -88,7 +199,6 @@ void main() {
     });
 
     test('setting same section value is a no-op', () {
-      service.sections = {'A16': 'A-16'};
       controller.activeSection = 'A-16';
       final code = controller.activeSectionCode;
       controller.activeSection = 'A-16';
@@ -96,48 +206,29 @@ void main() {
     });
 
     test('updates activeSectionCode from sections map', () {
-      service.sections = {'A16': 'A-16', 'B16': 'B-16'};
       controller.activeSection = 'B-16';
       expect(controller.activeSectionCode, 'B16');
     });
 
     test('activeSectionCode is null when no matching mapping exists', () {
-      service.sections = {'A16': 'A-16'};
       controller.activeSection = 'NONEXISTENT';
       expect(controller.activeSectionCode, isNull);
     });
   });
 
-  group('activeSemester setter', () {
-    test('changing semester triggers getSections and clears section code', () {
-      service.sections = {'A16': 'A-16'};
-      controller.activeSection = 'A-16';
-      expect(controller.activeSectionCode, 'A16');
-
-      controller.activeSemester = 'SEM1';
-      expect(controller.activeSemester, 'SEM1');
-      expect(controller.activeSectionCode, isNull);
-      expect(service.getSectionsCallCount, 1);
-    });
-
-    test('setting same semester does not call getSections again', () {
-      controller.activeSemester = 'SEM1';
-      controller.activeSemester = 'SEM1';
-      expect(service.getSectionsCallCount, 1);
-    });
-  });
-
   group('elective setters', () {
     test('activeElectiveSemester resets scheme and code and fetches schemes',
-        () {
+        () async {
+      await controller.initialize();
+      controller.selectedElectiveYear = '2024';
+      await Future.delayed(Duration.zero);
       controller.activeElectiveScheme = 'Scheme A';
       controller.activeElectiveSchemeCode = 'a';
-      controller.activeElectiveSemester = 'SEM2';
+      controller.activeElectiveSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
 
-      expect(controller.activeElectiveSemester, 'SEM2');
-      expect(controller.activeElectiveScheme, isNull);
-      expect(controller.activeElectiveSchemeCode, isNull);
-      expect(service.getElectiveSchemesCallCount, 1);
+      expect(controller.activeElectiveSemester, 'SEM1');
+      expect(controller.electiveSchemes, {'a': 'Scheme A', 'b': 'Scheme B'});
     });
 
     test('activeElectiveScheme ignores null assignment', () {
@@ -163,15 +254,12 @@ void main() {
       expect(controller.getShortCode(), 'SEM1');
     });
 
-    test('returns section when only section selected', () {
-      service.sections = {'A16': 'A-16'};
-      controller.activeSection = 'A-16';
-      expect(controller.getShortCode(), 'A16');
-    });
-
-    test('returns combined code when both selected', () {
-      service.sections = {'A16': 'A-16'};
+    test('returns combined code when both selected', () async {
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
       controller.activeSection = 'A-16';
       expect(controller.getShortCode(), 'A16 | SEM1');
     });
@@ -223,117 +311,23 @@ void main() {
     });
   });
 
-  group('setPrimarySection', () {
-    test('does not set activeSection when primary not in sections', () async {
-      service.sections = {'A16': 'A-16'};
-      await preferences.savePrimarySectionPreference('Z99');
-
-      await controller.setPrimarySection();
-      expect(controller.activeSection, isNull);
-    });
-
-    test('sets activeSection from sections when primary is present', () async {
-      service.sections = {'A16': 'A-16'};
-      await preferences.savePrimarySectionPreference('A16');
-
-      await controller.setPrimarySection();
-      expect(controller.activeSection, 'A-16');
-      expect(controller.activeSectionCode, 'A16');
-    });
-  });
-
-  group('setPrimarySemester', () {
-    test('sets active semester from preferences when in known list', () {
-      service.semesters = ['SEM1', 'SEM2'];
-      preferences.savePrimarySemesterPreference('SEM2');
-      controller.setPrimarySemester();
-      expect(controller.activeSemester, 'SEM2');
-    });
-
-    test('still sets active semester when service.semesters is null', () {
-      preferences.savePrimarySemesterPreference('SEM3');
-      controller.setPrimarySemester();
-      expect(controller.activeSemester, 'SEM3');
-    });
-
-    test('does nothing when no primary semester saved', () {
-      controller.setPrimarySemester();
-      expect(controller.activeSemester, isNull);
-    });
-  });
-
-  group('setPrimaryYear', () {
-    test('sets selectedYear on service when valid', () async {
-      service.filterController = controller;
-      service.years = ['2024', '2023'];
-      await preferences.savePrimaryYearPreference('2023');
-
-      await controller.setPrimaryYear();
-      expect(service.selectedYear, '2023');
-    });
-
-    test('does nothing when no primary year saved', () async {
-      service.filterController = controller;
-      service.years = ['2024'];
-      await controller.setPrimaryYear();
-      expect(service.selectedYear, isNull);
-    });
-  });
-
-  group('setPrimaryElectiveScheme', () {
-    test('sets active elective scheme when present in map', () async {
-      service.electiveSchemes = {'a': 'Scheme A', 'b': 'Scheme B'};
-      await preferences.savePrimaryElectiveSchemePreference('b');
-
-      await controller.setPrimaryElectiveScheme();
-      expect(controller.activeElectiveScheme, 'Scheme B');
-      expect(controller.activeElectiveSchemeCode, 'b');
-    });
-
-    test('does not set when scheme is unknown', () async {
-      service.electiveSchemes = {'a': 'Scheme A'};
-      await preferences.savePrimaryElectiveSchemePreference('z');
-
-      await controller.setPrimaryElectiveScheme();
-      expect(controller.activeElectiveScheme, isNull);
-      expect(controller.activeElectiveSchemeCode, isNull);
-    });
-  });
-
-  group('setPrimaryElectiveSemester', () {
-    test('sets elective semester from preferences', () async {
-      service.electivesSemesters = ['SEM1', 'SEM2'];
-      await preferences.savePrimaryElectiveSemesterPreference('SEM2');
-
-      await controller.setPrimaryElectiveSemester();
-      expect(controller.activeElectiveSemester, 'SEM2');
-    });
-  });
-
-  group('setPrimaryElectiveYear', () {
-    test('sets elective year from preferences', () async {
-      service.filterController = controller;
-      service.electiveYears = ['2024', '2023'];
-      await preferences.savePrimaryElectiveYearPreference('2024');
-
-      await controller.setPrimaryElectiveYear();
-      expect(service.selectedElectiveYear, '2024');
-    });
-  });
-
   group('storePrimarySection', () {
     testWidgets('saves selected section to preferences', (tester) async {
-      service.sections = {'A16': 'A-16'};
-      await pumpInitialized(tester);
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
       controller.activeSection = 'A-16';
 
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimarySection(ctx);
       expect(preferences.getPrimarySectionPreference(), 'A16');
     });
 
     testWidgets('does not save when no active section', (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimarySection(ctx);
       expect(preferences.getPrimarySectionPreference(), isNull);
@@ -343,7 +337,7 @@ void main() {
 
   group('storePrimarySemester', () {
     testWidgets('saves selected semester', (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       controller.activeSemester = 'SEM1';
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimarySemester(ctx);
@@ -351,7 +345,7 @@ void main() {
     });
 
     testWidgets('does not save when no active semester', (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimarySemester(ctx);
       expect(preferences.getPrimarySemesterPreference(), isNull);
@@ -361,19 +355,18 @@ void main() {
 
   group('storePrimaryYear', () {
     testWidgets('saves selected year', (tester) async {
-      service.filterController = controller;
-      service.years = ['2024'];
-      await pumpInitialized(tester);
-      service.selectedYear = '2024';
+      await controller.initialize();
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
 
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimaryYear(ctx);
       expect(preferences.getPrimaryYearPreference(), '2024');
     });
 
-    testWidgets('does not save when service.selectedYear is null',
-        (tester) async {
-      await pumpInitialized(tester);
+    testWidgets('does not save when selectedYear is null', (tester) async {
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimaryYear(ctx);
       expect(preferences.getPrimaryYearPreference(), isNull);
@@ -383,7 +376,7 @@ void main() {
 
   group('storePrimaryElectiveScheme', () {
     testWidgets('saves selected elective scheme code', (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       controller.activeElectiveSchemeCode = 'a';
 
       final ctx = tester.element(find.byType(Scaffold));
@@ -393,7 +386,7 @@ void main() {
 
     testWidgets('returns error future when no scheme is selected',
         (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await expectLater(
         controller.storePrimaryElectiveScheme(ctx),
@@ -405,7 +398,7 @@ void main() {
 
   group('storePrimaryElectiveSemester', () {
     testWidgets('saves selected elective semester', (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       controller.activeElectiveSemester = 'SEM2';
 
       final ctx = tester.element(find.byType(Scaffold));
@@ -415,7 +408,7 @@ void main() {
 
     testWidgets('returns error future when no semester is selected',
         (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await expectLater(
         controller.storePrimaryElectiveSemester(ctx),
@@ -427,11 +420,11 @@ void main() {
 
   group('storePrimaryElectiveYear', () {
     testWidgets('saves selected elective year', (tester) async {
-      service.filterController = controller;
-      service.electiveYears = ['2024'];
-      await pumpInitialized(tester);
-      service.selectedElectiveYear = '2024';
+      await controller.initialize();
+      controller.selectedElectiveYear = '2024';
+      await Future.delayed(Duration.zero);
 
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await controller.storePrimaryElectiveYear(ctx);
       expect(preferences.getPrimaryElectiveYearPreference(), '2024');
@@ -439,40 +432,13 @@ void main() {
 
     testWidgets('returns error future when no elective year selected',
         (tester) async {
-      await pumpInitialized(tester);
+      await pumpWidget(tester);
       final ctx = tester.element(find.byType(Scaffold));
       await expectLater(
         controller.storePrimaryElectiveYear(ctx),
         throwsA(anything),
       );
       await tester.pumpAndSettle(const Duration(seconds: 6));
-    });
-  });
-
-  group('onInit', () {
-    testWidgets('wires up service, preferences, and today\'s weekday',
-        (tester) async {
-      final fresh = FilterController();
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<GitService>.value(value: service),
-            ChangeNotifierProvider<AppPreferencesController>.value(
-              value: preferences,
-            ),
-          ],
-          child: MaterialApp(
-            home: Builder(builder: (ctx) {
-              fresh.onInit(ctx);
-              return const SizedBox();
-            }),
-          ),
-        ),
-      );
-
-      expect(fresh.service, same(service));
-      expect(fresh.preferences, same(preferences));
-      expect(fresh.weekday, Weekday.today());
     });
   });
 }

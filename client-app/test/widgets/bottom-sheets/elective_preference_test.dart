@@ -4,7 +4,6 @@ import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
 import 'package:plan_sync/widgets/dropdowns/elective_year_bar.dart';
@@ -14,7 +13,6 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../mock_controllers/app_preferences_controller_mock.dart';
 import '../../mock_controllers/filter_controller_mock.dart';
-import '../../mock_controllers/git_service_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -76,7 +74,8 @@ void main() {
 
   testWidgets('ElectivePreferenceBottomSheet opens yearbar',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
+    final filterController =
+        Get.find<FilterController>() as MockFilterController;
 
     await pumpBaseWidget(tester);
 
@@ -91,7 +90,7 @@ void main() {
     await tester.tap(find.text('2024'));
     await tester.pumpAndSettle();
 
-    expect(gitController.selectedElectiveYear, '2024');
+    expect(filterController.selectedElectiveYear, '2024');
   });
 
   testWidgets('ElectivePreferenceBottomSheet opens SemestersBar',
@@ -115,11 +114,10 @@ void main() {
 
   testWidgets('ElectivePreferenceBottomSheet opens SectionBar',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final filterController =
         Get.find<FilterController>() as MockFilterController;
 
-    gitController.electiveSchemes = {
+    filterController.electiveSchemes = {
       "a": "Scheme A",
       "b": "Scheme B",
     };
@@ -146,7 +144,6 @@ void main() {
   testWidgets(
       'ElectivePreferenceBottomSheet does not save config to SharedPreferences',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final perfs =
         Get.find<AppPreferencesController>() as MockAppPreferencesController;
     final filterController =
@@ -155,8 +152,8 @@ void main() {
     // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();
 
-    gitController.selectedElectiveYear = '2024';
-    gitController.electiveSchemes = {
+    filterController.selectedElectiveYear = '2024';
+    filterController.electiveSchemes = {
       "a": "Scheme A",
       "b": "Scheme B",
     };
@@ -177,7 +174,7 @@ void main() {
     expect(filterController.activeElectiveSemester, 'SEM1');
     expect(filterController.activeElectiveScheme, 'Scheme B');
     expect(filterController.activeElectiveSchemeCode, 'b');
-    expect(gitController.selectedElectiveYear, '2024');
+    expect(filterController.selectedElectiveYear, '2024');
 
     // verify existing perfs
     expect(perfs.getPrimaryElectiveSchemePreference(), isNull);
@@ -196,7 +193,6 @@ void main() {
 
   testWidgets('ElectivePreferenceBottomSheet saves config to SharedPreferences',
       (WidgetTester tester) async {
-    final gitController = Get.find<GitService>() as MockGitService;
     final perfs =
         Get.find<AppPreferencesController>() as MockAppPreferencesController;
     final filterController =
@@ -205,8 +201,8 @@ void main() {
     // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();
 
-    gitController.selectedElectiveYear = '2024';
-    gitController.electiveSchemes = {
+    filterController.selectedElectiveYear = '2024';
+    filterController.electiveSchemes = {
       "a": "Scheme A",
       "b": "Scheme B",
     };
@@ -229,7 +225,7 @@ void main() {
     expect(filterController.activeElectiveSemester, 'SEM1');
     expect(filterController.activeElectiveScheme, 'Scheme B');
     expect(filterController.activeElectiveSchemeCode, 'b');
-    expect(gitController.selectedElectiveYear, '2024');
+    expect(filterController.selectedElectiveYear, '2024');
 
     // verify existing perfs
     expect(perfs.getPrimaryElectiveSchemePreference(), isNull);

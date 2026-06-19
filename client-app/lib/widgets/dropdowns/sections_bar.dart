@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:provider/provider.dart';
@@ -14,7 +13,6 @@ class SectionsBar extends StatefulWidget {
 }
 
 class _SectionsBarState extends State<SectionsBar> {
-  String? selectedValue;
   bool _hasShownSnackbar = false;
 
   void _showNetworkError() {
@@ -42,21 +40,17 @@ class _SectionsBarState extends State<SectionsBar> {
         width: 128,
         height: 48,
         child: DropdownButtonHideUnderline(
-          child: Consumer<GitService>(
-            builder: (ctx, serviceController, child) =>
-                Consumer<FilterController>(
-                    builder: (ctx, filterController, child) {
-              // Reset snackbar flag when data arrives
+          child: Consumer<FilterController>(
+            builder: (ctx, filterController, child) {
               if (filterController.activeSemester != null &&
-                  serviceController.sections != null &&
-                  serviceController.sections!.isNotEmpty) {
+                  filterController.sections != null &&
+                  filterController.sections!.isNotEmpty) {
                 _hasShownSnackbar = false;
               }
 
-              // Check if data is missing and show snackbar if tapped
               if (filterController.activeSemester != null &&
-                  (serviceController.sections == null ||
-                      serviceController.sections!.isEmpty)) {
+                  (filterController.sections == null ||
+                      filterController.sections!.isEmpty)) {
                 return GestureDetector(
                   onTap: _showNetworkError,
                   child: Container(
@@ -65,9 +59,9 @@ class _SectionsBarState extends State<SectionsBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                        color: Colors.black,
-                        size: 24,
-                      ),
+                          color: Colors.black,
+                          size: 24,
+                        ),
                         Icon(
                           Icons.arrow_drop_down,
                           color: colorScheme.surface,
@@ -90,24 +84,18 @@ class _SectionsBarState extends State<SectionsBar> {
                 value: filterController.activeSection,
                 dropdownColor: colorScheme.onSurface,
                 disabledHint: Text(
-                  "Select Semester First",
-                  style: TextStyle(
-                    color: colorScheme.surface,
-                    fontSize: 16,
-                  ),
+                  'Select Semester First',
+                  style: TextStyle(color: colorScheme.surface, fontSize: 16),
                 ),
                 hint: Text(
-                  "Section",
-                  style: TextStyle(
-                    color: colorScheme.surface,
-                    fontSize: 16,
-                  ),
+                  'Section',
+                  style: TextStyle(color: colorScheme.surface, fontSize: 16),
                 ),
                 menuMaxHeight: 376,
-                items: serviceController.sections?.keys
+                items: filterController.sections?.keys
                     .toList()
-                    .map((e) => buildMenuItem(
-                          serviceController.sections?[e],
+                    .map((e) => _buildMenuItem(
+                          filterController.sections?[e] ?? e,
                           colorScheme.surface,
                         ))
                     .toList(),
@@ -118,7 +106,7 @@ class _SectionsBarState extends State<SectionsBar> {
                         filterController.activeSection = newSelection;
                       },
               );
-            }),
+            },
           ),
         ),
       ),
@@ -126,12 +114,9 @@ class _SectionsBarState extends State<SectionsBar> {
   }
 }
 
-DropdownMenuItem<String> buildMenuItem(String section, Color color) {
+DropdownMenuItem<String> _buildMenuItem(String section, Color color) {
   return DropdownMenuItem(
     value: section,
-    child: Text(
-      section,
-      style: TextStyle(color: color),
-    ),
+    child: Text(section, style: TextStyle(color: color)),
   );
 }
