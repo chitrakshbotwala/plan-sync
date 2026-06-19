@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:provider/provider.dart';
 
 class VersionCheckWidget extends StatefulWidget {
@@ -11,12 +11,12 @@ class VersionCheckWidget extends StatefulWidget {
 }
 
 class _VersionCheckWidgetState extends State<VersionCheckWidget> {
-  late VersionController versionController;
+  late VersionViewModel versionController;
 
   @override
   void initState() {
     super.initState();
-    versionController = Provider.of<VersionController>(context, listen: false);
+    versionController = Provider.of<VersionViewModel>(context, listen: false);
   }
 
   @override

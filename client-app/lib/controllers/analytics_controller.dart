@@ -2,7 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:provider/provider.dart';
 
@@ -38,8 +38,8 @@ class AnalyticsController extends ChangeNotifier {
   }
 
   void logOpenApp(BuildContext context) async {
-    VersionController version =
-        Provider.of<VersionController>(context, listen: false);
+    VersionViewModel version =
+        Provider.of<VersionViewModel>(context, listen: false);
     final parameters = {
       'app_version': version.clientVersion ?? "unknown",
       'primary_section': filters.primarySection ?? "null",

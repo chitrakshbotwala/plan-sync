@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:provider/provider.dart';
 
 class InAppReviewCacheModel {
@@ -35,7 +35,7 @@ class InAppReviewCacheModel {
     DateTime firstOpenDate = DateTime.fromMillisecondsSinceEpoch(
       firstOpen,
     );
-    final versionController = Provider.of<VersionController>(
+    final versionController = Provider.of<VersionViewModel>(
       context,
       listen: false,
     );
@@ -70,7 +70,7 @@ class InAppReviewCacheModel {
 
   Future<void> updateLastRequested(BuildContext context) async {
     final versionController =
-        Provider.of<VersionController>(context, listen: false);
+        Provider.of<VersionViewModel>(context, listen: false);
     final currentAppVersion = versionController.clientVersion;
     lastRequested = DateTime.now().millisecondsSinceEpoch;
     lastAppVersion = currentAppVersion;

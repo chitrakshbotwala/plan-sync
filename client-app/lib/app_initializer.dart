@@ -8,7 +8,7 @@ import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:provider/provider.dart';
 
@@ -22,7 +22,7 @@ class AppInitializer {
       Provider.of<AppThemeController>(context, listen: false).onInit();
 
       await Future.wait([
-        Provider.of<VersionController>(context, listen: false).onReady(context),
+        Provider.of<VersionViewModel>(context, listen: false).onReady(context),
         Provider.of<FilterViewModel>(context, listen: false).initialize(),
         Provider.of<RemoteConfigController>(context, listen: false).onReady(),
       ]);

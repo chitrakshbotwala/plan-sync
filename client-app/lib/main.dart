@@ -14,6 +14,7 @@ import 'package:plan_sync/features/auth/repository/auth_repository_impl.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
+import 'package:plan_sync/core/services/version_service.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository_impl.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
@@ -25,7 +26,7 @@ import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/router_refresh_stream.dart';
 import 'package:plan_sync/features/campus_navigator/view/campus_navigator_view.dart';
 import 'package:plan_sync/views/electives_screen.dart';
@@ -96,9 +97,16 @@ class AppProvider extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => AppTourController()),
         Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
         ChangeNotifierProvider(create: (_) => RemoteConfigController()),
-        ChangeNotifierProvider(
-          create: (context) => VersionController(
+        Provider(
+          create: (context) => VersionService(
             apiClient: context.read<ApiClient>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => VersionViewModel(
+            versionService: context.read<VersionService>(),
+            remoteConfig: context.read<RemoteConfigController>(),
+            preferences: context.read<AppPreferencesController>(),
           ),
         ),
         ChangeNotifierProvider(create: (_) => AppThemeController()),
@@ -279,7 +287,7 @@ final _router = GoRouter(
               builder: (context, state) => ChangeNotifierProvider(
                 create: (context) => SettingsViewModel(
                   auth: context.read<AuthRepository>(),
-                  version: context.read<VersionController>(),
+                  version: context.read<VersionViewModel>(),
                   analytics: context.read<AnalyticsController>(),
                 ),
                 child: const SettingsPage(),
@@ -314,11 +322,6 @@ String? redirectHandler(BuildContext context, GoRouterState state) {
     return notifRoute;
   }
 
-  final versionControllerForcedPath = VersionController.forcedRedirectPath;
-  if (versionControllerForcedPath != null) {
-    VersionController.forcedRedirectPath = null; // Clear after redirect
-    return versionControllerForcedPath;
-  }
   final auth = Provider.of<AuthRepository>(context, listen: false);
 
   if (auth.currentUser != null && state.matchedLocation == '/login') {

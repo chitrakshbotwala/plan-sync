@@ -1,19 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 
 class SettingsViewModel extends ChangeNotifier {
   SettingsViewModel({
     required AuthRepository auth,
-    required VersionController version,
+    required VersionViewModel version,
     required AnalyticsController analytics,
   })  : _auth = auth,
         _version = version,
         _analytics = analytics;
 
   final AuthRepository _auth;
-  final VersionController _version;
+  final VersionViewModel _version;
   final AnalyticsController _analytics;
 
   bool isPunActivated = false;

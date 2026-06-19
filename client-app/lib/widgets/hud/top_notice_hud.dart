@@ -2,7 +2,7 @@ import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/widgets/hud/notice_carousel_widget.dart';
 import 'package:plan_sync/widgets/version_check.dart';
 import 'package:provider/provider.dart';
@@ -44,9 +44,9 @@ class _TopNoticeHudState extends State<TopNoticeHud> {
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Selector<VersionController, bool>(
-      selector: (context, versionController) =>
-          versionController.isUpdateAvailable,
+    return Selector<VersionViewModel, bool>(
+      selector: (context, versionViewModel) =>
+          versionViewModel.isUpdateAvailable,
       builder: (context, isUpdateAvailable, _) {
         List<Widget> widgets = [
           if (isUpdateAvailable) const VersionCheckWidget(),
