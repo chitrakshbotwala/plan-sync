@@ -68,8 +68,14 @@ class LoginScreen extends StatelessWidget {
                           backgroundColor:
                               WidgetStatePropertyAll(colorScheme.primary),
                         ),
-                        onPressed: () =>
-                            vm.login(context, LoginProvider.google),
+                        onPressed: () async {
+                          await vm.login(LoginProvider.google);
+                          if (!context.mounted) return;
+                          if (vm.errorMessage != null) {
+                            CustomSnackbar.error(
+                                'Authentication Error', vm.errorMessage!, context);
+                          }
+                        },
                         icon: Icon(
                           FontAwesomeIcons.google,
                           color: colorScheme.onPrimary,
@@ -115,7 +121,14 @@ class LoginScreen extends StatelessWidget {
                             Colors.transparent.withValues(alpha: 0.04),
                           ),
                         ),
-                        onPressed: () => vm.login(context, LoginProvider.apple),
+                        onPressed: () async {
+                          await vm.login(LoginProvider.apple);
+                          if (!context.mounted) return;
+                          if (vm.errorMessage != null) {
+                            CustomSnackbar.error(
+                                'Authentication Error', vm.errorMessage!, context);
+                          }
+                        },
                         icon: Icon(
                           FontAwesomeIcons.apple,
                           color: colorScheme.onSurface,

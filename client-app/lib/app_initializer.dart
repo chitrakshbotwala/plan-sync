@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/controllers/analytics_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
@@ -15,7 +15,6 @@ import 'package:provider/provider.dart';
 class AppInitializer {
   static Future<void> initializeApp(BuildContext context) async {
     try {
-      Provider.of<Auth>(context, listen: false).onInit();
       await Provider.of<ApiClient>(context, listen: false).initialize();
       Provider.of<AppTourController>(context, listen: false).onInit(context);
       await Provider.of<AppPreferencesController>(context, listen: false)
@@ -28,11 +27,14 @@ class AppInitializer {
         Provider.of<RemoteConfigController>(context, listen: false).onReady(),
       ]);
 
-      final auth = Provider.of<Auth>(context, listen: false);
       final analytics =
           Provider.of<AnalyticsController>(context, listen: false);
       await analytics.onReady(context);
-      auth.addUserStatusListener(() => analytics.setUserData());
+
+      // Keep analytics user data in sync with auth state for the app's lifetime.
+      Provider.of<AuthRepository>(context, listen: false)
+          .authStateChanges()
+          .listen((_) => analytics.setUserData());
     } catch (e, stackTrace) {
       if (kReleaseMode) {
         FirebaseCrashlytics.instance.recordError(e, stackTrace);

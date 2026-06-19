@@ -9,7 +9,8 @@ import 'package:plan_sync/controllers/analytics_controller.dart';
 import 'package:plan_sync/controllers/app_review_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository_impl.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
@@ -93,7 +94,7 @@ class AppProvider extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => AnalyticsController()),
         ChangeNotifierProvider(create: (_) => AppTourController()),
-        ChangeNotifierProvider(create: (_) => Auth()),
+        Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
         ChangeNotifierProvider(create: (_) => RemoteConfigController()),
         ChangeNotifierProvider(
           create: (context) => VersionController(
@@ -277,9 +278,9 @@ final _router = GoRouter(
               name: 'settings_screen',
               builder: (context, state) => ChangeNotifierProvider(
                 create: (context) => SettingsViewModel(
-                  auth: context.read(),
-                  version: context.read(),
-                  analytics: context.read(),
+                  auth: context.read<AuthRepository>(),
+                  version: context.read<VersionController>(),
+                  analytics: context.read<AnalyticsController>(),
                 ),
                 child: const SettingsPage(),
               ),
@@ -293,7 +294,7 @@ final _router = GoRouter(
       name: 'login_screen',
       builder: (context, state) => ChangeNotifierProvider(
         create: (context) =>
-            LoginViewModel(auth: context.read<Auth>()),
+            LoginViewModel(repository: context.read<AuthRepository>()),
         child: const LoginScreen(),
       ),
     ),
@@ -318,13 +319,13 @@ String? redirectHandler(BuildContext context, GoRouterState state) {
     VersionController.forcedRedirectPath = null; // Clear after redirect
     return versionControllerForcedPath;
   }
-  Auth auth = Provider.of<Auth>(context, listen: false);
+  final auth = Provider.of<AuthRepository>(context, listen: false);
 
-  if (auth.activeUser != null && state.matchedLocation == '/login') {
+  if (auth.currentUser != null && state.matchedLocation == '/login') {
     return '/';
   }
-  if (auth.activeUser == null) {
-    return "/login";
+  if (auth.currentUser == null) {
+    return '/login';
   }
 
   AppPreferencesController perfs =

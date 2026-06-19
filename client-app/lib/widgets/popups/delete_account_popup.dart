@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
+import 'package:plan_sync/util/snackbar.dart';
 import 'package:provider/provider.dart';
 
 class DeleteAccountPopup extends StatefulWidget {
@@ -12,6 +13,7 @@ class DeleteAccountPopup extends StatefulWidget {
 
 class _DeleteAccountPopupState extends State<DeleteAccountPopup> {
   bool isWorking = false;
+
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -62,16 +64,32 @@ class _DeleteAccountPopupState extends State<DeleteAccountPopup> {
                     onPressed: isWorking
                         ? () {}
                         : () async {
-                            setState(() {
-                              isWorking = true;
-                            });
-
-                            await Provider.of<Auth>(context, listen: false)
-                                .deleteCurrentUser(context);
-
-                            setState(() {
-                              isWorking = false;
-                            });
+                            setState(() => isWorking = true);
+                            try {
+                              await context
+                                  .read<AuthRepository>()
+                                  .deleteCurrentUser();
+                              if (!context.mounted) return;
+                              CustomSnackbar.info(
+                                'Account Deleted',
+                                "We have sent delete request, it'll be done shortly!",
+                                context,
+                              );
+                              Navigator.of(context).pop();
+                            } on DeleteAccountException catch (e) {
+                              if (!context.mounted) return;
+                              CustomSnackbar.error(
+                                  'Operation Failed', e.message, context);
+                            } catch (_) {
+                              if (!context.mounted) return;
+                              CustomSnackbar.error(
+                                'Operation Failed',
+                                'We faced some error. Please try again later.',
+                                context,
+                              );
+                            } finally {
+                              if (mounted) setState(() => isWorking = false);
+                            }
                           },
                     style: ButtonStyle(
                       shape: WidgetStatePropertyAll(
