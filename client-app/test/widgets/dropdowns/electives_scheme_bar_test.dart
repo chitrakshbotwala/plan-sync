@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/widgets/dropdowns/electives_scheme_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -37,8 +34,7 @@ void main() {
   testWidgets(
     'ElectiveSchemeBar loads when data is availble but not selected',
     (WidgetTester tester) async {
-      final filterController =
-          Get.find<FilterViewModel>() as MockFilterViewModel;
+      final filterController = mockFilterViewModel;
 
       filterController.activeElectiveSemester = "SEM1";
       filterController.electiveSchemes = {
@@ -56,8 +52,7 @@ void main() {
   testWidgets(
     'ElectiveSchemeBar updates data when clicked on item',
     (WidgetTester tester) async {
-      final filterController =
-          Get.find<FilterViewModel>() as MockFilterViewModel;
+      final filterController = mockFilterViewModel;
 
       filterController.activeElectiveSemester = "SEM1";
       filterController.electiveSchemes = {

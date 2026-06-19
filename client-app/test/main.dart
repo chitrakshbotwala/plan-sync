@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
@@ -23,72 +22,77 @@ import 'mock_controllers/remote_config_controller_mock.dart';
 import 'mock_controllers/schedule_repository_mock.dart';
 import 'mock_controllers/version_controller_mock.dart';
 
-Future<void> injectMockDependencies() async {
-  Get.reset();
-  final preferences = MockAppPreferencesController();
-  await preferences.onInit();
+late MockAuth mockAuth;
+late MockAppPreferencesController mockPreferences;
+late MockFilterViewModel mockFilterViewModel;
+late MockScheduleRepository mockScheduleRepository;
+late MockVersionViewModel mockVersionViewModel;
+late MockAnalyticsService mockAnalyticsService;
+late MockAppTourController mockAppTourController;
+late MockRemoteConfigController mockRemoteConfigController;
+late MockNotificationService mockNotificationService;
+late AppThemeController mockThemeController;
 
-  Get.put<AuthRepository>(MockAuth());
-  Get.put<AppPreferencesController>(preferences);
-  Get.put<FilterViewModel>(MockFilterViewModel());
-  Get.put<ScheduleRepository>(MockScheduleRepository());
-  Get.put<VersionViewModel>(MockVersionViewModel());
-  Get.put<AnalyticsService>(MockAnalyticsService());
-  Get.put<AppTourController>(MockAppTourController());
-  Get.put<RemoteConfigController>(MockRemoteConfigController());
-  Get.put<NotificationService>(MockNotificationService());
-  Get.put<AppThemeController>(AppThemeController());
+Future<void> injectMockDependencies() async {
+  mockAuth = MockAuth();
+  mockPreferences = MockAppPreferencesController();
+  await mockPreferences.onInit();
+  mockFilterViewModel = MockFilterViewModel(mockPreferences);
+  mockScheduleRepository = MockScheduleRepository();
+  mockVersionViewModel = MockVersionViewModel();
+  mockAnalyticsService = MockAnalyticsService();
+  mockAppTourController = MockAppTourController();
+  mockRemoteConfigController = MockRemoteConfigController();
+  mockNotificationService = MockNotificationService();
+  mockThemeController = AppThemeController();
 }
 
-/// Wraps [child] in the provider tree expected by widgets in lib/, using
-/// the mocks currently registered in [Get]. Tests should use [testApp]
-/// for a bare home page or [wrapWithProviders] when supplying a custom
-/// [MaterialApp.router].
+/// Wraps [child] in the provider tree expected by widgets in lib/.
 Widget wrapWithProviders({required Widget child}) {
   return MultiProvider(
     providers: [
-      Provider<AuthRepository>.value(value: Get.find<AuthRepository>()),
+      Provider<AuthRepository>.value(value: mockAuth),
       ChangeNotifierProvider<AppPreferencesController>.value(
-        value: Get.find<AppPreferencesController>(),
+        value: mockPreferences,
       ),
       ChangeNotifierProvider<FilterViewModel>.value(
-        value: Get.find<FilterViewModel>(),
+        value: mockFilterViewModel,
       ),
       ChangeNotifierProvider<VersionViewModel>.value(
-        value: Get.find<VersionViewModel>(),
+        value: mockVersionViewModel,
       ),
       Provider<AnalyticsService>.value(
-        value: Get.find<AnalyticsService>(),
+        value: mockAnalyticsService,
       ),
       ChangeNotifierProvider<AppTourController>.value(
-        value: Get.find<AppTourController>(),
+        value: mockAppTourController,
       ),
       ChangeNotifierProvider<RemoteConfigController>.value(
-        value: Get.find<RemoteConfigController>(),
+        value: mockRemoteConfigController,
       ),
       Provider<NotificationService>.value(
-        value: Get.find<NotificationService>(),
+        value: mockNotificationService,
       ),
       ChangeNotifierProvider<AppThemeController>.value(
-        value: Get.find<AppThemeController>(),
+        value: mockThemeController,
       ),
       Provider<ScheduleRepository>.value(
-        value: Get.find<ScheduleRepository>(),
+        value: mockScheduleRepository,
       ),
       ChangeNotifierProvider<HomeViewModel>(
         create: (_) => HomeViewModel(
-          appTour: Get.find<AppTourController>(),
-          appPreferences: Get.find<AppPreferencesController>(),
+          appTour: mockAppTourController,
+          appPreferences: mockPreferences,
         ),
       ),
     ],
     child: Builder(
       builder: (ctx) {
-        Get.find<AppTourController>().onInit(ctx);
+        mockAppTourController.onInit(ctx);
         return ChangeNotifierProvider<ScheduleViewModel>(
           create: (_) => ScheduleViewModel(
-            repository: Get.find<ScheduleRepository>(),
-            filterViewModel: Get.find<FilterViewModel>(),
+            repository: mockScheduleRepository,
+            filterViewModel: mockFilterViewModel,
           ),
           child: child,
         );

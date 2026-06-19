@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/views/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/app_preferences_controller_mock.dart';
 
 void main() {
   Future<void> pumpTutorialWidget(WidgetTester tester) async {
@@ -36,7 +33,7 @@ void main() {
     'Tutorial stops when skip button is pressed',
     (WidgetTester tester) async {
       final perfs =
-          Get.find<AppPreferencesController>() as MockAppPreferencesController;
+          mockPreferences;
       perfs.saveTutorialStatus(false);
 
       await pumpTutorialWidget(tester);
@@ -57,7 +54,7 @@ void main() {
     'Tutorial starts if user has not completed',
     (WidgetTester tester) async {
       final perfs =
-          Get.find<AppPreferencesController>() as MockAppPreferencesController;
+          mockPreferences;
 
       await perfs.resetPreferencesToNull();
 

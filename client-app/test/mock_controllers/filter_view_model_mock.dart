@@ -1,4 +1,3 @@
-import 'package:get/get.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
@@ -8,6 +7,10 @@ import 'package:plan_sync/util/enums.dart';
 class MockFilterViewModel extends Mock
     with ChangeNotifier
     implements FilterViewModel {
+  MockFilterViewModel(this._prefsController);
+
+  final AppPreferencesController _prefsController;
+
   // --- Schedule metadata ---
 
   @override
@@ -170,7 +173,7 @@ class MockFilterViewModel extends Mock
     return '$section | $semester'.toUpperCase();
   }
 
-  AppPreferencesController get _prefs => Get.find<AppPreferencesController>();
+  AppPreferencesController get _prefs => _prefsController;
 
   @override
   Future<bool> storePrimarySection() async {

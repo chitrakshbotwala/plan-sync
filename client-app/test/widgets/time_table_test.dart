@@ -1,15 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:plan_sync/widgets/time_table.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
-import '../mock_controllers/filter_view_model_mock.dart';
 import '../mock_controllers/schedule_repository_mock.dart';
 
 void main() {
@@ -29,10 +25,8 @@ void main() {
 
   testWidgets('TimeTableWidget renders schedule if available',
       (WidgetTester tester) async {
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
-    final scheduleRepo =
-        Get.find<ScheduleRepository>() as MockScheduleRepository;
+    final filterController = mockFilterViewModel;
+    final scheduleRepo = mockScheduleRepository;
 
     scheduleRepo.stage = MockScheduleRepositoryStage.success;
     filterController.selectedYear = '2024';
@@ -69,10 +63,8 @@ void main() {
 
   testWidgets('TimeTableWidget renders info page if schedule is updating',
       (WidgetTester tester) async {
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
-    final scheduleRepo =
-        Get.find<ScheduleRepository>() as MockScheduleRepository;
+    final filterController = mockFilterViewModel;
+    final scheduleRepo = mockScheduleRepository;
 
     scheduleRepo.stage = MockScheduleRepositoryStage.scheduleUpdating;
     filterController.selectedYear = '2024';
@@ -97,10 +89,8 @@ void main() {
   /// Skipping as we've added offline support using caching
   testWidgets('TimeTableWidget renders error if no internet', skip: true,
       (WidgetTester tester) async {
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
-    final scheduleRepo =
-        Get.find<ScheduleRepository>() as MockScheduleRepository;
+    final filterController = mockFilterViewModel;
+    final scheduleRepo = mockScheduleRepository;
 
     scheduleRepo.stage = MockScheduleRepositoryStage.noInternet;
     filterController.selectedYear = '2024';

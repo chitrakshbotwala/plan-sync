@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/widgets/dropdowns/elective_year_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(WidgetTester tester) async {
@@ -31,8 +28,7 @@ void main() {
   testWidgets(
     'ElectiveYearBar updates data when clicked on item',
     (WidgetTester tester) async {
-      final filterController =
-          Get.find<FilterViewModel>() as MockFilterViewModel;
+      final filterController = mockFilterViewModel;
 
       filterController.electiveYears = ['2024', '2023'];
       filterController.selectedElectiveYear = null;

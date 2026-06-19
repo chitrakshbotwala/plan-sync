@@ -1,12 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/widgets/version_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
-import '../mock_controllers/version_controller_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(WidgetTester tester) async {
@@ -25,8 +22,7 @@ void main() {
 
   testWidgets('VersionCheckWidget renders when update is available',
       (WidgetTester tester) async {
-    final controller = Get.find<VersionViewModel>() as MockVersionViewModel;
-    controller.updateResult = true;
+    mockVersionViewModel.updateResult = true;
 
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
@@ -42,8 +38,7 @@ void main() {
   testWidgets(
       'VersionCheckWidget does not renders when update is not available',
       skip: true, (WidgetTester tester) async {
-    final controller = Get.find<VersionViewModel>() as MockVersionViewModel;
-    controller.updateResult = false;
+    mockVersionViewModel.updateResult = false;
 
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();

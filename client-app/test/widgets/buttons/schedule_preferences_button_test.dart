@@ -1,11 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -38,7 +35,7 @@ void main() {
   testWidgets(
     'SchedulePreferenceButton when section is null',
     (WidgetTester tester) async {
-      final controller = Get.find<FilterViewModel>() as MockFilterViewModel;
+      final controller = mockFilterViewModel;
       controller.activeSemester = "SEM1";
 
       // initial state
@@ -53,7 +50,7 @@ void main() {
   testWidgets(
     'SchedulePreferenceButton when semester is null',
     (WidgetTester tester) async {
-      final controller = Get.find<FilterViewModel>() as MockFilterViewModel;
+      final controller = mockFilterViewModel;
       controller.activeSectionCode = "B16";
       controller.activeSemester = null;
 
@@ -69,7 +66,7 @@ void main() {
   testWidgets(
     'SchedulePreferenceButton when both sem and section is set',
     (WidgetTester tester) async {
-      final controller = Get.find<FilterViewModel>() as MockFilterViewModel;
+      final controller = mockFilterViewModel;
       controller.activeSectionCode = "B16";
       controller.activeSemester = "SEM1";
 

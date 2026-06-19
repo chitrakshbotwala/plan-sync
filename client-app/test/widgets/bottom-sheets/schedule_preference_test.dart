@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/widgets/bottom-sheets/schedule_preference.dart';
 import 'package:plan_sync/widgets/dropdowns/sections_bar.dart';
@@ -12,15 +9,13 @@ import 'package:plan_sync/widgets/dropdowns/year_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../main.dart';
-import '../../mock_controllers/app_preferences_controller_mock.dart';
-import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
     WidgetTester tester,
   ) async {
     final router = GoRouter(
-      navigatorKey: Get.key,
+      navigatorKey: GlobalKey<NavigatorState>(),
       initialLocation: '/home',
       routes: [
         GoRoute(
@@ -75,8 +70,7 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet opens yearbar',
       (WidgetTester tester) async {
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
+    final filterController = mockFilterViewModel;
 
     await pumpBaseWidget(tester);
 
@@ -96,8 +90,7 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet opens SemestersBar',
       (WidgetTester tester) async {
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
+    final filterController = mockFilterViewModel;
 
     // Pre-seed sections so the SectionsBar does not flip to its
     // loading state (which spins an infinite animation) once a
@@ -122,8 +115,7 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet opens SectionBar',
       (WidgetTester tester) async {
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
+    final filterController = mockFilterViewModel;
 
     filterController.sections = {
       "b13": "B13 CSE",
@@ -153,10 +145,8 @@ void main() {
 
   testWidgets('SchedulePreferenceBottomSheet saves config to SharedPreferences',
       (WidgetTester tester) async {
-    final perfs =
-        Get.find<AppPreferencesController>() as MockAppPreferencesController;
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
+    final perfs = mockPreferences;
+    final filterController = mockFilterViewModel;
 
     filterController.sections = {
       "b13": "B13 CSE",
@@ -205,10 +195,8 @@ void main() {
   testWidgets(
       'SchedulePreferenceBottomSheet does not save config to SharedPreferences',
       (WidgetTester tester) async {
-    final perfs =
-        Get.find<AppPreferencesController>() as MockAppPreferencesController;
-    final filterController =
-        Get.find<FilterViewModel>() as MockFilterViewModel;
+    final perfs = mockPreferences;
+    final filterController = mockFilterViewModel;
 
     // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/widgets/buttons/logout_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/auth_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -36,13 +33,12 @@ void main() {
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
 
-    final controller = Get.find<AuthRepository>() as MockAuth;
-    await controller.loginWithGoogle();
+    await mockAuth.loginWithGoogle();
 
-    expect(controller.currentUser, isNotNull);
+    expect(mockAuth.currentUser, isNotNull);
 
     // start logout
     await tester.tap(find.text('Logout'));
-    expect(controller.currentUser, isNull);
+    expect(mockAuth.currentUser, isNull);
   });
 }
