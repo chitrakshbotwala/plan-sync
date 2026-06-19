@@ -1,7 +1,7 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:provider/provider.dart';
@@ -9,10 +9,10 @@ import 'package:provider/provider.dart';
 class AnalyticsController extends ChangeNotifier {
   late FirebaseAnalytics _analytics;
   late Auth auth;
-  late FilterController filters;
+  late FilterViewModel filters;
 
   Future<void> onReady(BuildContext context) async {
-    filters = Provider.of<FilterController>(context, listen: false);
+    filters = Provider.of<FilterViewModel>(context, listen: false);
     auth = Provider.of<Auth>(context, listen: false);
     Logger.i("Analytics controller ready");
     _analytics = FirebaseAnalytics.instance;

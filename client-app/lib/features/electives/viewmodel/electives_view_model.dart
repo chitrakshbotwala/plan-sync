@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 
 class ElectivesViewModel extends ChangeNotifier {
   ElectivesViewModel({
     required ElectivesRepository repository,
-    required FilterController filterController,
+    required FilterViewModel filterViewModel,
   })  : _repository = repository,
-        _filterController = filterController {
-    _filterController.addListener(_onStateChanged);
+        _filterViewModel = filterViewModel {
+    _filterViewModel.addListener(_onStateChanged);
     _tryLoad();
   }
 
   final ElectivesRepository _repository;
-  final FilterController _filterController;
+  final FilterViewModel _filterViewModel;
   StreamSubscription<Timetable?>? _sub;
 
   String? _lastYear;
@@ -31,9 +31,9 @@ class ElectivesViewModel extends ChangeNotifier {
   void _onStateChanged() => _tryLoad();
 
   void _tryLoad() {
-    final year = _filterController.activeElectiveYear;
-    final semester = _filterController.activeElectiveSemester;
-    final schemeCode = _filterController.activeElectiveSchemeCode;
+    final year = _filterViewModel.activeElectiveYear;
+    final semester = _filterViewModel.activeElectiveSemester;
+    final schemeCode = _filterViewModel.activeElectiveSchemeCode;
 
     if (year == null || semester == null || schemeCode == null) {
       _sub?.cancel();
@@ -92,7 +92,7 @@ class ElectivesViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
-    _filterController.removeListener(_onStateChanged);
+    _filterViewModel.removeListener(_onStateChanged);
     super.dispose();
   }
 }

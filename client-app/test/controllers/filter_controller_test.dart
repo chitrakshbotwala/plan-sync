@@ -1,10 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/util/enums.dart';
-import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeSectionsRepository implements SectionsRepository {
@@ -35,58 +33,42 @@ class FakeSectionsRepository implements SectionsRepository {
   };
 
   @override
-  Future<List<String>> getYears() async => fakeYears;
+  Stream<List<String>> getYears() => Stream.value(fakeYears);
 
   @override
-  Future<List<String>> getSemesters(String year) async =>
-      fakeSemesters[year] ?? [];
+  Stream<List<String>> getSemesters(String year) =>
+      Stream.value(fakeSemesters[year] ?? []);
 
   @override
-  Future<Map<String, String>> getSections(String year, String semester) async =>
-      fakeSections[year]?[semester] ?? {};
+  Stream<Map<String, String>> getSections(String year, String semester) =>
+      Stream.value(fakeSections[year]?[semester] ?? {});
 
   @override
-  Future<List<String>> getElectiveYears() async => fakeElectiveYears;
+  Stream<List<String>> getElectiveYears() => Stream.value(fakeElectiveYears);
 
   @override
-  Future<List<String>> getElectiveSemesters(String year) async =>
-      fakeElectiveSemesters[year] ?? [];
+  Stream<List<String>> getElectiveSemesters(String year) =>
+      Stream.value(fakeElectiveSemesters[year] ?? []);
 
   @override
-  Future<Map<String, String>?> getElectiveSchemes(
-          String year, String semester) async =>
-      fakeElectiveSchemes[year]?[semester];
+  Stream<Map<String, String>?> getElectiveSchemes(
+          String year, String semester) =>
+      Stream.value(fakeElectiveSchemes[year]?[semester]);
 }
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late FilterController controller;
+  late FilterViewModel controller;
   late FakeSectionsRepository repository;
   late AppPreferencesController preferences;
-
-  Future<void> pumpWidget(WidgetTester tester, {Widget? child}) async {
-    await tester.pumpWidget(
-      MultiProvider(
-        providers: [
-          ChangeNotifierProvider<AppPreferencesController>.value(
-            value: preferences,
-          ),
-          ChangeNotifierProvider<FilterController>.value(value: controller),
-        ],
-        child: MaterialApp(
-          home: child ?? const Scaffold(body: SizedBox()),
-        ),
-      ),
-    );
-  }
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     preferences = AppPreferencesController();
     await preferences.onInit();
     repository = FakeSectionsRepository();
-    controller = FilterController(
+    controller = FilterViewModel(
       sectionsRepository: repository,
       preferences: preferences,
     );
@@ -96,6 +78,7 @@ void main() {
   group('initialize', () {
     test('loads years and electiveYears from repository', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       expect(controller.years, ['2024', '2023']);
       expect(controller.electiveYears, ['2024', '2023']);
     });
@@ -103,12 +86,14 @@ void main() {
     test('restores primary year when saved in preferences', () async {
       await preferences.savePrimaryYearPreference('2023');
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       expect(controller.selectedYear, '2023');
     });
 
     test('does not set selectedYear when primary not in years list', () async {
       await preferences.savePrimaryYearPreference('1999');
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       expect(controller.selectedYear, isNull);
     });
   });
@@ -116,6 +101,7 @@ void main() {
   group('selectedYear setter', () {
     test('setting year loads semesters asynchronously', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       expect(controller.semesters, ['SEM1', 'SEM2']);
@@ -123,6 +109,7 @@ void main() {
 
     test('clears downstream state when year changes', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
@@ -136,6 +123,7 @@ void main() {
 
     test('setting same year is a no-op', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       final semsBefore = controller.semesters;
@@ -147,6 +135,7 @@ void main() {
   group('activeSemester setter', () {
     test('setting semester loads sections', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
@@ -156,6 +145,7 @@ void main() {
 
     test('changing semester clears section', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
@@ -169,6 +159,7 @@ void main() {
 
     test('setting same semester is a no-op', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
@@ -182,6 +173,7 @@ void main() {
   group('activeSection setter', () {
     setUp(() async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
@@ -220,6 +212,7 @@ void main() {
     test('activeElectiveSemester resets scheme and code and fetches schemes',
         () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedElectiveYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeElectiveScheme = 'Scheme A';
@@ -256,6 +249,7 @@ void main() {
 
     test('returns combined code when both selected', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
@@ -312,133 +306,105 @@ void main() {
   });
 
   group('storePrimarySection', () {
-    testWidgets('saves selected section to preferences', (tester) async {
+    test('saves selected section to preferences', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
       controller.activeSemester = 'SEM1';
       await Future.delayed(Duration.zero);
       controller.activeSection = 'A-16';
 
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimarySection(ctx);
+      final result = await controller.storePrimarySection();
+      expect(result, isTrue);
       expect(preferences.getPrimarySectionPreference(), 'A16');
     });
 
-    testWidgets('does not save when no active section', (tester) async {
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimarySection(ctx);
+    test('returns false and does not save when no active section', () async {
+      final result = await controller.storePrimarySection();
+      expect(result, isFalse);
       expect(preferences.getPrimarySectionPreference(), isNull);
-      await tester.pumpAndSettle(const Duration(seconds: 6));
     });
   });
 
   group('storePrimarySemester', () {
-    testWidgets('saves selected semester', (tester) async {
-      await pumpWidget(tester);
+    test('saves selected semester', () async {
       controller.activeSemester = 'SEM1';
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimarySemester(ctx);
+      final result = await controller.storePrimarySemester();
+      expect(result, isTrue);
       expect(preferences.getPrimarySemesterPreference(), 'SEM1');
     });
 
-    testWidgets('does not save when no active semester', (tester) async {
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimarySemester(ctx);
+    test('returns false and does not save when no active semester', () async {
+      final result = await controller.storePrimarySemester();
+      expect(result, isFalse);
       expect(preferences.getPrimarySemesterPreference(), isNull);
-      await tester.pumpAndSettle(const Duration(seconds: 6));
     });
   });
 
   group('storePrimaryYear', () {
-    testWidgets('saves selected year', (tester) async {
+    test('saves selected year', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
 
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimaryYear(ctx);
+      final result = await controller.storePrimaryYear();
+      expect(result, isTrue);
       expect(preferences.getPrimaryYearPreference(), '2024');
     });
 
-    testWidgets('does not save when selectedYear is null', (tester) async {
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimaryYear(ctx);
+    test('returns false when selectedYear is null', () async {
+      final result = await controller.storePrimaryYear();
+      expect(result, isFalse);
       expect(preferences.getPrimaryYearPreference(), isNull);
-      await tester.pumpAndSettle(const Duration(seconds: 6));
     });
   });
 
   group('storePrimaryElectiveScheme', () {
-    testWidgets('saves selected elective scheme code', (tester) async {
-      await pumpWidget(tester);
+    test('saves selected elective scheme code', () async {
       controller.activeElectiveSchemeCode = 'a';
-
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimaryElectiveScheme(ctx);
+      final result = await controller.storePrimaryElectiveScheme();
+      expect(result, isTrue);
       expect(preferences.getPrimaryElectiveSchemePreference(), 'a');
     });
 
-    testWidgets('returns error future when no scheme is selected',
-        (tester) async {
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await expectLater(
-        controller.storePrimaryElectiveScheme(ctx),
-        throwsA(anything),
-      );
-      await tester.pumpAndSettle(const Duration(seconds: 6));
+    test('returns false when no scheme is selected', () async {
+      final result = await controller.storePrimaryElectiveScheme();
+      expect(result, isFalse);
     });
   });
 
   group('storePrimaryElectiveSemester', () {
-    testWidgets('saves selected elective semester', (tester) async {
-      await pumpWidget(tester);
+    test('saves selected elective semester', () async {
       controller.activeElectiveSemester = 'SEM2';
-
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimaryElectiveSemester(ctx);
+      final result = await controller.storePrimaryElectiveSemester();
+      expect(result, isTrue);
       expect(preferences.getPrimaryElectiveSemesterPreference(), 'SEM2');
     });
 
-    testWidgets('returns error future when no semester is selected',
-        (tester) async {
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await expectLater(
-        controller.storePrimaryElectiveSemester(ctx),
-        throwsA(anything),
-      );
-      await tester.pumpAndSettle(const Duration(seconds: 6));
+    test('returns false when no semester is selected', () async {
+      final result = await controller.storePrimaryElectiveSemester();
+      expect(result, isFalse);
     });
   });
 
   group('storePrimaryElectiveYear', () {
-    testWidgets('saves selected elective year', (tester) async {
+    test('saves selected elective year', () async {
       await controller.initialize();
+      await Future.delayed(Duration.zero);
       controller.selectedElectiveYear = '2024';
       await Future.delayed(Duration.zero);
 
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await controller.storePrimaryElectiveYear(ctx);
+      final result = await controller.storePrimaryElectiveYear();
+      expect(result, isTrue);
       expect(preferences.getPrimaryElectiveYearPreference(), '2024');
     });
 
-    testWidgets('returns error future when no elective year selected',
-        (tester) async {
-      await pumpWidget(tester);
-      final ctx = tester.element(find.byType(Scaffold));
-      await expectLater(
-        controller.storePrimaryElectiveYear(ctx),
-        throwsA(anything),
-      );
-      await tester.pumpAndSettle(const Duration(seconds: 6));
+    test('returns false when no elective year selected', () async {
+      final result = await controller.storePrimaryElectiveYear();
+      expect(result, isFalse);
     });
   });
+
 }

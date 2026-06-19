@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/util/enums.dart';
@@ -178,7 +178,7 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
 
     if (widget.isElective) {
       final vm = context.watch<ElectivesViewModel>();
-      final filterController = context.watch<FilterController>();
+      final filterController = context.watch<FilterViewModel>();
 
       if (vm.isLoading && !vm.hasData) {
         return Column(
@@ -327,7 +327,7 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
 
     // Non-elective: ScheduleViewModel owns the subscription.
     final vm = context.watch<ScheduleViewModel>();
-    final filterController = context.watch<FilterController>();
+    final filterController = context.watch<FilterViewModel>();
 
     if (vm.isLoading && !vm.hasData) {
       return Column(

@@ -5,7 +5,7 @@ import 'package:plan_sync/controllers/analytics_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/controllers/version_controller.dart';
@@ -24,7 +24,7 @@ class AppInitializer {
 
       await Future.wait([
         Provider.of<VersionController>(context, listen: false).onReady(context),
-        Provider.of<FilterController>(context, listen: false).initialize(),
+        Provider.of<FilterViewModel>(context, listen: false).initialize(),
         Provider.of<RemoteConfigController>(context, listen: false).onReady(),
       ]);
 

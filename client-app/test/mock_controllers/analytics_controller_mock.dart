@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/controllers/analytics_controller.dart';
 import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/util/logger.dart';
 
 import 'auth_mock.dart';
-import 'filter_controller_mock.dart';
+import 'filter_view_model_mock.dart';
 
 class MockAnalyticsController extends Mock
     with ChangeNotifier
@@ -15,7 +15,7 @@ class MockAnalyticsController extends Mock
   Auth auth = MockAuth();
 
   @override
-  FilterController filters = MockFilterController();
+  FilterViewModel filters = MockFilterViewModel();
 
   @override
   Future<void> onReady(BuildContext context) async {

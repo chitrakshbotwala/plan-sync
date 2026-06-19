@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:plan_sync/util/external_links.dart';
 import 'package:plan_sync/util/snackbar.dart';
@@ -22,8 +22,8 @@ class ReportErrorMailPopup extends StatelessWidget {
         return;
       }
 
-      FilterController controller =
-          Provider.of<FilterController>(context, listen: false);
+      FilterViewModel controller =
+          Provider.of<FilterViewModel>(context, listen: false);
       await ExternalLinks.reportErrorViaMail(
         academicYear: controller.selectedYear,
         course: controller.activeSemester,

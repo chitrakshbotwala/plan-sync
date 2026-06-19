@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
 import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
 
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/util/extensions.dart';
 import 'package:plan_sync/util/snackbar.dart';
@@ -44,7 +44,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
 
   List<ScheduleEntry> filteredSchedule = [];
 
-  late FilterController filterProvider;
+  late FilterViewModel filterProvider;
   late AppPreferencesController appPreferencesController;
 
   @override
@@ -54,7 +54,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
       context,
       listen: false,
     );
-    filterProvider = Provider.of<FilterController>(
+    filterProvider = Provider.of<FilterViewModel>(
       context,
       listen: false,
     );

@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 
 class ScheduleViewModel extends ChangeNotifier {
   ScheduleViewModel({
     required ScheduleRepository repository,
-    required FilterController filterController,
+    required FilterViewModel filterViewModel,
   })  : _repository = repository,
-        _filterController = filterController {
-    _filterController.addListener(_onStateChanged);
+        _filterViewModel = filterViewModel {
+    _filterViewModel.addListener(_onStateChanged);
     _tryLoad();
   }
 
   final ScheduleRepository _repository;
-  final FilterController _filterController;
+  final FilterViewModel _filterViewModel;
   StreamSubscription<Timetable?>? _sub;
 
   // Track last-loaded params to avoid redundant fetches on unrelated notifies.
@@ -32,9 +32,9 @@ class ScheduleViewModel extends ChangeNotifier {
   void _onStateChanged() => _tryLoad();
 
   void _tryLoad() {
-    final year = _filterController.activeYear;
-    final semester = _filterController.activeSemester;
-    final section = _filterController.activeSectionCode;
+    final year = _filterViewModel.activeYear;
+    final semester = _filterViewModel.activeSemester;
+    final section = _filterViewModel.activeSectionCode;
 
     if (year == null || semester == null || section == null) {
       if (isLoading) {
@@ -89,7 +89,7 @@ class ScheduleViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _sub?.cancel();
-    _filterController.removeListener(_onStateChanged);
+    _filterViewModel.removeListener(_onStateChanged);
     super.dispose();
   }
 }

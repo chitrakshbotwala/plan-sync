@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:provider/provider.dart';
@@ -36,7 +36,7 @@ class _SchedulePreferenceButtonState extends State<SchedulePreferenceButton> {
       ),
       child: Row(
         children: [
-          Selector<FilterController, String?>(
+          Selector<FilterViewModel, String?>(
             builder: (ctx, shortCodee, child) {
               return Text(
                 shortCodee ?? 'Processing',

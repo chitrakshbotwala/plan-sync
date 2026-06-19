@@ -10,7 +10,7 @@ import 'package:plan_sync/controllers/app_review_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
@@ -84,9 +84,9 @@ class AppProvider extends StatelessWidget {
             apiClient: context.read<ApiClient>(),
           ),
         ),
-        // FilterController needs SectionsRepository + AppPreferencesController
+        // FilterViewModel needs SectionsRepository + AppPreferencesController
         ChangeNotifierProvider(
-          create: (context) => FilterController(
+          create: (context) => FilterViewModel(
             sectionsRepository: context.read<SectionsRepository>(),
             preferences: context.read<AppPreferencesController>(),
           ),
@@ -230,7 +230,7 @@ final _router = GoRouter(
                   ChangeNotifierProvider<ScheduleViewModel>(
                     create: (ctx) => ScheduleViewModel(
                       repository: ctx.read<ScheduleRepository>(),
-                      filterController: ctx.read<FilterController>(),
+                      filterViewModel: ctx.read<FilterViewModel>(),
                     ),
                   ),
                   ChangeNotifierProvider<HomeViewModel>(
@@ -254,7 +254,7 @@ final _router = GoRouter(
               builder: (context, state) => ChangeNotifierProvider<ElectivesViewModel>(
                 create: (ctx) => ElectivesViewModel(
                   repository: ctx.read<ElectivesRepository>(),
-                  filterController: ctx.read<FilterController>(),
+                  filterViewModel: ctx.read<FilterViewModel>(),
                 ),
                 child: const ElectiveScreen(),
               ),

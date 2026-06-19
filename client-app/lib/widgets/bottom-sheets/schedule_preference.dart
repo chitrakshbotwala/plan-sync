@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:plan_sync/widgets/dropdowns/sections_bar.dart';
 import 'package:plan_sync/widgets/dropdowns/semester_bar.dart';
@@ -30,11 +30,10 @@ class SchedulePreferenceBottomSheetState
 
   void exitBottomSheet() {
     if (savePreferencesOnExit) {
-      FilterController controller =
-          Provider.of<FilterController>(context, listen: false);
-      controller.storePrimarySemester(context);
-      controller.storePrimarySection(context);
-      controller.storePrimaryYear(context);
+      final vm = Provider.of<FilterViewModel>(context, listen: false);
+      vm.storePrimaryYear();
+      vm.storePrimarySemester();
+      vm.storePrimarySection();
       CustomSnackbar.info(
         'Primary Preferences Stored!',
         "Your timetable will be selected by default.",

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/widgets/dropdowns/sections_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/filter_controller_mock.dart';
+import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -28,7 +28,7 @@ void main() {
 
   testWidgets('Semester Bar loads properly', (WidgetTester tester) async {
     final filterController =
-        Get.find<FilterController>() as MockFilterController;
+        Get.find<FilterViewModel>() as MockFilterViewModel;
 
     filterController.sections = {
       "b13": "B13 CSE",
@@ -53,7 +53,7 @@ void main() {
     'Semester Bar loads and update controller dropdown items',
     (WidgetTester tester) async {
       final filterController =
-          Get.find<FilterController>() as MockFilterController;
+          Get.find<FilterViewModel>() as MockFilterViewModel;
 
       filterController.sections = {
         "b13": "B13 CSE",

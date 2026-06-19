@@ -1,14 +1,11 @@
-import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:flutter/material.dart';
 import 'package:plan_sync/util/enums.dart';
 
-class MockFilterController extends Mock
+class MockFilterViewModel extends Mock
     with ChangeNotifier
-    implements FilterController {
-  late AppPreferencesController preferences;
-
+    implements FilterViewModel {
   // --- Schedule metadata ---
 
   @override
@@ -172,39 +169,45 @@ class MockFilterController extends Mock
   }
 
   @override
-  Future<void> storePrimarySection(BuildContext context) async {
-    if (_activeSectionCode == null) return;
+  Future<bool> storePrimarySection() async {
+    if (_activeSectionCode == null) return false;
     notifyListeners();
+    return true;
   }
 
   @override
-  Future<void> storePrimarySemester(BuildContext context) async {
-    if (_activeSemester == null) return;
+  Future<bool> storePrimarySemester() async {
+    if (_activeSemester == null) return false;
     notifyListeners();
+    return true;
   }
 
   @override
-  Future<void> storePrimaryYear(BuildContext context) async {
-    if (_selectedYear == null) return;
+  Future<bool> storePrimaryYear() async {
+    if (_selectedYear == null) return false;
     notifyListeners();
+    return true;
   }
 
   @override
-  Future<void> storePrimaryElectiveScheme(BuildContext context) async {
-    if (_activeElectiveSchemeCode == null) return Future.error('error');
+  Future<bool> storePrimaryElectiveScheme() async {
+    if (_activeElectiveSchemeCode == null) return false;
     notifyListeners();
+    return true;
   }
 
   @override
-  Future<void> storePrimaryElectiveSemester(BuildContext context) async {
-    if (_activeElectiveSemester == null) return Future.error('error');
+  Future<bool> storePrimaryElectiveSemester() async {
+    if (_activeElectiveSemester == null) return false;
     notifyListeners();
+    return true;
   }
 
   @override
-  Future<void> storePrimaryElectiveYear(BuildContext context) async {
-    if (_selectedElectiveYear == null) return Future.error('error');
+  Future<bool> storePrimaryElectiveYear() async {
+    if (_selectedElectiveYear == null) return false;
     notifyListeners();
+    return true;
   }
 
   @override

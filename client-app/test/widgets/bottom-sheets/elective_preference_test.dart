@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
 import 'package:plan_sync/widgets/dropdowns/elective_year_bar.dart';
@@ -12,7 +12,7 @@ import 'package:plan_sync/widgets/dropdowns/electives_sem_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import '../../mock_controllers/app_preferences_controller_mock.dart';
-import '../../mock_controllers/filter_controller_mock.dart';
+import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -75,7 +75,7 @@ void main() {
   testWidgets('ElectivePreferenceBottomSheet opens yearbar',
       (WidgetTester tester) async {
     final filterController =
-        Get.find<FilterController>() as MockFilterController;
+        Get.find<FilterViewModel>() as MockFilterViewModel;
 
     await pumpBaseWidget(tester);
 
@@ -96,7 +96,7 @@ void main() {
   testWidgets('ElectivePreferenceBottomSheet opens SemestersBar',
       (WidgetTester tester) async {
     final filterController =
-        Get.find<FilterController>() as MockFilterController;
+        Get.find<FilterViewModel>() as MockFilterViewModel;
 
     await pumpBaseWidget(tester);
 
@@ -115,7 +115,7 @@ void main() {
   testWidgets('ElectivePreferenceBottomSheet opens SectionBar',
       (WidgetTester tester) async {
     final filterController =
-        Get.find<FilterController>() as MockFilterController;
+        Get.find<FilterViewModel>() as MockFilterViewModel;
 
     filterController.electiveSchemes = {
       "a": "Scheme A",
@@ -147,7 +147,7 @@ void main() {
     final perfs =
         Get.find<AppPreferencesController>() as MockAppPreferencesController;
     final filterController =
-        Get.find<FilterController>() as MockFilterController;
+        Get.find<FilterViewModel>() as MockFilterViewModel;
 
     // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();
@@ -196,7 +196,7 @@ void main() {
     final perfs =
         Get.find<AppPreferencesController>() as MockAppPreferencesController;
     final filterController =
-        Get.find<FilterController>() as MockFilterController;
+        Get.find<FilterViewModel>() as MockFilterViewModel;
 
     // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();

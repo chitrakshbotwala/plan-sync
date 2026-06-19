@@ -1,9 +1,9 @@
 abstract class SectionsRepository {
-  Future<List<String>> getYears();
-  Future<List<String>> getSemesters(String year);
-  Future<Map<String, String>> getSections(String year, String semester);
+  Stream<List<String>> getYears();
+  Stream<List<String>> getSemesters(String year);
+  Stream<Map<String, String>> getSections(String year, String semester);
 
-  Future<List<String>> getElectiveYears();
-  Future<List<String>> getElectiveSemesters(String year);
-  Future<Map<String, String>?> getElectiveSchemes(String year, String semester);
+  Stream<List<String>> getElectiveYears();
+  Stream<List<String>> getElectiveSemesters(String year);
+  Stream<Map<String, String>?> getElectiveSchemes(String year, String semester);
 }

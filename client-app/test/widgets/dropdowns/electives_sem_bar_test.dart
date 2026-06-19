@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/widgets/dropdowns/electives_sem_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/filter_controller_mock.dart';
+import '../../mock_controllers/filter_view_model_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
@@ -28,7 +28,7 @@ void main() {
     'ElectiveSemesterBar loads when no data',
     (WidgetTester tester) async {
       final filterController =
-          Get.find<FilterController>() as MockFilterController;
+          Get.find<FilterViewModel>() as MockFilterViewModel;
 
       filterController.activeElectiveSemester = null;
       filterController.electivesSemesters = null;
@@ -43,7 +43,7 @@ void main() {
     'ElectiveSemesterBar loads when data is availble but not selected',
     (WidgetTester tester) async {
       final filterController =
-          Get.find<FilterController>() as MockFilterController;
+          Get.find<FilterViewModel>() as MockFilterViewModel;
 
       filterController.electivesSemesters = ["SEM1", "SEM2"];
       // initial state
@@ -57,7 +57,7 @@ void main() {
     'ElectiveSemesterBar updates data when clicked on item',
     (WidgetTester tester) async {
       final filterController =
-          Get.find<FilterController>() as MockFilterController;
+          Get.find<FilterViewModel>() as MockFilterViewModel;
 
       filterController.electivesSemesters = ["SEM1", "SEM2"];
 

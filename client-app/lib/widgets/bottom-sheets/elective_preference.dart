@@ -4,7 +4,7 @@ import 'package:plan_sync/widgets/dropdowns/electives_scheme_bar.dart';
 import 'package:plan_sync/widgets/dropdowns/electives_sem_bar.dart';
 import 'package:plan_sync/widgets/dropdowns/elective_year_bar.dart';
 import 'package:plan_sync/util/snackbar.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:provider/provider.dart';
 
 class ElectivePreferenceBottomSheet extends StatefulWidget {
@@ -30,13 +30,10 @@ class ElectivePreferenceBottomSheetState
 
   void exitBottomSheet() {
     if (savePreferencesOnExit) {
-      FilterController controller = Provider.of<FilterController>(
-        context,
-        listen: false,
-      );
-      controller.storePrimaryElectiveYear(context);
-      controller.storePrimaryElectiveSemester(context);
-      controller.storePrimaryElectiveScheme(context);
+      final vm = Provider.of<FilterViewModel>(context, listen: false);
+      vm.storePrimaryElectiveYear();
+      vm.storePrimaryElectiveSemester();
+      vm.storePrimaryElectiveScheme();
       CustomSnackbar.info(
         'Primary Preferences Stored!',
         "Your timetable will be selected by default.",

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:provider/provider.dart';
@@ -18,7 +18,7 @@ class DateWidget extends StatelessWidget {
     final colorScheme = Theme.of(context).colorScheme;
     final appTheme = Provider.of<AppThemeController>(context, listen: false);
 
-    return Consumer<FilterController>(
+    return Consumer<FilterViewModel>(
       builder: (ctx, filterController, child) {
         return Container(
           decoration: ShapeDecoration(
