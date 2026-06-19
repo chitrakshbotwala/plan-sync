@@ -29,7 +29,7 @@ class CampusNavigatorView extends StatelessWidget {
     return ChangeNotifierProvider(
       create: (_) => CampusNavigatorViewModel(
         repository: CampusNavigatorRepositoryImpl(),
-      ),
+      )..load(),
       child: _CampusNavigatorBody(onLaunchMaps: _launchMaps),
     );
   }

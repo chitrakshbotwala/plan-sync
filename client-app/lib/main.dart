@@ -255,7 +255,6 @@ final _router = GoRouter(
                     create: (ctx) => HomeViewModel(
                       appTour: ctx.read<AppTourController>(),
                       appPreferences: ctx.read<AppPreferencesController>(),
-                      notifications: ctx.read<NotificationService>(),
                     ),
                   ),
                 ],

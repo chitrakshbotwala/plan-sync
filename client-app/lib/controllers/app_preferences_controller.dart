@@ -61,29 +61,26 @@ class AppPreferencesController extends ChangeNotifier {
   // regarding HUD Notices
   static const String _noticesDismissalPerfKey = 'dismissed_notices';
 
+  Map<String, dynamic> _getNoticeDismissals() =>
+      json.decode(perfs.getString(_noticesDismissalPerfKey) ?? '{}')
+          as Map<String, dynamic>;
+
   Future<void> dismissNotice(int noticeId) async {
-    Map<String, dynamic> dismissed =
-        json.decode(perfs.getString(_noticesDismissalPerfKey) ?? '{}');
+    final dismissed = _getNoticeDismissals();
     dismissed[noticeId.toString()] = DateTime.now().toIso8601String();
     await perfs.setString(_noticesDismissalPerfKey, json.encode(dismissed));
   }
 
   bool shouldShowNotice(int noticeId) {
-    Map<String, dynamic> dismissed =
-        json.decode(perfs.getString(_noticesDismissalPerfKey) ?? '{}');
-    return !dismissed.containsKey(noticeId.toString());
+    return !_getNoticeDismissals().containsKey(noticeId.toString());
   }
 
   Future<void> cleanupOldNoticeDismissals() async {
-    Map<String, dynamic> dismissed =
-        json.decode(perfs.getString(_noticesDismissalPerfKey) ?? '{}');
-
-    DateTime yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final dismissed = _getNoticeDismissals();
+    final yesterday = DateTime.now().subtract(const Duration(days: 1));
     dismissed.removeWhere((key, value) {
-      DateTime dismissedDate = DateTime.parse(value);
-      return dismissedDate.isBefore(yesterday);
+      return DateTime.parse(value).isBefore(yesterday);
     });
-
     await perfs.setString(_noticesDismissalPerfKey, json.encode(dismissed));
   }
 
@@ -96,9 +93,7 @@ class AppPreferencesController extends ChangeNotifier {
   }
 
   Future<void> saveAppReviewRequest(InAppReviewCacheModel model) async {
-    String jsonData = json.encode(model.toJson());
-    await perfs.setString(_reviewRequestKey, jsonData);
-    notifyListeners();
+    await perfs.setString(_reviewRequestKey, json.encode(model.toJson()));
   }
 
   static const String _starredElectivesKey = 'starred_electives';
@@ -144,5 +139,24 @@ class AppPreferencesController extends ChangeNotifier {
     if (current.isEmpty) return false;
 
     return current.contains(electiveId);
+  }
+
+  // Notification permission dialog cooldown
+  static const String _notificationDialogDismissedKey =
+      'notification_dialog_dismissed_at';
+
+  Future<void> saveNotificationDialogDismissedAt() async {
+    await perfs.setString(
+      _notificationDialogDismissedKey,
+      DateTime.now().toIso8601String(),
+    );
+  }
+
+  bool shouldPromptForNotifications() {
+    final raw = perfs.getString(_notificationDialogDismissedKey);
+    if (raw == null) return true;
+    final dismissedAt = DateTime.tryParse(raw);
+    if (dismissedAt == null) return true;
+    return DateTime.now().difference(dismissedAt) > const Duration(days: 7);
   }
 }

@@ -79,7 +79,6 @@ Widget wrapWithProviders({required Widget child}) {
         create: (_) => HomeViewModel(
           appTour: Get.find<AppTourController>(),
           appPreferences: Get.find<AppPreferencesController>(),
-          notifications: Get.find<NotificationService>(),
         ),
       ),
     ],

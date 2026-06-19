@@ -11,10 +11,18 @@ class GoRouterRefreshStream extends ChangeNotifier {
     log('GoRouterRefreshStream getting initial message');
     FirebaseMessaging.instance.getInitialMessage().then((initialMessage) {
       if (initialMessage != null) {
-        // Handle navigation, e.g.:
         final route = initialMessage.data['route'];
         NotificationService.initialNotificationRoute = route;
         log('Route from initial message: $route');
+        notifyListeners();
+      }
+    });
+
+    FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
+      final route = message.data['route'];
+      if (route != null) {
+        log('Message clicked, route: $route');
+        NotificationService.initialNotificationRoute = route;
         notifyListeners();
       }
     });

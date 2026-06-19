@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
 import 'package:plan_sync/widgets/date_widget.dart';
@@ -18,8 +20,48 @@ class _HomeScreenState extends State<HomeScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<HomeViewModel>().onReady(context);
+      if (!mounted) return;
+      final vm = context.read<HomeViewModel>();
+      vm.startAppTour(context);
+      if (vm.shouldInitializeNotifications) {
+        _initNotifications();
+      }
     });
+  }
+
+  Future<void> _initNotifications() async {
+    if (!mounted) return;
+    final service = context.read<NotificationService>();
+    final prefs = context.read<AppPreferencesController>();
+    final needsPerm = await service.needsPermission();
+    if (needsPerm && prefs.shouldPromptForNotifications() && mounted) {
+      final shouldRequest = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Enable Notifications'),
+          content: const Text(
+            'Notifications will be sent for class alerts. Would you like to enable notifications?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('No'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Yes'),
+            ),
+          ],
+        ),
+      );
+      if (shouldRequest == true) {
+        await service.requestPermission();
+      } else {
+        await prefs.saveNotificationDialogDismissedAt();
+      }
+    }
+    await service.initialize();
   }
 
   @override

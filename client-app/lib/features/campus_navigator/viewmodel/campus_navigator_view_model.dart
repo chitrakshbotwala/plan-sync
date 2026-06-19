@@ -6,9 +6,9 @@ import 'package:plan_sync/util/logger.dart';
 
 class CampusNavigatorViewModel extends ChangeNotifier {
   CampusNavigatorViewModel({required CampusNavigatorRepository repository})
-      : _repository = repository {
-    fetchItems(reset: true);
-  }
+      : _repository = repository;
+
+  void load() => fetchItems(reset: true);
 
   final CampusNavigatorRepository _repository;
   final List<CampusNavigationModel> _items = [];
