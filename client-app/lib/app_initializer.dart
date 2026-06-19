@@ -1,7 +1,7 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
@@ -28,8 +28,8 @@ class AppInitializer {
       ]);
 
       final analytics =
-          Provider.of<AnalyticsController>(context, listen: false);
-      await analytics.onReady(context);
+          Provider.of<AnalyticsService>(context, listen: false);
+      await analytics.onReady();
 
       // Keep analytics user data in sync with auth state for the app's lifetime.
       Provider.of<AuthRepository>(context, listen: false)

@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/app_initializer.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/app_review_controller.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
+import 'package:plan_sync/core/services/app_review_service.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
@@ -93,7 +93,6 @@ class AppProvider extends StatelessWidget {
             preferences: context.read<AppPreferencesController>(),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => AnalyticsController()),
         ChangeNotifierProvider(create: (_) => AppTourController()),
         Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
         ChangeNotifierProvider(create: (_) => RemoteConfigController()),
@@ -109,13 +108,23 @@ class AppProvider extends StatelessWidget {
             preferences: context.read<AppPreferencesController>(),
           ),
         ),
+        Provider(
+          create: (context) => AnalyticsService(
+            auth: context.read<AuthRepository>(),
+            filters: context.read<FilterViewModel>(),
+            version: context.read<VersionViewModel>(),
+          ),
+        ),
         ChangeNotifierProvider(create: (_) => AppThemeController()),
         Provider(create: (_) => NotificationService()),
-        ChangeNotifierProvider(
+        Provider(
           create: (context) {
-            final controller = AppReviewController();
-            controller.initalize(context);
-            return controller;
+            final service = AppReviewService(
+              preferences: context.read<AppPreferencesController>(),
+              version: context.read<VersionViewModel>(),
+            );
+            service.initialize();
+            return service;
           },
           lazy: false,
         ),
@@ -288,7 +297,7 @@ final _router = GoRouter(
                 create: (context) => SettingsViewModel(
                   auth: context.read<AuthRepository>(),
                   version: context.read<VersionViewModel>(),
-                  analytics: context.read<AnalyticsController>(),
+                  analytics: context.read<AnalyticsService>(),
                 ),
                 child: const SettingsPage(),
               ),

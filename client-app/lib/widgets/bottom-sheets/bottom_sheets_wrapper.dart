@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/widgets/bottom-sheets/contribute_schedule.dart';
 import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
 import 'package:plan_sync/widgets/bottom-sheets/report_error.dart';
@@ -68,7 +68,7 @@ class BottomSheets {
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    Provider.of<AnalyticsController>(
+    Provider.of<AnalyticsService>(
       context,
       listen: false,
     ).logShareViaExternalApps();
