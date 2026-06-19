@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_update/in_app_update.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/version_service.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
@@ -16,7 +16,7 @@ void main() {
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    final prefs = AppPreferencesController();
+    final prefs = AppPreferencesRepositoryImpl();
     await prefs.onInit();
     versionService = VersionService(apiClient: ApiClient());
     viewModel = VersionViewModel(

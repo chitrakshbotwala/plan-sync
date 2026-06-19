@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/backend/models/in_app_review_model.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/app_review_service.dart';
 import 'package:plan_sync/core/services/version_service.dart';
@@ -41,11 +41,11 @@ void main() {
   group('shouldRequestReview', () {
     late AppReviewService service;
     late VersionViewModel version;
-    late AppPreferencesController preferences;
+    late AppPreferencesRepositoryImpl preferences;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
-      preferences = AppPreferencesController();
+      preferences = AppPreferencesRepositoryImpl();
       await preferences.onInit();
       version = VersionViewModel(
         versionService: VersionService(apiClient: ApiClient()),

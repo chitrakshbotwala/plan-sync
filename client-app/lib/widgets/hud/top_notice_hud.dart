@@ -1,7 +1,7 @@
 import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/widgets/hud/notice_carousel_widget.dart';
 import 'package:plan_sync/widgets/version_check.dart';
@@ -30,7 +30,7 @@ class _TopNoticeHudState extends State<TopNoticeHud> {
 
   Future<void> _fetchNotices() async {
     final remoteConfig =
-        Provider.of<RemoteConfigController>(context, listen: false);
+        Provider.of<RemoteConfigService>(context, listen: false);
     final result = remoteConfig.getNotices();
     // Remove items that should not be shown
     result.removeWhere((item) => !item.shouldShow(context));

@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
@@ -8,7 +8,7 @@ import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
 class AppTourController extends ChangeNotifier {
-  late AppPreferencesController appPreferencesController;
+  late AppPreferencesRepository appPreferencesController;
 
   late GlobalKey _schedulePreferencesButtonKey;
   GlobalKey get schedulePreferencesButtonKey => _schedulePreferencesButtonKey;
@@ -23,7 +23,7 @@ class AppTourController extends ChangeNotifier {
   GlobalKey get doneButtonKey => _doneButtonKey;
 
   void onInit(BuildContext context) {
-    appPreferencesController = Provider.of<AppPreferencesController>(
+    appPreferencesController = Provider.of<AppPreferencesRepository>(
       context,
       listen: false,
     );

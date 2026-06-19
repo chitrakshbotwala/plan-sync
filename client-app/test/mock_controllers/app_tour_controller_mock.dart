@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
@@ -13,7 +13,7 @@ class MockAppTourController extends Mock
     with ChangeNotifier
     implements AppTourController {
   @override
-  late AppPreferencesController appPreferencesController;
+  late AppPreferencesRepository appPreferencesController;
 
   @override
   final GlobalKey schedulePreferencesButtonKey = GlobalKey();
@@ -29,7 +29,7 @@ class MockAppTourController extends Mock
 
   @override
   void onInit(BuildContext context) {
-    appPreferencesController = Provider.of<AppPreferencesController>(
+    appPreferencesController = Provider.of<AppPreferencesRepository>(
       context,
       listen: false,
     );

@@ -4,7 +4,7 @@ import 'package:plan_sync/backend/models/timetable.dart';
 import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
 
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/util/extensions.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:plan_sync/widgets/no_schedule_widget.dart';
@@ -45,12 +45,12 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
   List<ScheduleEntry> filteredSchedule = [];
 
   late FilterViewModel filterProvider;
-  late AppPreferencesController appPreferencesController;
+  late AppPreferencesRepository appPreferencesController;
 
   @override
   void initState() {
     super.initState();
-    appPreferencesController = Provider.of<AppPreferencesController>(
+    appPreferencesController = Provider.of<AppPreferencesRepository>(
       context,
       listen: false,
     );
@@ -83,13 +83,13 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
     final scheme = filterProvider.activeElectiveScheme ?? '';
 
     filteredSchedule.sort((a, b) {
-      final aId = AppPreferencesController.electiveId(
+      final aId = AppPreferencesRepository.electiveId(
         academicYear: academicYear,
         semester: semester,
         scheme: scheme,
         subjectName: a.subject ?? '',
       );
-      final bId = AppPreferencesController.electiveId(
+      final bId = AppPreferencesRepository.electiveId(
         academicYear: academicYear,
         semester: semester,
         scheme: scheme,
@@ -252,7 +252,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (context, index) {
-              final electiveId = AppPreferencesController.electiveId(
+              final electiveId = AppPreferencesRepository.electiveId(
                 academicYear: filterProvider.selectedElectiveYear ?? '',
                 semester: filterProvider.activeElectiveSemester ?? '',
                 scheme: filterProvider.activeElectiveScheme ?? '',

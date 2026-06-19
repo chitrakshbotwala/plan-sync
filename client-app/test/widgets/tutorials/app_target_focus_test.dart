@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/views/home_screen.dart';
+import 'package:plan_sync/features/home/view/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 

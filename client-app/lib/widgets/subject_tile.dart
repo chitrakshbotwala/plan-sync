@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 
 class SubjectTile extends StatelessWidget {
   const SubjectTile({
@@ -26,7 +26,7 @@ class SubjectTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    final id = AppPreferencesController.electiveId(
+    final id = AppPreferencesRepository.electiveId(
       academicYear: academicYear,
       semester: semester,
       scheme: scheme,

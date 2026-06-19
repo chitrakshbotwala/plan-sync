@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/util/enums.dart';
@@ -61,11 +61,11 @@ void main() {
 
   late FilterViewModel controller;
   late FakeSectionsRepository repository;
-  late AppPreferencesController preferences;
+  late AppPreferencesRepositoryImpl preferences;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    preferences = AppPreferencesController();
+    preferences = AppPreferencesRepositoryImpl();
     await preferences.onInit();
     repository = FakeSectionsRepository();
     controller = FilterViewModel(

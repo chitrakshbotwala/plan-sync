@@ -3,10 +3,10 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
@@ -17,14 +17,14 @@ class AppInitializer {
     try {
       await Provider.of<ApiClient>(context, listen: false).initialize();
       Provider.of<AppTourController>(context, listen: false).onInit(context);
-      await Provider.of<AppPreferencesController>(context, listen: false)
+      await Provider.of<AppPreferencesRepository>(context, listen: false)
           .onInit();
       Provider.of<AppThemeController>(context, listen: false).onInit();
 
       await Future.wait([
         Provider.of<VersionViewModel>(context, listen: false).onReady(context),
         Provider.of<FilterViewModel>(context, listen: false).initialize(),
-        Provider.of<RemoteConfigController>(context, listen: false).onReady(),
+        Provider.of<RemoteConfigService>(context, listen: false).onReady(),
       ]);
 
       final analytics =

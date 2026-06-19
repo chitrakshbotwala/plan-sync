@@ -8,7 +8,8 @@ import 'package:plan_sync/app_initializer.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/core/services/app_review_service.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository_impl.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
@@ -24,14 +25,15 @@ import 'package:plan_sync/features/schedule/repository/sections_repository.dart'
 import 'package:plan_sync/features/schedule/repository/sections_repository_impl.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
+import 'package:plan_sync/core/services/remote_config_service_impl.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/router_refresh_stream.dart';
 import 'package:plan_sync/features/campus_navigator/view/campus_navigator_view.dart';
-import 'package:plan_sync/views/electives_screen.dart';
-import 'package:plan_sync/views/forced_update_screen.dart';
-import 'package:plan_sync/views/home_screen.dart';
+import 'package:plan_sync/features/electives/view/electives_screen.dart';
+import 'package:plan_sync/features/version/view/forced_update_screen.dart';
+import 'package:plan_sync/features/home/view/home_screen.dart';
 import 'package:plan_sync/features/auth/view/login_screen.dart';
 import 'package:plan_sync/features/auth/viewmodel/login_view_model.dart';
 import 'package:plan_sync/features/settings/view/settings_screen.dart';
@@ -79,23 +81,27 @@ class AppProvider extends StatelessWidget {
       providers: [
         // Core infra — registered first; nothing depends on them in constructors
         Provider(create: (_) => ApiClient()),
-        ChangeNotifierProvider(create: (_) => AppPreferencesController()),
+        Provider<AppPreferencesRepository>(
+          create: (_) => AppPreferencesRepositoryImpl(),
+        ),
         // SectionsRepository needs ApiClient
         Provider<SectionsRepository>(
           create: (context) => SectionsRepositoryImpl(
             apiClient: context.read<ApiClient>(),
           ),
         ),
-        // FilterViewModel needs SectionsRepository + AppPreferencesController
+        // FilterViewModel needs SectionsRepository + AppPreferencesRepository
         ChangeNotifierProvider(
           create: (context) => FilterViewModel(
             sectionsRepository: context.read<SectionsRepository>(),
-            preferences: context.read<AppPreferencesController>(),
+            preferences: context.read<AppPreferencesRepository>(),
           ),
         ),
         ChangeNotifierProvider(create: (_) => AppTourController()),
         Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
-        ChangeNotifierProvider(create: (_) => RemoteConfigController()),
+        Provider<RemoteConfigService>(
+          create: (_) => RemoteConfigServiceImpl(),
+        ),
         Provider(
           create: (context) => VersionService(
             apiClient: context.read<ApiClient>(),
@@ -104,8 +110,8 @@ class AppProvider extends StatelessWidget {
         ChangeNotifierProvider(
           create: (context) => VersionViewModel(
             versionService: context.read<VersionService>(),
-            remoteConfig: context.read<RemoteConfigController>(),
-            preferences: context.read<AppPreferencesController>(),
+            remoteConfig: context.read<RemoteConfigService>(),
+            preferences: context.read<AppPreferencesRepository>(),
           ),
         ),
         Provider(
@@ -120,7 +126,7 @@ class AppProvider extends StatelessWidget {
         Provider(
           create: (context) {
             final service = AppReviewService(
-              preferences: context.read<AppPreferencesController>(),
+              preferences: context.read<AppPreferencesRepository>(),
               version: context.read<VersionViewModel>(),
             );
             service.initialize();
@@ -254,7 +260,7 @@ final _router = GoRouter(
                   ChangeNotifierProvider<HomeViewModel>(
                     create: (ctx) => HomeViewModel(
                       appTour: ctx.read<AppTourController>(),
-                      appPreferences: ctx.read<AppPreferencesController>(),
+                      appPreferences: ctx.read<AppPreferencesRepository>(),
                     ),
                   ),
                 ],
@@ -339,8 +345,8 @@ String? redirectHandler(BuildContext context, GoRouterState state) {
     return '/login';
   }
 
-  AppPreferencesController perfs =
-      Provider.of<AppPreferencesController>(context, listen: false);
+  AppPreferencesRepository perfs =
+      Provider.of<AppPreferencesRepository>(context, listen: false);
   if (perfs.isAppBelowMinVersion() &&
       state.matchedLocation != '/forced_update') {
     return '/forced_update';

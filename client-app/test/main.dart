@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
@@ -52,7 +52,7 @@ Widget wrapWithProviders({required Widget child}) {
   return MultiProvider(
     providers: [
       Provider<AuthRepository>.value(value: mockAuth),
-      ChangeNotifierProvider<AppPreferencesController>.value(
+      Provider<AppPreferencesRepository>.value(
         value: mockPreferences,
       ),
       ChangeNotifierProvider<FilterViewModel>.value(
@@ -67,7 +67,7 @@ Widget wrapWithProviders({required Widget child}) {
       ChangeNotifierProvider<AppTourController>.value(
         value: mockAppTourController,
       ),
-      ChangeNotifierProvider<RemoteConfigController>.value(
+      Provider<RemoteConfigService>.value(
         value: mockRemoteConfigController,
       ),
       Provider<NotificationService>.value(

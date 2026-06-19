@@ -1,17 +1,14 @@
-import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class MockAppPreferencesController extends Mock
-    with ChangeNotifier
-    implements AppPreferencesController {
+    implements AppPreferencesRepository {
   Future<bool> resetPreferencesToNull() async {
     final res = await perfs.clear();
     return res;
   }
 
-  @override
   late SharedPreferences perfs;
 
   @override

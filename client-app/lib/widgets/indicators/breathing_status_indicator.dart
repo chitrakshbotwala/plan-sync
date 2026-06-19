@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:provider/provider.dart';
 
 class BreathingStatusIndicator extends StatefulWidget {
@@ -68,7 +68,7 @@ class _BreathingStatusIndicatorState extends State<BreathingStatusIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final config = Provider.of<RemoteConfigController>(context, listen: false);
+    final config = Provider.of<RemoteConfigService>(context, listen: false);
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {

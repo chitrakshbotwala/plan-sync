@@ -5,8 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/version_service.dart';
 import 'package:plan_sync/util/app_version.dart';
 import 'package:plan_sync/util/external_links.dart';
@@ -17,15 +17,15 @@ import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 class VersionViewModel extends ChangeNotifier {
   VersionViewModel({
     required VersionService versionService,
-    required RemoteConfigController remoteConfig,
-    required AppPreferencesController preferences,
+    required RemoteConfigService remoteConfig,
+    required AppPreferencesRepository preferences,
   })  : _versionService = versionService,
         _remoteConfig = remoteConfig,
         _preferences = preferences;
 
   final VersionService _versionService;
-  final RemoteConfigController _remoteConfig;
-  final AppPreferencesController _preferences;
+  final RemoteConfigService _remoteConfig;
+  final AppPreferencesRepository _preferences;
 
   late PackageInfo _packageInfo;
 

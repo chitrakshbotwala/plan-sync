@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
 import 'package:plan_sync/widgets/date_widget.dart';
 import 'package:plan_sync/widgets/hud/top_notice_hud.dart';
 import 'package:provider/provider.dart';
-import '../widgets/time_table.dart';
+import 'package:plan_sync/widgets/time_table.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -32,7 +32,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _initNotifications() async {
     if (!mounted) return;
     final service = context.read<NotificationService>();
-    final prefs = context.read<AppPreferencesController>();
+    final prefs = context.read<AppPreferencesRepository>();
     final needsPerm = await service.needsPermission();
     if (needsPerm && prefs.shouldPromptForNotifications() && mounted) {
       final shouldRequest = await showDialog<bool>(

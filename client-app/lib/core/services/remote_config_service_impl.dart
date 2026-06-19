@@ -3,11 +3,13 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/util/logger.dart';
 
-class RemoteConfigController extends ChangeNotifier {
+class RemoteConfigServiceImpl implements RemoteConfigService {
   final remoteConfig = FirebaseRemoteConfig.instance;
 
+  @override
   Future<void> onReady() async {
     await remoteConfig.setConfigSettings(
       RemoteConfigSettings(
@@ -35,12 +37,10 @@ class RemoteConfigController extends ChangeNotifier {
     }
   }
 
-  /// fetches all configs from firebase, and makes models only
-  /// for notices shown in-app
+  @override
   List<HudNoticeModel> getNotices() {
     final val = remoteConfig.getString('hud_notice');
 
-    // data comes as a string
     if (val == '[]') {
       Logger.i('No HUD notices');
       return [];
@@ -56,7 +56,7 @@ class RemoteConfigController extends ChangeNotifier {
     return result;
   }
 
-  /// get latest ios version from remoteConfig
+  @override
   String? latestIosVersion() {
     final value = remoteConfig.getString('latest_ios_version');
     return value == '' ? null : value;
@@ -64,6 +64,7 @@ class RemoteConfigController extends ChangeNotifier {
 
   // TODO: Remove this temporary easter egg
   // ( The Sigma Male Loading Indicator )
+  @override
   bool canShowSigmaEmoji() {
     return remoteConfig.getBool('can_show_sigma_status_indicator');
   }
