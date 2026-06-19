@@ -1,33 +1,46 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:in_app_update/in_app_update.dart';
-import 'package:package_info_plus/package_info_plus.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/core/services/api_client.dart';
+import 'package:plan_sync/core/services/version_service.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../mock_controllers/remote_config_controller_mock.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late VersionController controller;
+  late VersionViewModel viewModel;
+  late VersionService versionService;
 
-  setUp(() {
-    controller = VersionController(apiClient: ApiClient());
+  setUp(() async {
+    SharedPreferences.setMockInitialValues({});
+    final prefs = AppPreferencesController();
+    await prefs.onInit();
+    versionService = VersionService(apiClient: ApiClient());
+    viewModel = VersionViewModel(
+      versionService: versionService,
+      remoteConfig: MockRemoteConfigController(),
+      preferences: prefs,
+    );
   });
 
   group('clientVersion setter', () {
     test('valid assignment updates value and notifies', () {
       var notifications = 0;
-      controller.addListener(() => notifications++);
-      controller.clientVersion = '2.0.0';
-      expect(controller.clientVersion, '2.0.0');
+      viewModel.addListener(() => notifications++);
+      viewModel.clientVersion = '2.0.0';
+      expect(viewModel.clientVersion, '2.0.0');
       expect(notifications, 1);
     });
 
     test('null assignment is dropped and does not notify', () {
-      controller.clientVersion = '1.0.0';
+      viewModel.clientVersion = '1.0.0';
       var notifications = 0;
-      controller.addListener(() => notifications++);
-      controller.clientVersion = null;
-      expect(controller.clientVersion, '1.0.0');
+      viewModel.addListener(() => notifications++);
+      viewModel.clientVersion = null;
+      expect(viewModel.clientVersion, '1.0.0');
       expect(notifications, 0);
     });
   });
@@ -35,18 +48,18 @@ void main() {
   group('appBuild setter', () {
     test('valid assignment updates value and notifies', () {
       var notifications = 0;
-      controller.addListener(() => notifications++);
-      controller.appBuild = '99';
-      expect(controller.appBuild, '99');
+      viewModel.addListener(() => notifications++);
+      viewModel.appBuild = '99';
+      expect(viewModel.appBuild, '99');
       expect(notifications, 1);
     });
 
     test('null assignment is dropped and does not notify', () {
-      controller.appBuild = '42';
+      viewModel.appBuild = '42';
       var notifications = 0;
-      controller.addListener(() => notifications++);
-      controller.appBuild = null;
-      expect(controller.appBuild, '42');
+      viewModel.addListener(() => notifications++);
+      viewModel.appBuild = null;
+      expect(viewModel.appBuild, '42');
       expect(notifications, 0);
     });
   });
@@ -54,50 +67,35 @@ void main() {
   group('plain boolean setters notify', () {
     test('isError', () {
       var notifications = 0;
-      controller.addListener(() => notifications++);
-      controller.isError = true;
-      expect(controller.isError, isTrue);
+      viewModel.addListener(() => notifications++);
+      viewModel.isError = true;
+      expect(viewModel.isError, isTrue);
       expect(notifications, 1);
     });
 
     test('isUpdateAvailable', () {
       var notifications = 0;
-      controller.addListener(() => notifications++);
-      controller.isUpdateAvailable = true;
-      expect(controller.isUpdateAvailable, isTrue);
+      viewModel.addListener(() => notifications++);
+      viewModel.isUpdateAvailable = true;
+      expect(viewModel.isUpdateAvailable, isTrue);
       expect(notifications, 1);
     });
   });
 
   group('immediateUpdateCondition', () {
-    // PackageInfo.fromPlatform() can't run in widget tests, so we seed
-    // controller.packageInfo directly. The real onReady path populates
-    // this from the platform channel.
-    void seedBuildNumber(String buildNumber) {
-      controller.packageInfo = PackageInfo(
-        appName: 'plan_sync',
-        packageName: 'com.example.plan_sync',
-        version: '4.1.3',
-        buildNumber: buildNumber,
-      );
-    }
-
     test('returns true when the available version code is >5 ahead', () {
-      seedBuildNumber('100');
       final info = _fakeUpdateInfo(availableVersionCode: 106);
-      expect(controller.immediateUpdateCondition(info), isTrue);
+      expect(versionService.immediateUpdateCondition(info, '100'), isTrue);
     });
 
     test('returns false at the boundary (difference == 5)', () {
-      seedBuildNumber('100');
       final info = _fakeUpdateInfo(availableVersionCode: 105);
-      expect(controller.immediateUpdateCondition(info), isFalse);
+      expect(versionService.immediateUpdateCondition(info, '100'), isFalse);
     });
 
     test('returns false when current build is already ahead', () {
-      seedBuildNumber('120');
       final info = _fakeUpdateInfo(availableVersionCode: 100);
-      expect(controller.immediateUpdateCondition(info), isFalse);
+      expect(versionService.immediateUpdateCondition(info, '120'), isFalse);
     });
   });
 }

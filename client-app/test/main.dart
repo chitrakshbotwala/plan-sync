@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/controllers/remote_config_controller.dart';
 import 'package:plan_sync/controllers/theme_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
@@ -27,12 +28,12 @@ Future<void> injectMockDependencies() async {
   final preferences = MockAppPreferencesController();
   await preferences.onInit();
 
-  Get.put<Auth>(MockAuth());
+  Get.put<AuthRepository>(MockAuth());
   Get.put<AppPreferencesController>(preferences);
   Get.put<FilterViewModel>(MockFilterViewModel());
   Get.put<ScheduleRepository>(MockScheduleRepository());
-  Get.put<VersionController>(MockVersionController());
-  Get.put<AnalyticsController>(MockAnalyticsController());
+  Get.put<VersionViewModel>(MockVersionViewModel());
+  Get.put<AnalyticsService>(MockAnalyticsService());
   Get.put<AppTourController>(MockAppTourController());
   Get.put<RemoteConfigController>(MockRemoteConfigController());
   Get.put<NotificationService>(MockNotificationService());
@@ -46,18 +47,18 @@ Future<void> injectMockDependencies() async {
 Widget wrapWithProviders({required Widget child}) {
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider<Auth>.value(value: Get.find<Auth>()),
+      Provider<AuthRepository>.value(value: Get.find<AuthRepository>()),
       ChangeNotifierProvider<AppPreferencesController>.value(
         value: Get.find<AppPreferencesController>(),
       ),
       ChangeNotifierProvider<FilterViewModel>.value(
         value: Get.find<FilterViewModel>(),
       ),
-      ChangeNotifierProvider<VersionController>.value(
-        value: Get.find<VersionController>(),
+      ChangeNotifierProvider<VersionViewModel>.value(
+        value: Get.find<VersionViewModel>(),
       ),
-      ChangeNotifierProvider<AnalyticsController>.value(
-        value: Get.find<AnalyticsController>(),
+      Provider<AnalyticsService>.value(
+        value: Get.find<AnalyticsService>(),
       ),
       ChangeNotifierProvider<AppTourController>.value(
         value: Get.find<AppTourController>(),
@@ -73,6 +74,13 @@ Widget wrapWithProviders({required Widget child}) {
       ),
       Provider<ScheduleRepository>.value(
         value: Get.find<ScheduleRepository>(),
+      ),
+      ChangeNotifierProvider<HomeViewModel>(
+        create: (_) => HomeViewModel(
+          appTour: Get.find<AppTourController>(),
+          appPreferences: Get.find<AppPreferencesController>(),
+          notifications: Get.find<NotificationService>(),
+        ),
       ),
     ],
     child: Builder(

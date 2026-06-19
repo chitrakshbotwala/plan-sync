@@ -40,7 +40,7 @@ class AppReviewService {
       return;
     }
 
-    if (!_shouldRequestReview(reviewModel)) {
+    if (!shouldRequestReview(reviewModel)) {
       log('Review request conditions not met');
       return;
     }
@@ -53,7 +53,7 @@ class AppReviewService {
     }
   }
 
-  bool _shouldRequestReview(InAppReviewCacheModel model) {
+  bool shouldRequestReview(InAppReviewCacheModel model) {
     final now = DateTime.now();
     final firstOpenDate = DateTime.fromMillisecondsSinceEpoch(model.firstOpen);
     final currentVersion = _version.clientVersion;

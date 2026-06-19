@@ -1,11 +1,13 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/backend/models/in_app_review_model.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
 import 'package:plan_sync/core/services/api_client.dart';
-import 'package:provider/provider.dart';
+import 'package:plan_sync/core/services/app_review_service.dart';
+import 'package:plan_sync/core/services/version_service.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+
+import '../../mock_controllers/remote_config_controller_mock.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -37,78 +39,55 @@ void main() {
   });
 
   group('shouldRequestReview', () {
-    late VersionController version;
+    late AppReviewService service;
+    late VersionViewModel version;
     late AppPreferencesController preferences;
 
     setUp(() async {
       SharedPreferences.setMockInitialValues({});
       preferences = AppPreferencesController();
       await preferences.onInit();
-      version = VersionController(apiClient: ApiClient());
+      version = VersionViewModel(
+        versionService: VersionService(apiClient: ApiClient()),
+        remoteConfig: MockRemoteConfigController(),
+        preferences: preferences,
+      );
       version.clientVersion = '4.1.3';
+      service = AppReviewService(preferences: preferences, version: version);
     });
 
-    Future<bool> evaluate(
-      WidgetTester tester,
-      InAppReviewCacheModel model,
-    ) async {
-      late bool result;
-      await tester.pumpWidget(
-        MultiProvider(
-          providers: [
-            ChangeNotifierProvider<VersionController>.value(value: version),
-            ChangeNotifierProvider<AppPreferencesController>.value(
-              value: preferences,
-            ),
-          ],
-          child: MaterialApp(
-            home: Builder(
-              builder: (ctx) {
-                // ignore: discarded_futures
-                model.shouldRequestReview(ctx).then((v) => result = v);
-                return const SizedBox();
-              },
-            ),
-          ),
-        ),
-      );
-      await tester.pumpAndSettle();
-      return result;
-    }
-
-    testWidgets(
+    test(
       'first-open: returns false when less than 7 days have elapsed',
-      (tester) async {
+      () {
         final model = InAppReviewCacheModel(
           firstOpen: DateTime.now()
               .subtract(const Duration(days: 3))
               .millisecondsSinceEpoch,
         );
 
-        expect(await evaluate(tester, model), isFalse);
-        // first-time path must not record a request when conditions are unmet
+        expect(service.shouldRequestReview(model), isFalse);
         expect(model.lastRequested, isNull);
       },
     );
 
-    testWidgets(
+    test(
       'first-open: returns true after 7 days and stamps lastRequested',
-      (tester) async {
+      () {
         final model = InAppReviewCacheModel(
           firstOpen: DateTime.now()
               .subtract(const Duration(days: 8))
               .millisecondsSinceEpoch,
         );
 
-        expect(await evaluate(tester, model), isTrue);
+        expect(service.shouldRequestReview(model), isTrue);
         expect(model.lastRequested, isNotNull);
         expect(model.lastAppVersion, '4.1.3');
       },
     );
 
-    testWidgets(
+    test(
       'follow-up: skips when last request was within 30 days',
-      (tester) async {
+      () {
         final model = InAppReviewCacheModel(
           firstOpen: DateTime.now()
               .subtract(const Duration(days: 60))
@@ -119,13 +98,13 @@ void main() {
           lastAppVersion: '4.1.3',
         );
 
-        expect(await evaluate(tester, model), isFalse);
+        expect(service.shouldRequestReview(model), isFalse);
       },
     );
 
-    testWidgets(
+    test(
       'follow-up: requests again after 30 days',
-      (tester) async {
+      () {
         final earlier = DateTime.now()
             .subtract(const Duration(days: 40))
             .millisecondsSinceEpoch;
@@ -135,14 +114,14 @@ void main() {
           lastAppVersion: '4.1.3',
         );
 
-        expect(await evaluate(tester, model), isTrue);
+        expect(service.shouldRequestReview(model), isTrue);
         expect(model.lastRequested, greaterThan(earlier));
       },
     );
 
-    testWidgets(
+    test(
       'version bump unblocks a previously-suppressed window',
-      (tester) async {
+      () {
         // Last request was recent (would normally suppress), but the app
         // version has changed — the model clears lastRequested so the
         // first-open path runs again. firstOpenDate is captured before the
@@ -159,8 +138,7 @@ void main() {
           lastAppVersion: '4.1.3',
         );
 
-        expect(await evaluate(tester, model), isTrue);
-        // updateLastRequested ran and stamped the new app version
+        expect(service.shouldRequestReview(model), isTrue);
         expect(model.lastAppVersion, '5.0.0');
         expect(model.lastRequested, isNotNull);
       },

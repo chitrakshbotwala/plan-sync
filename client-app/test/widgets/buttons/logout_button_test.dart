@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/widgets/buttons/logout_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
@@ -36,14 +36,13 @@ void main() {
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
 
-    final controller = Get.find<Auth>() as MockAuth;
-    final ctx = tester.element(find.byType(Scaffold));
-    await controller.loginWithGoogle(ctx);
+    final controller = Get.find<AuthRepository>() as MockAuth;
+    await controller.loginWithGoogle();
 
-    expect(controller.activeUser, isNotNull);
+    expect(controller.currentUser, isNotNull);
 
     // start logout
     await tester.tap(find.text('Logout'));
-    expect(controller.activeUser, isNull);
+    expect(controller.currentUser, isNull);
   });
 }

@@ -1,4 +1,6 @@
+import 'package:get/get.dart';
 import 'package:mockito/mockito.dart';
+import 'package:plan_sync/controllers/app_preferences_controller.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/util/enums.dart';
@@ -168,46 +170,54 @@ class MockFilterViewModel extends Mock
     return '$section | $semester'.toUpperCase();
   }
 
+  AppPreferencesController get _prefs => Get.find<AppPreferencesController>();
+
   @override
   Future<bool> storePrimarySection() async {
     if (_activeSectionCode == null) return false;
-    notifyListeners();
-    return true;
+    final res = await _prefs.savePrimarySectionPreference(_activeSectionCode!);
+    if (res) notifyListeners();
+    return res;
   }
 
   @override
   Future<bool> storePrimarySemester() async {
     if (_activeSemester == null) return false;
-    notifyListeners();
-    return true;
+    final res = await _prefs.savePrimarySemesterPreference(_activeSemester!);
+    if (res) notifyListeners();
+    return res;
   }
 
   @override
   Future<bool> storePrimaryYear() async {
     if (_selectedYear == null) return false;
-    notifyListeners();
-    return true;
+    final res = await _prefs.savePrimaryYearPreference(_selectedYear!);
+    if (res) notifyListeners();
+    return res;
   }
 
   @override
   Future<bool> storePrimaryElectiveScheme() async {
     if (_activeElectiveSchemeCode == null) return false;
-    notifyListeners();
-    return true;
+    final res = await _prefs.savePrimaryElectiveSchemePreference(_activeElectiveSchemeCode!);
+    if (res) notifyListeners();
+    return res;
   }
 
   @override
   Future<bool> storePrimaryElectiveSemester() async {
     if (_activeElectiveSemester == null) return false;
-    notifyListeners();
-    return true;
+    final res = await _prefs.savePrimaryElectiveSemesterPreference(_activeElectiveSemester!);
+    if (res) notifyListeners();
+    return res;
   }
 
   @override
   Future<bool> storePrimaryElectiveYear() async {
     if (_selectedElectiveYear == null) return false;
-    notifyListeners();
-    return true;
+    final res = await _prefs.savePrimaryElectiveYearPreference(_selectedElectiveYear!);
+    if (res) notifyListeners();
+    return res;
   }
 
   @override
