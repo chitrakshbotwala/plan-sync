@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/controllers/app_preferences_controller.dart';
@@ -138,105 +137,77 @@ class FilterViewModel extends ChangeNotifier {
   String? get activeYear => _selectedYear;
   String? get activeElectiveYear => _selectedElectiveYear;
 
-  // --- Stream subscriptions ---
-
-  StreamSubscription<List<String>>? _yearsSub;
-  StreamSubscription<List<String>>? _semestersSub;
-  StreamSubscription<Map<String, String>>? _sectionsSub;
-  StreamSubscription<List<String>>? _electiveYearsSub;
-  StreamSubscription<List<String>>? _electiveSemestersSub;
-  StreamSubscription<Map<String, String>?>? _electiveSchemesSub;
-
   // --- Initialization ---
 
   Future<void> initialize() async {
     _weekday = Weekday.today();
-    _loadYears();
-    _loadElectiveYears();
+    await Future.wait([_loadYears(), _loadElectiveYears()]);
   }
 
-  void _loadYears() {
-    _yearsSub?.cancel();
-    _yearsSub = _repository.getYears().listen(
-      (data) {
-        years = data;
-        _setPrimaryYear();
-        notifyListeners();
-      },
-      onError: (e) => Logger.e('FilterViewModel._loadYears error: $e'),
-    );
-  }
-
-  void _loadSemesters() {
-    if (_selectedYear == null) return;
-    _semestersSub?.cancel();
-    _semestersSub = _repository.getSemesters(_selectedYear!).listen(
-      (data) {
-        _semesters = data;
-        _setPrimarySemester();
-        notifyListeners();
-      },
-      onError: (e) => Logger.e('FilterViewModel._loadSemesters error: $e'),
-    );
-  }
-
-  void _loadSections() {
-    if (_selectedYear == null || _activeSemester == null) return;
-    _sectionsSub?.cancel();
-    _sectionsSub =
-        _repository.getSections(_selectedYear!, _activeSemester!).listen(
-      (data) {
-        _sections = data;
-        _setPrimarySection();
-        notifyListeners();
-      },
-      onError: (e) => Logger.e('FilterViewModel._loadSections error: $e'),
-    );
-  }
-
-  void _loadElectiveYears() {
-    _electiveYearsSub?.cancel();
-    _electiveYearsSub = _repository.getElectiveYears().listen(
-      (data) {
-        electiveYears = data;
-        _setPrimaryElectiveYear();
-        notifyListeners();
-      },
-      onError: (e) => Logger.e('FilterViewModel._loadElectiveYears error: $e'),
-    );
-  }
-
-  void _loadElectiveSemesters() {
-    if (_selectedElectiveYear == null) return;
-    _electiveSemestersSub?.cancel();
-    _electiveSemestersSub =
-        _repository.getElectiveSemesters(_selectedElectiveYear!).listen(
-      (data) {
-        _electivesSemesters = data;
-        _setPrimaryElectiveSemester();
-        notifyListeners();
-      },
-      onError: (e) =>
-          Logger.e('FilterViewModel._loadElectiveSemesters error: $e'),
-    );
-  }
-
-  void _loadElectiveSchemes() {
-    if (_selectedElectiveYear == null || _activeElectiveSemester == null) {
-      return;
+  Future<void> _loadYears() async {
+    try {
+      years = await _repository.getYears();
+      _setPrimaryYear();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('FilterViewModel._loadYears error: $e');
     }
-    _electiveSchemesSub?.cancel();
-    _electiveSchemesSub = _repository
-        .getElectiveSchemes(_selectedElectiveYear!, _activeElectiveSemester!)
-        .listen(
-      (data) {
-        electiveSchemes = data;
-        _setPrimaryElectiveScheme();
-        notifyListeners();
-      },
-      onError: (e) =>
-          Logger.e('FilterViewModel._loadElectiveSchemes error: $e'),
-    );
+  }
+
+  Future<void> _loadSemesters() async {
+    if (_selectedYear == null) return;
+    try {
+      _semesters = await _repository.getSemesters(_selectedYear!);
+      _setPrimarySemester();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('FilterViewModel._loadSemesters error: $e');
+    }
+  }
+
+  Future<void> _loadSections() async {
+    if (_selectedYear == null || _activeSemester == null) return;
+    try {
+      _sections = await _repository.getSections(_selectedYear!, _activeSemester!);
+      _setPrimarySection();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('FilterViewModel._loadSections error: $e');
+    }
+  }
+
+  Future<void> _loadElectiveYears() async {
+    try {
+      electiveYears = await _repository.getElectiveYears();
+      _setPrimaryElectiveYear();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('FilterViewModel._loadElectiveYears error: $e');
+    }
+  }
+
+  Future<void> _loadElectiveSemesters() async {
+    if (_selectedElectiveYear == null) return;
+    try {
+      _electivesSemesters =
+          await _repository.getElectiveSemesters(_selectedElectiveYear!);
+      _setPrimaryElectiveSemester();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('FilterViewModel._loadElectiveSemesters error: $e');
+    }
+  }
+
+  Future<void> _loadElectiveSchemes() async {
+    if (_selectedElectiveYear == null || _activeElectiveSemester == null) return;
+    try {
+      electiveSchemes = await _repository.getElectiveSchemes(
+          _selectedElectiveYear!, _activeElectiveSemester!);
+      _setPrimaryElectiveScheme();
+      notifyListeners();
+    } catch (e) {
+      Logger.e('FilterViewModel._loadElectiveSchemes error: $e');
+    }
   }
 
   // --- Short codes ---
@@ -388,16 +359,5 @@ class FilterViewModel extends ChangeNotifier {
     if (primary != null && electiveYears?.contains(primary) == true) {
       selectedElectiveYear = primary;
     }
-  }
-
-  @override
-  void dispose() {
-    _yearsSub?.cancel();
-    _semestersSub?.cancel();
-    _sectionsSub?.cancel();
-    _electiveYearsSub?.cancel();
-    _electiveSemestersSub?.cancel();
-    _electiveSchemesSub?.cancel();
-    super.dispose();
   }
 }

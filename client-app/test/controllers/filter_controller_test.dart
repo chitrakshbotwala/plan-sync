@@ -33,27 +33,27 @@ class FakeSectionsRepository implements SectionsRepository {
   };
 
   @override
-  Stream<List<String>> getYears() => Stream.value(fakeYears);
+  Future<List<String>> getYears() async => fakeYears;
 
   @override
-  Stream<List<String>> getSemesters(String year) =>
-      Stream.value(fakeSemesters[year] ?? []);
+  Future<List<String>> getSemesters(String year) async =>
+      fakeSemesters[year] ?? [];
 
   @override
-  Stream<Map<String, String>> getSections(String year, String semester) =>
-      Stream.value(fakeSections[year]?[semester] ?? {});
+  Future<Map<String, String>> getSections(String year, String semester) async =>
+      fakeSections[year]?[semester] ?? {};
 
   @override
-  Stream<List<String>> getElectiveYears() => Stream.value(fakeElectiveYears);
+  Future<List<String>> getElectiveYears() async => fakeElectiveYears;
 
   @override
-  Stream<List<String>> getElectiveSemesters(String year) =>
-      Stream.value(fakeElectiveSemesters[year] ?? []);
+  Future<List<String>> getElectiveSemesters(String year) async =>
+      fakeElectiveSemesters[year] ?? [];
 
   @override
-  Stream<Map<String, String>?> getElectiveSchemes(
-          String year, String semester) =>
-      Stream.value(fakeElectiveSchemes[year]?[semester]);
+  Future<Map<String, String>?> getElectiveSchemes(
+          String year, String semester) async =>
+      fakeElectiveSchemes[year]?[semester];
 }
 
 void main() {

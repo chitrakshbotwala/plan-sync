@@ -118,33 +118,48 @@ codebase *harder* to read. The lifecycle test keeps each new addition classified
 consistently. **When you add something new, write down which side of this rule it falls on
 and why** (a one-line comment at the class is enough).
 
-## The cache-then-refresh contract (the core data pattern)
+## Stream vs Future — picking the right return type
 
-Every repository method backed by **both** cache and network follows this exact behaviour,
-returning a **plain `Stream<T>`** (no `Resource<T>` / sealed wrapper — see non-goals):
+**The rule:** use `Stream<T>` only when you intend to emit **two values** — cached data
+first, fresh network data second. If a method will ever only return one value, use
+`Future<T>`.
+
+| Use `Stream<T>` when… | Use `Future<T>` when… |
+|---|---|
+| Showing stale content immediately improves perceived performance (timetables, campus maps, long lists the user stares at) | Data is metadata / lookup values that the user never directly stares at (years list, semesters list, available sections) |
+| The screen should re-render twice: once with cache, once with fresh | One result is all that's needed — either fresh (first load) or cached-fallback (network failure) |
+| A stale → fresh transition is invisible or welcome (schedule updates silently in the background) | A stale → fresh transition would cause visible flicker or reset the user's current selection |
+
+**In practice for this app:**
+- `ScheduleRepository.getSchedule()` → `Stream<T>` — the timetable renders immediately
+  from cache, then quietly updates if fresh data differs.
+- `SectionsRepository.getYears/Semesters/Sections()` → `Future<T>` — these are dropdowns
+  driven by user selection; the Dio `refreshForceCache` interceptor already handles
+  cache-or-network, so a plain `Future` that returns one result is correct.
+
+**Don't reach for `Stream<T>` just because data is cached.** The Dio interceptor's
+`refreshForceCache` policy already provides cache-fallback behaviour for `Future`-based
+methods: it hits the network and falls back to cache on failure. A `Stream` on top of
+that adds a second emission and `StreamSubscription` lifecycle overhead for no UX gain.
+
+## The cache-then-refresh contract (`Stream<T>` methods)
+
+For repository methods that genuinely need dual-emission, use `async*` generators.
+The contract:
 
 1. Check local cache. If present → **emit it immediately** (fast first paint).
-2. Regardless of cache hit, call the network in the background.
-3. On success → **update the cache, then emit the fresh value** (second emission).
-4. If the cache was empty, the network result is the **first and only** emission (awaited).
+2. Call the network in the background.
+3. On success → **update cache, emit fresh value** (second emission).
+4. If cache was empty, the network result is the **first and only** emission.
 
-**Error handling — one rule for the whole codebase:**
-
-- If a cached value was **already emitted**, a failed background refresh is **caught,
-  logged via `Logger`, and NOT emitted as a stream error.** The View keeps showing cached
-  data; it must never flash an error after already rendering content.
-- If there was **no cache** and the network fails, the stream **emits an error** (throw
-  inside the `async*` generator) so the ViewModel can surface it.
-
-We standardize on **`async*` generators** for this (it's what `GitService` already uses —
-keep it consistent; don't mix in raw `StreamController` unless a method genuinely needs
-multi-source merging).
+**Error handling:**
+- Cached value already emitted → swallow the network error (log it, don't re-emit).
+  The View keeps showing cached data; it must never flash an error after rendering content.
+- No cache + network fails → emit an error so the ViewModel can surface it.
 
 ```dart
-// schedule_repository.dart  — the interface (the contract Views/VMs depend on)
+// schedule_repository.dart
 abstract class ScheduleRepository {
-  /// Emits cached schedule first (if any), then the fresh network value.
-  /// Errors only if there was no cache and the network failed.
   Stream<List<ScheduleItem>> getSchedule({
     required String year,
     required String semester,
@@ -155,70 +170,49 @@ abstract class ScheduleRepository {
 
 ```dart
 // schedule_repository_impl.dart
-class ScheduleRepositoryImpl implements ScheduleRepository {
-  ScheduleRepositoryImpl({required ApiClient api, required CacheService cache})
-      : _api = api,
-        _cache = cache;
+@override
+Stream<List<ScheduleItem>> getSchedule({
+  required String year,
+  required String semester,
+  required String section,
+}) async* {
+  final cacheKey = 'schedule/$year/$semester/$section';
+  var emittedFromCache = false;
 
-  final ApiClient _api;
-  final CacheService _cache;
+  final cached = await _cache.get<List<ScheduleItem>>(
+    cacheKey,
+    fromJson: (json) => (json as List)
+        .map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
+        .toList(),
+  );
+  if (cached != null) {
+    emittedFromCache = true;
+    yield cached;
+  }
 
-  @override
-  Stream<List<ScheduleItem>> getSchedule({
-    required String year,
-    required String semester,
-    required String section,
-  }) async* {
-    final cacheKey = 'schedule/$year/$semester/$section';
-
-    // 1. cache → emit immediately if present
-    var emittedFromCache = false;
-    final cached = await _cache.get<List<ScheduleItem>>(
+  try {
+    final res = await _api.dio.get('/$year/$semester/$section.json');
+    final fresh = (jsonDecode(res.data) as List)
+        .map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
+        .toList();
+    await _cache.set<List<ScheduleItem>>(
       cacheKey,
-      fromJson: (json) => (json as List)
-          .map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      fresh,
+      toJson: (value) => value.map((e) => e.toJson()).toList(),
     );
-    if (cached != null) {
-      emittedFromCache = true;
-      yield cached;
-    }
-
-    // 2 + 3. background refresh → update cache → emit fresh
-    try {
-      final res = await _api.dio.get(
-        '/$year/$semester/$section.json', // resolved against the GitLab raw base URL
-      );
-      final fresh = (jsonDecode(res.data) as List)
-          .map((e) => ScheduleItem.fromJson(e as Map<String, dynamic>))
-          .toList();
-
-      await _cache.set<List<ScheduleItem>>(
-        cacheKey,
-        fresh,
-        toJson: (value) => value.map((e) => e.toJson()).toList(),
-      );
-      yield fresh; // 4. if cache was empty, this is the first & only emission
-    } catch (e, st) {
-      Logger.e('ScheduleRepository.getSchedule failed: $e');
-      if (!emittedFromCache) {
-        // no cache to fall back on → surface to the ViewModel
-        throw ScheduleFetchException('Could not load schedule', e, st);
-      }
-      // had cache → swallow; View keeps showing cached data
-    }
+    yield fresh;
+  } catch (e, st) {
+    Logger.e('ScheduleRepository.getSchedule failed: $e');
+    if (!emittedFromCache) throw ScheduleFetchException('Could not load schedule', e, st);
   }
 }
 ```
 
-The ViewModel subscribes **internally** and exposes plain getters — see the full
-View / ViewModel / before-and-after in **`references/running-example.md`**. Shape:
+The ViewModel holds a `StreamSubscription`, subscribes internally, and exposes plain
+getters. **Always cancel in `dispose()`.**
 
 ```dart
 class ScheduleViewModel extends ChangeNotifier {
-  ScheduleViewModel({required ScheduleRepository repository})
-      : _repository = repository;
-
   final ScheduleRepository _repository;
   StreamSubscription<List<ScheduleItem>>? _sub;
 
@@ -238,22 +232,82 @@ class ScheduleViewModel extends ChangeNotifier {
       (items) {
         schedule = items;
         isLoading = false;
-        errorMessage = null;
         notifyListeners();              // fires on cache emit AND on fresh emit
       },
       onError: (e) {
         isLoading = false;
         errorMessage = 'Could not load your schedule. Pull to retry.';
-        notifyListeners();              // notify on error too
+        notifyListeners();
       },
     );
   }
 
   @override
   void dispose() {
-    _sub?.cancel();                     // ALWAYS cancel the subscription
+    _sub?.cancel();
     super.dispose();
   }
+}
+```
+
+## Future-based repository methods
+
+When the return type is `Future<T>`, the implementation is a straightforward async fetch.
+The Dio `refreshForceCache` interceptor handles cache-fallback automatically — no manual
+cache check needed in the repository.
+
+```dart
+// sections_repository.dart
+abstract class SectionsRepository {
+  Future<List<String>> getYears();
+  Future<List<String>> getSemesters(String year);
+  Future<Map<String, String>> getSections(String year, String semester);
+}
+```
+
+```dart
+// sections_repository_impl.dart
+Future<Map<String, dynamic>> _fetchJsonData(String url) async {
+  try {
+    final response = await _apiClient.dio.get(url);
+    return jsonDecode(response.data) as Map<String, dynamic>;
+  } on DioException catch (e) {
+    Logger.e('SectionsRepository._fetchJsonData DioException: $e');
+    rethrow;
+  }
+}
+
+@override
+Future<List<String>> getYears() async {
+  final data = await _fetchJsonData(_sectionsUrl);
+  return List<String>.from(data.keys);
+}
+```
+
+The ViewModel uses plain `async/await` + try-catch — **no `StreamSubscription` fields,
+no `dispose()` override needed.**
+
+```dart
+Future<void> _loadYears() async {
+  try {
+    years = await _repository.getYears();
+    _applyPrimaryYear();
+    notifyListeners();
+  } catch (e) {
+    Logger.e('FilterViewModel._loadYears error: $e');
+  }
+}
+```
+
+Fire-and-forget from setters is fine — discard the returned `Future`:
+
+```dart
+set selectedYear(String? newYear) {
+  if (newYear == null || _selectedYear == newYear) return;
+  _selectedYear = newYear;
+  _semesters = null;
+  notifyListeners();
+  _loadSemesters(); // fire-and-forget: Future discarded intentionally
 }
 ```
 
