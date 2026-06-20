@@ -35,6 +35,7 @@ void main() {
           child: TimeTableForDay(
             data: data,
             day: day,
+            showSigmaEmoji: false,
           ),
         ),
       ),

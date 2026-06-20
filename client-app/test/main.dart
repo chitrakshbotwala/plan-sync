@@ -85,6 +85,7 @@ Widget wrapWithProviders({required Widget child}) {
           appTour: mockAppTourService,
           appPreferences: mockPreferences,
           remoteConfig: mockRemoteConfigController,
+          notifications: mockNotificationService,
         ),
       ),
       ChangeNotifierProvider<SettingsViewModel>(
@@ -102,6 +103,7 @@ Widget wrapWithProviders({required Widget child}) {
           create: (_) => ScheduleViewModel(
             repository: mockScheduleRepository,
             filterViewModel: mockFilterViewModel,
+            remoteConfig: mockRemoteConfigController,
           ),
           child: child,
         );

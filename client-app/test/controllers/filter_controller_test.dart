@@ -4,6 +4,7 @@ import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/core/util/enums.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../mock_controllers/app_tour_controller_mock.dart';
 
 class FakeSectionsRepository implements SectionsRepository {
   List<String> fakeYears = ['2024', '2023'];
@@ -62,15 +63,18 @@ void main() {
   late FilterViewModel controller;
   late FakeSectionsRepository repository;
   late AppPreferencesRepositoryImpl preferences;
+  late MockAppTourController appTour;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     preferences = AppPreferencesRepositoryImpl();
     await preferences.onInit();
     repository = FakeSectionsRepository();
+    appTour = MockAppTourController();
     controller = FilterViewModel(
       sectionsRepository: repository,
       preferences: preferences,
+      appTour: appTour,
     );
     controller.weekday = Weekday.monday;
   });
