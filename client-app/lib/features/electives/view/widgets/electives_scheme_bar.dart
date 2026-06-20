@@ -58,7 +58,7 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                          color: Colors.black,
+                          color: colorScheme.surface,
                           size: 24,
                         ),
                         Icon(
