@@ -11,6 +11,7 @@ import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
+import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:provider/provider.dart';
 import 'mock_controllers/analytics_controller_mock.dart';
 import 'mock_controllers/app_preferences_controller_mock.dart';
@@ -84,6 +85,13 @@ Widget wrapWithProviders({required Widget child}) {
           appTour: mockAppTourService,
           appPreferences: mockPreferences,
           remoteConfig: mockRemoteConfigController,
+        ),
+      ),
+      ChangeNotifierProvider<SettingsViewModel>(
+        create: (_) => SettingsViewModel(
+          auth: mockAuth,
+          version: mockVersionViewModel,
+          analytics: mockAnalyticsService,
         ),
       ),
     ],
