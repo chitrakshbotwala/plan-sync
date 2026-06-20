@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
-import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
+import 'package:plan_sync/core/util/external_links.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:provider/provider.dart';
 
-class VersionCheckWidget extends StatefulWidget {
+class VersionCheckWidget extends StatelessWidget {
   const VersionCheckWidget({super.key});
 
-  @override
-  State<VersionCheckWidget> createState() => _VersionCheckWidgetState();
-}
-
-class _VersionCheckWidgetState extends State<VersionCheckWidget> {
-  late VersionViewModel versionController;
-
-  @override
-  void initState() {
-    super.initState();
-    versionController = Provider.of<VersionViewModel>(context, listen: false);
+  Future<void> _openStore(BuildContext context) async {
+    try {
+      await ExternalLinks.store();
+    } catch (e) {
+      if (!context.mounted) return;
+      CustomSnackbar.error(
+        'Failed to open store',
+        'Could not open the app store. Please try again.',
+        context,
+      );
+    }
   }
 
   @override
@@ -78,7 +79,7 @@ class _VersionCheckWidgetState extends State<VersionCheckWidget> {
                 foregroundColor:
                     WidgetStatePropertyAll(colorScheme.onSecondary),
                 shape: const WidgetStatePropertyAll(StadiumBorder())),
-            onPressed: () => versionController.openStore(context),
+            onPressed: () => _openStore(context),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [

@@ -5,6 +5,8 @@ import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/home/view/widgets/schedule_preferences_button.dart';
 import 'package:plan_sync/features/home/view/widgets/date_widget.dart';
 import 'package:plan_sync/features/home/view/widgets/hud/top_notice_hud.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:plan_sync/features/schedule/view/widgets/time_table.dart';
 
@@ -16,9 +18,13 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  late final VersionViewModel _versionVm;
+
   @override
   void initState() {
     super.initState();
+    _versionVm = context.read<VersionViewModel>();
+    _versionVm.addListener(_onVersionUpdate);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (!mounted) return;
       final vm = context.read<HomeViewModel>();
@@ -26,7 +32,26 @@ class _HomeScreenState extends State<HomeScreen> {
       if (vm.shouldInitializeNotifications) {
         _initNotifications();
       }
+      // Handle update failure that occurred before this screen mounted
+      if (_versionVm.updateFailed) _showUpdateFailedPopup();
     });
+  }
+
+  @override
+  void dispose() {
+    _versionVm.removeListener(_onVersionUpdate);
+    super.dispose();
+  }
+
+  void _onVersionUpdate() {
+    if (_versionVm.updateFailed && mounted) {
+      _showUpdateFailedPopup();
+    }
+  }
+
+  void _showUpdateFailedPopup() {
+    _versionVm.clearUpdateFailed();
+    PopupsWrapper.showInAppUpateFailedPopup(context: context);
   }
 
   Future<void> _initNotifications() async {

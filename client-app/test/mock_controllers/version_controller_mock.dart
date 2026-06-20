@@ -11,7 +11,10 @@ class MockVersionViewModel extends Mock
   bool isUpdateAvailable = false;
 
   @override
-  Future<void> onReady(BuildContext context) async {}
+  bool updateFailed = false;
+
+  @override
+  Future<void> onReady() async {}
 
   @override
   Future<bool> checkForUpdate() async {

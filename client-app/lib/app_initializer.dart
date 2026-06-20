@@ -24,7 +24,7 @@ class AppInitializer {
       Provider.of<ThemeService>(context, listen: false).onInit();
 
       await Future.wait([
-        Provider.of<VersionViewModel>(context, listen: false).onReady(context),
+        Provider.of<VersionViewModel>(context, listen: false).onReady(),
         Provider.of<FilterViewModel>(context, listen: false).initialize(),
         Provider.of<RemoteConfigService>(context, listen: false).onReady(),
       ]);

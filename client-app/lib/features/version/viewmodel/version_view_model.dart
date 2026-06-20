@@ -1,7 +1,6 @@
 import 'dart:io';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -9,10 +8,7 @@ import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/version_service.dart';
 import 'package:plan_sync/core/util/app_version.dart';
-import 'package:plan_sync/core/util/external_links.dart';
-import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:plan_sync/core/util/logger.dart';
-import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 
 class VersionViewModel extends ChangeNotifier {
   VersionViewModel({
@@ -59,14 +55,22 @@ class VersionViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<void> onReady(BuildContext context) async {
+  bool _updateFailed = false;
+  bool get updateFailed => _updateFailed;
+
+  void clearUpdateFailed() {
+    _updateFailed = false;
+    notifyListeners();
+  }
+
+  Future<void> onReady() async {
     _packageInfo = await _versionService.getPackageInfo();
     _logCurrentVersion();
 
     checkForUpdate().then((value) => isUpdateAvailable = value);
 
     if (!kDebugMode) {
-      triggerPlayUpdate(context: context);
+      triggerPlayUpdate();
     }
     // awaited so min-version flag is set before the router first renders
     await verifyMinimumVersion();
@@ -76,19 +80,6 @@ class VersionViewModel extends ChangeNotifier {
     Logger.i("App version: v${_packageInfo.version}");
     clientVersion = _packageInfo.version;
     appBuild = _packageInfo.buildNumber;
-  }
-
-  void openStore(BuildContext context) async {
-    try {
-      await ExternalLinks.store();
-    } catch (e) {
-      if (!context.mounted) return;
-      CustomSnackbar.error(
-        'Failed to open store',
-        'Could not open the app store. Please try again.',
-        context,
-      );
-    }
   }
 
   Future<bool> checkIosUpdate() async {
@@ -129,7 +120,7 @@ class VersionViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> triggerPlayUpdate({required BuildContext context}) async {
+  Future<void> triggerPlayUpdate() async {
     if (Platform.isIOS) return;
 
     final updateAvail = await _versionService.checkAndroidUpdate();
@@ -148,7 +139,8 @@ class VersionViewModel extends ChangeNotifier {
       if (result == AppUpdateResult.success) {
         await InAppUpdate.completeFlexibleUpdate().onError((err, trace) {
           FirebaseCrashlytics.instance.recordError(err, trace);
-          PopupsWrapper.showInAppUpateFailedPopup(context: context);
+          _updateFailed = true;
+          notifyListeners();
           return;
         });
         Logger.i('flex update package installed');

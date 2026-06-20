@@ -151,6 +151,7 @@ class AppProvider extends StatelessWidget {
         Provider<ElectivesRepository>(
           create: (context) => ElectivesRepositoryImpl(
             apiClient: context.read<ApiClient>(),
+            cache: context.read<CacheService>(),
           ),
         ),
       ],
