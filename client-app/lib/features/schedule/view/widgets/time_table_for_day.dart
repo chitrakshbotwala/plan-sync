@@ -7,9 +7,9 @@ import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/util/extensions.dart';
 import 'package:plan_sync/util/snackbar.dart';
-import 'package:plan_sync/widgets/no_schedule_widget.dart';
-import 'package:plan_sync/widgets/indicators/schedule_freshness_indicator.dart';
-import 'package:plan_sync/widgets/subject_tile.dart';
+import 'package:plan_sync/features/schedule/view/widgets/no_schedule_widget.dart';
+import 'package:plan_sync/features/schedule/view/widgets/indicators/schedule_freshness_indicator.dart';
+import 'package:plan_sync/features/schedule/view/widgets/subject_tile.dart';
 import 'package:provider/provider.dart';
 
 class TimeTableForDay extends StatefulWidget {
@@ -18,42 +18,35 @@ class TimeTableForDay extends StatefulWidget {
     required this.data,
     required this.day,
     this.searchEnabled = false,
+    this.isElectiveStarred,
+    this.onStarElective,
+    this.onUnstarElective,
   });
 
   final Timetable data;
   final String day;
   final bool searchEnabled;
 
+  /// Elective starring callbacks — only required when displaying electives.
+  final bool Function(String electiveId)? isElectiveStarred;
+  final void Function(String electiveId)? onStarElective;
+  final void Function(String electiveId)? onUnstarElective;
+
   @override
   State<TimeTableForDay> createState() => _TimeTableForDayState();
 }
 
 class _TimeTableForDayState extends State<TimeTableForDay> {
-  final days = [
-    "monday",
-    "tuesday",
-    "wednesday",
-    "thursday",
-    "friday",
-    "saturday"
-  ];
-  List<DataColumn> columns = [];
-  List<DataRow> rows = [];
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
 
   List<ScheduleEntry> filteredSchedule = [];
 
   late FilterViewModel filterProvider;
-  late AppPreferencesRepository appPreferencesController;
 
   @override
   void initState() {
     super.initState();
-    appPreferencesController = Provider.of<AppPreferencesRepository>(
-      context,
-      listen: false,
-    );
     filterProvider = Provider.of<FilterViewModel>(
       context,
       listen: false,
@@ -77,6 +70,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
 
   void _sortElectives() {
     if (widget.data.meta.type != 'electives') return;
+    if (widget.isElectiveStarred == null) return;
 
     final academicYear = filterProvider.selectedElectiveYear ?? '';
     final semester = filterProvider.activeElectiveSemester ?? '';
@@ -95,8 +89,8 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
         scheme: scheme,
         subjectName: b.subject ?? '',
       );
-      final aStarred = appPreferencesController.isElectiveStarred(aId);
-      final bStarred = appPreferencesController.isElectiveStarred(bId);
+      final aStarred = widget.isElectiveStarred!(aId);
+      final bStarred = widget.isElectiveStarred!(bId);
 
       if (aStarred == bStarred) {
         return (a.subject ?? '').compareTo(b.subject ?? '');
@@ -108,7 +102,9 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
   @override
   void didUpdateWidget(TimeTableForDay oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.day != widget.day || oldWidget.data != widget.data) {
+    if (oldWidget.day != widget.day ||
+        oldWidget.data != widget.data ||
+        oldWidget.isElectiveStarred != widget.isElectiveStarred) {
       setState(() {
         filteredSchedule = _getFilteredSchedule();
         _sortElectives();
@@ -258,33 +254,39 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
                 scheme: filterProvider.activeElectiveScheme ?? '',
                 subjectName: filteredSchedule[index].subject ?? '',
               );
+              final showStar = widget.data.meta.type == 'electives' &&
+                  widget.isElectiveStarred != null;
 
               return SubjectTile(
-                starred: appPreferencesController.isElectiveStarred(electiveId),
-                showStar: widget.data.meta.type == 'electives',
+                starred: showStar
+                    ? widget.isElectiveStarred!(electiveId)
+                    : false,
+                showStar: showStar,
                 entry: filteredSchedule[index],
                 academicYear: filterProvider.selectedElectiveYear ?? '',
                 semester: filterProvider.activeElectiveSemester ?? '',
                 scheme: filterProvider.activeElectiveScheme ?? '',
-                onStarToggle: (newValue) {
-                  if (newValue) {
-                    appPreferencesController.starElective(electiveId);
-                    CustomSnackbar.info(
-                      "Elective Pinned",
-                      "${filteredSchedule[index].subject} has been pinned to top.",
-                      context,
-                    );
-                  } else {
-                    appPreferencesController.unstarElective(electiveId);
-                    CustomSnackbar.info(
-                      "Elective Unpinned",
-                      "${filteredSchedule[index].subject} has been removed from pins.",
-                      context,
-                    );
-                  }
-                  _sortElectives();
-                  setState(() {});
-                },
+                onStarToggle: showStar
+                    ? (newValue) {
+                        if (newValue) {
+                          widget.onStarElective?.call(electiveId);
+                          CustomSnackbar.info(
+                            "Elective Pinned",
+                            "${filteredSchedule[index].subject} has been pinned to top.",
+                            context,
+                          );
+                        } else {
+                          widget.onUnstarElective?.call(electiveId);
+                          CustomSnackbar.info(
+                            "Elective Unpinned",
+                            "${filteredSchedule[index].subject} has been removed from pins.",
+                            context,
+                          );
+                        }
+                        _sortElectives();
+                        setState(() {});
+                      }
+                    : null,
               );
             },
             separatorBuilder: (context, index) => const SizedBox(height: 8),

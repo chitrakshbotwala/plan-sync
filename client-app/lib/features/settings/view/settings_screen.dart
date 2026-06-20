@@ -7,7 +7,7 @@ import 'package:plan_sync/util/constants.dart';
 import 'package:plan_sync/util/external_links.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
-import 'package:plan_sync/widgets/buttons/logout_button.dart';
+import 'package:plan_sync/features/settings/view/widgets/logout_button.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
 

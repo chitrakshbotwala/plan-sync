@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository_impl.dart';
+import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository.dart';
 import 'package:plan_sync/features/campus_navigator/view/widgets/campus_location_card.dart';
 import 'package:plan_sync/features/campus_navigator/view/widgets/empty_campus_widget.dart';
 import 'package:plan_sync/features/campus_navigator/viewmodel/campus_navigator_view_model.dart';
@@ -27,8 +27,8 @@ class CampusNavigatorView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ChangeNotifierProvider(
-      create: (_) => CampusNavigatorViewModel(
-        repository: CampusNavigatorRepositoryImpl(),
+      create: (ctx) => CampusNavigatorViewModel(
+        repository: ctx.read<CampusNavigatorRepository>(),
       )..load(),
       child: _CampusNavigatorBody(onLaunchMaps: _launchMaps),
     );

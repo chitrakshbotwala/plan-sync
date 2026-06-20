@@ -6,7 +6,7 @@ import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
-import 'package:plan_sync/widgets/time_table_for_day.dart';
+import 'package:plan_sync/features/schedule/view/widgets/time_table_for_day.dart';
 import 'package:provider/provider.dart';
 
 class TimeTableWidget extends StatefulWidget {
@@ -319,6 +319,9 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
               day: filterController.weekday.key,
               data: vm.timetable!,
               searchEnabled: true,
+              isElectiveStarred: vm.isElectiveStarred,
+              onStarElective: vm.starElective,
+              onUnstarElective: vm.unstarElective,
             ),
           ],
         );

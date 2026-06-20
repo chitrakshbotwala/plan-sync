@@ -1,10 +1,9 @@
 import 'package:expandable_page_view/expandable_page_view.dart';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
-import 'package:plan_sync/core/services/remote_config_service.dart';
+import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
-import 'package:plan_sync/widgets/hud/notice_carousel_widget.dart';
-import 'package:plan_sync/widgets/version_check.dart';
+import 'package:plan_sync/features/home/view/widgets/hud/notice_carousel_widget.dart';
+import 'package:plan_sync/features/home/view/widgets/version_check.dart';
 import 'package:provider/provider.dart';
 import 'package:smooth_page_indicator/smooth_page_indicator.dart';
 
@@ -18,51 +17,26 @@ class TopNoticeHud extends StatefulWidget {
 class _TopNoticeHudState extends State<TopNoticeHud> {
   late PageController pageController;
 
-  // for remote notifications on HUD
-  List<HudNoticeModel> notices = [];
-
   @override
   void initState() {
     super.initState();
     pageController = PageController();
-    _fetchNotices();
-  }
-
-  Future<void> _fetchNotices() async {
-    final remoteConfig =
-        Provider.of<RemoteConfigService>(context, listen: false);
-    final result = remoteConfig.getNotices();
-    // Remove items that should not be shown
-    result.removeWhere((item) => !item.shouldShow(context));
-    // Update the state
-    setState(() {
-      notices = result;
-    });
   }
 
   @override
   Widget build(BuildContext context) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
 
-    return Selector<VersionViewModel, bool>(
-      selector: (context, versionViewModel) =>
-          versionViewModel.isUpdateAvailable,
-      builder: (context, isUpdateAvailable, _) {
+    return Consumer2<VersionViewModel, HomeViewModel>(
+      builder: (context, version, home, _) {
         List<Widget> widgets = [
-          if (isUpdateAvailable) const VersionCheckWidget(),
-          if (notices.isNotEmpty)
-            ...List.generate(
-              notices.length,
-              (index) => NoticeCarouselWidget(
-                notice: notices[index],
-                onDelete: () {
-                  setState(() {
-                    notices[index].dismissNotice(context);
-                    notices.removeAt(index);
-                  });
-                },
-              ),
+          if (version.isUpdateAvailable) const VersionCheckWidget(),
+          ...home.notices.map(
+            (notice) => NoticeCarouselWidget(
+              notice: notice,
+              onDelete: () => home.dismissNotice(notice.id),
             ),
+          ),
         ];
 
         return AnimatedSwitcher(

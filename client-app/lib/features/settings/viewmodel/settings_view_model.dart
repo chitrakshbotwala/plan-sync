@@ -24,6 +24,8 @@ class SettingsViewModel extends ChangeNotifier {
   String? get uid => _auth.currentUser?.uid;
   String? get clientVersion => _version.clientVersion;
 
+  Future<void> logout() => _auth.logout();
+
   void togglePun() {
     isPunActivated = !isPunActivated;
     notifyListeners();

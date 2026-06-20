@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
+import 'package:plan_sync/features/home/view/widgets/schedule_preferences_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 

@@ -5,6 +5,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/app_initializer.dart';
+import 'package:plan_sync/core/cache/cache_service.dart';
+import 'package:plan_sync/core/cache/hive_cache_service.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/core/services/app_review_service.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
@@ -12,6 +14,8 @@ import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository_impl.dart';
+import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository.dart';
+import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository_impl.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
@@ -81,8 +85,12 @@ class AppProvider extends StatelessWidget {
       providers: [
         // Core infra — registered first; nothing depends on them in constructors
         Provider(create: (_) => ApiClient()),
+        Provider<CacheService>(create: (_) => HiveCacheService()),
         Provider<AppPreferencesRepository>(
           create: (_) => AppPreferencesRepositoryImpl(),
+        ),
+        Provider<CampusNavigatorRepository>(
+          create: (_) => CampusNavigatorRepositoryImpl(),
         ),
         // SectionsRepository needs ApiClient
         Provider<SectionsRepository>(
@@ -137,6 +145,7 @@ class AppProvider extends StatelessWidget {
         Provider<ScheduleRepository>(
           create: (context) => ScheduleRepositoryImpl(
             apiClient: context.read<ApiClient>(),
+            cache: context.read<CacheService>(),
           ),
         ),
         Provider<ElectivesRepository>(
@@ -261,6 +270,7 @@ final _router = GoRouter(
                     create: (ctx) => HomeViewModel(
                       appTour: ctx.read<AppTourService>(),
                       appPreferences: ctx.read<AppPreferencesRepository>(),
+                      remoteConfig: ctx.read<RemoteConfigService>(),
                     ),
                   ),
                 ],
@@ -278,6 +288,7 @@ final _router = GoRouter(
                 create: (ctx) => ElectivesViewModel(
                   repository: ctx.read<ElectivesRepository>(),
                   filterViewModel: ctx.read<FilterViewModel>(),
+                  preferences: ctx.read<AppPreferencesRepository>(),
                 ),
                 child: const ElectiveScreen(),
               ),

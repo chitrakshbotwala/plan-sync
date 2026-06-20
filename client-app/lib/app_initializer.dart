@@ -1,6 +1,7 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
@@ -16,6 +17,7 @@ class AppInitializer {
   static Future<void> initializeApp(BuildContext context) async {
     try {
       await Provider.of<ApiClient>(context, listen: false).initialize();
+      await Provider.of<CacheService>(context, listen: false).initialize();
       Provider.of<AppTourService>(context, listen: false).onInit(context);
       await Provider.of<AppPreferencesRepository>(context, listen: false)
           .onInit();
@@ -27,8 +29,7 @@ class AppInitializer {
         Provider.of<RemoteConfigService>(context, listen: false).onReady(),
       ]);
 
-      final analytics =
-          Provider.of<AnalyticsService>(context, listen: false);
+      final analytics = Provider.of<AnalyticsService>(context, listen: false);
       await analytics.onReady();
 
       // Keep analytics user data in sync with auth state for the app's lifetime.

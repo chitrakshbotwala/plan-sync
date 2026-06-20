@@ -3,7 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
 import 'package:plan_sync/backend/models/timetable_meta.dart';
 import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
-import 'package:plan_sync/widgets/time_table_for_day.dart';
+import 'package:plan_sync/features/schedule/view/widgets/time_table_for_day.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart';
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/widgets/buttons/elective_preferences_button.dart';
-import 'package:plan_sync/widgets/date_widget.dart';
-import 'package:plan_sync/widgets/time_table.dart';
+import 'package:plan_sync/features/electives/view/widgets/elective_preferences_button.dart';
+import 'package:plan_sync/features/home/view/widgets/date_widget.dart';
+import 'package:plan_sync/features/schedule/view/widgets/time_table.dart';
 
 class ElectiveScreen extends StatelessWidget {
   const ElectiveScreen({super.key});

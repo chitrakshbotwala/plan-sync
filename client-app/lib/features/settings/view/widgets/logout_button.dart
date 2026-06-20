@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
-import 'package:plan_sync/features/auth/repository/auth_repository.dart';
+import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:provider/provider.dart';
 
 class LogoutButton extends StatefulWidget {
@@ -13,17 +13,10 @@ class LogoutButton extends StatefulWidget {
 
 class _LogoutButtonState extends State<LogoutButton> {
   bool isLoggingOut = false;
-  late AuthRepository _auth;
-
-  @override
-  void initState() {
-    super.initState();
-    _auth = Provider.of<AuthRepository>(context, listen: false);
-  }
 
   void logout() async {
     setState(() => isLoggingOut = true);
-    await _auth.logout();
+    await context.read<SettingsViewModel>().logout();
     if (mounted) setState(() => isLoggingOut = false);
   }
 
@@ -61,8 +54,7 @@ class _LogoutButtonState extends State<LogoutButton> {
           : Text(
               "Logout",
               style: TextStyle(
-                color:
-                    appTheme.isDarkMode ? Colors.white : colorScheme.onError,
+                color: appTheme.isDarkMode ? Colors.white : colorScheme.onError,
               ),
             ),
     );

@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
-import 'package:plan_sync/widgets/buttons/schedule_preferences_button.dart';
-import 'package:plan_sync/widgets/date_widget.dart';
-import 'package:plan_sync/widgets/hud/top_notice_hud.dart';
+import 'package:plan_sync/features/home/view/widgets/schedule_preferences_button.dart';
+import 'package:plan_sync/features/home/view/widgets/date_widget.dart';
+import 'package:plan_sync/features/home/view/widgets/hud/top_notice_hud.dart';
 import 'package:provider/provider.dart';
-import 'package:plan_sync/widgets/time_table.dart';
+import 'package:plan_sync/features/schedule/view/widgets/time_table.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});

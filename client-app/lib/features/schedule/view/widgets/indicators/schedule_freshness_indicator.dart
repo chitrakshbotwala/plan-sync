@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/widgets/indicators/breathing_status_indicator.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
+import 'package:plan_sync/features/schedule/view/widgets/indicators/breathing_status_indicator.dart';
+import 'package:provider/provider.dart';
 
 /// Wrapper of BreathingStatusIndicator
 class ScheduleFreshnessIndicator extends StatefulWidget {
@@ -34,6 +36,8 @@ class _ScheduleFreshnessIndicatorState
       });
     }
     final colorScheme = Theme.of(context).colorScheme;
+    final showSigma =
+        context.read<RemoteConfigService>().canShowSigmaEmoji();
     return AnimatedOpacity(
       opacity: widget.isFresh ? 0 : 1,
       duration: const Duration(seconds: 1, milliseconds: 500),
@@ -42,6 +46,7 @@ class _ScheduleFreshnessIndicatorState
           ? BreathingStatusIndicator(
               key: ValueKey('BreathingStatusIndicator:${widget.isFresh}'),
               color: widget.isFresh ? colorScheme.primary : colorScheme.error,
+              showSigmaEmoji: showSigma,
             )
           : const SizedBox(),
     );

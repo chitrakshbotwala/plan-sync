@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/widgets/buttons/logout_button.dart';
+import 'package:plan_sync/features/settings/view/widgets/logout_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 

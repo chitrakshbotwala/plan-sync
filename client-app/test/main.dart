@@ -83,6 +83,7 @@ Widget wrapWithProviders({required Widget child}) {
         create: (_) => HomeViewModel(
           appTour: mockAppTourService,
           appPreferences: mockPreferences,
+          remoteConfig: mockRemoteConfigController,
         ),
       ),
     ],

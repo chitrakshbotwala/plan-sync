@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/backend/models/timetable.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 
@@ -8,14 +9,18 @@ class ElectivesViewModel extends ChangeNotifier {
   ElectivesViewModel({
     required ElectivesRepository repository,
     required FilterViewModel filterViewModel,
+    required AppPreferencesRepository preferences,
   })  : _repository = repository,
-        _filterViewModel = filterViewModel {
+        _filterViewModel = filterViewModel,
+        _preferences = preferences {
     _filterViewModel.addListener(_onStateChanged);
+    _loadStarredElectives();
     _tryLoad();
   }
 
   final ElectivesRepository _repository;
   final FilterViewModel _filterViewModel;
+  final AppPreferencesRepository _preferences;
   StreamSubscription<Timetable?>? _sub;
 
   String? _lastYear;
@@ -26,7 +31,29 @@ class ElectivesViewModel extends ChangeNotifier {
   bool isLoading = false;
   String? errorMessage;
 
+  final Set<String> _starredIds = {};
+
   bool get hasData => timetable != null;
+
+  bool isElectiveStarred(String electiveId) => _starredIds.contains(electiveId);
+
+  void starElective(String electiveId) {
+    _starredIds.add(electiveId);
+    notifyListeners();
+    _preferences.starElective(electiveId);
+  }
+
+  void unstarElective(String electiveId) {
+    _starredIds.remove(electiveId);
+    notifyListeners();
+    _preferences.unstarElective(electiveId);
+  }
+
+  Future<void> _loadStarredElectives() async {
+    final starred = await _preferences.getStarredElectives();
+    _starredIds.addAll(starred);
+    notifyListeners();
+  }
 
   void _onStateChanged() => _tryLoad();
 

@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/core/services/remote_config_service.dart';
-import 'package:provider/provider.dart';
 
 class BreathingStatusIndicator extends StatefulWidget {
   final Color color;
   final double size;
+  final bool showSigmaEmoji;
 
   const BreathingStatusIndicator({
     super.key,
     required this.color,
     this.size = 12,
+    this.showSigmaEmoji = false,
   });
 
   @override
@@ -68,15 +68,14 @@ class _BreathingStatusIndicatorState extends State<BreathingStatusIndicator>
 
   @override
   Widget build(BuildContext context) {
-    final config = Provider.of<RemoteConfigService>(context, listen: false);
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
         return Transform.scale(
           // TODO: Remove this temporary easter egg
           // ( The Sigma Male Loading Indicator )
-          scale: config.canShowSigmaEmoji() ? 1 : _animation.value,
-          child: config.canShowSigmaEmoji()
+          scale: widget.showSigmaEmoji ? 1 : _animation.value,
+          child: widget.showSigmaEmoji
               ? Transform.rotate(
                   angle: _sigmaAnimation.value,
                   child: const Text(
