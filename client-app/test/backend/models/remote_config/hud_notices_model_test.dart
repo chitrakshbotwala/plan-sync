@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
+import 'package:plan_sync/core/models/hud_notices_model.dart';
 
 void main() {
   group('HudNoticeModel.fromMap', () {

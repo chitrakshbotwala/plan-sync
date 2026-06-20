@@ -1,4 +1,4 @@
-import 'package:plan_sync/backend/models/in_app_review_model.dart';
+import 'package:plan_sync/core/models/in_app_review_model.dart';
 
 abstract class AppPreferencesRepository {
   Future<void> onInit();

@@ -1,25 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:plan_sync/core/services/app_tour_service.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/features/electives/view/widgets/electives_scheme_bar.dart';
+import 'package:plan_sync/features/electives/view/widgets/electives_sem_bar.dart';
+import 'package:plan_sync/features/electives/view/widgets/elective_year_bar.dart';
 import 'package:plan_sync/util/snackbar.dart';
-import 'package:plan_sync/widgets/dropdowns/sections_bar.dart';
-import 'package:plan_sync/widgets/dropdowns/semester_bar.dart';
-import 'package:plan_sync/widgets/dropdowns/year_bar.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:provider/provider.dart';
 
-class SchedulePreferenceBottomSheet extends StatefulWidget {
-  const SchedulePreferenceBottomSheet({this.save = false, super.key});
+class ElectivePreferenceBottomSheet extends StatefulWidget {
+  const ElectivePreferenceBottomSheet({this.save = false, super.key});
 
   final bool save;
+
   @override
-  State<SchedulePreferenceBottomSheet> createState() =>
-      SchedulePreferenceBottomSheetState();
+  State<ElectivePreferenceBottomSheet> createState() =>
+      ElectivePreferenceBottomSheetState();
 }
 
 @visibleForTesting
-class SchedulePreferenceBottomSheetState
-    extends State<SchedulePreferenceBottomSheet> {
+class ElectivePreferenceBottomSheetState
+    extends State<ElectivePreferenceBottomSheet> {
   late bool savePreferencesOnExit;
 
   @override
@@ -31,9 +31,9 @@ class SchedulePreferenceBottomSheetState
   void exitBottomSheet() {
     if (savePreferencesOnExit) {
       final vm = Provider.of<FilterViewModel>(context, listen: false);
-      vm.storePrimaryYear();
-      vm.storePrimarySemester();
-      vm.storePrimarySection();
+      vm.storePrimaryElectiveYear();
+      vm.storePrimaryElectiveSemester();
+      vm.storePrimaryElectiveScheme();
       CustomSnackbar.info(
         'Primary Preferences Stored!',
         "Your timetable will be selected by default.",
@@ -48,8 +48,6 @@ class SchedulePreferenceBottomSheetState
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
-    AppTourService appTourController =
-        Provider.of<AppTourService>(context, listen: false);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -64,7 +62,6 @@ class SchedulePreferenceBottomSheetState
             children: [
               // preference switch
               ListTile(
-                key: appTourController.savePreferenceSwitchKey,
                 enableFeedback: true,
                 leading: Icon(
                   Icons.downloading_rounded,
@@ -148,7 +145,7 @@ class SchedulePreferenceBottomSheetState
                     color: colorScheme.onSurface,
                   ),
                 ),
-                trailing: const YearBar(),
+                trailing: const ElectiveYearBar(),
               ),
 
               // semester selection
@@ -164,30 +161,28 @@ class SchedulePreferenceBottomSheetState
                     color: colorScheme.onSurface,
                   ),
                 ),
-                trailing: const SemesterBar(),
+                trailing: const ElectiveSemesterBar(),
               ),
 
               // section selection
               ListTile(
-                key: appTourController.sectionBarKey,
                 enableFeedback: true,
                 leading: Icon(
                   Icons.book_rounded,
                   color: colorScheme.onSurface,
                 ),
                 title: Text(
-                  'Section',
+                  'Scheme',
                   style: TextStyle(
                     color: colorScheme.onSurface,
                   ),
                 ),
-                trailing: const SectionsBar(),
+                trailing: const ElectiveSchemeBar(),
               ),
               const SizedBox(height: 32),
 
               // save and exit button
               ElevatedButton(
-                key: appTourController.doneButtonKey,
                 style: ButtonStyle(
                   backgroundColor:
                       WidgetStatePropertyAll(colorScheme.secondary),

@@ -1,5 +1,5 @@
-import 'package:plan_sync/backend/models/timetable_meta.dart';
-import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
+import 'package:plan_sync/features/schedule/model/timetable_meta.dart';
+import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 import 'dart:convert';
 
 class Timetable {

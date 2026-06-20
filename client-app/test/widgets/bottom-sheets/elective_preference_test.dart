@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
-import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
-import 'package:plan_sync/widgets/dropdowns/elective_year_bar.dart';
-import 'package:plan_sync/widgets/dropdowns/electives_scheme_bar.dart';
-import 'package:plan_sync/widgets/dropdowns/electives_sem_bar.dart';
+import 'package:plan_sync/features/electives/view/widgets/elective_preference.dart';
+import 'package:plan_sync/features/electives/view/widgets/elective_year_bar.dart';
+import 'package:plan_sync/features/electives/view/widgets/electives_scheme_bar.dart';
+import 'package:plan_sync/features/electives/view/widgets/electives_sem_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 

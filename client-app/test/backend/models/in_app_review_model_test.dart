@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/backend/models/in_app_review_model.dart';
+import 'package:plan_sync/core/models/in_app_review_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/app_review_service.dart';

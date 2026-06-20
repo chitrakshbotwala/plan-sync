@@ -1,7 +1,7 @@
 import 'dart:developer';
 
 import 'package:in_app_review/in_app_review.dart';
-import 'package:plan_sync/backend/models/in_app_review_model.dart';
+import 'package:plan_sync/core/models/in_app_review_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 

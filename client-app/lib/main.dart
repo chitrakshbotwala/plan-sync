@@ -125,8 +125,8 @@ class AppProvider extends StatelessWidget {
         Provider(
           create: (context) => AnalyticsService(
             auth: context.read<AuthRepository>(),
-            filters: context.read<FilterViewModel>(),
-            version: context.read<VersionViewModel>(),
+            preferences: context.read<AppPreferencesRepository>(),
+            versionService: context.read<VersionService>(),
           ),
         ),
         ChangeNotifierProvider(create: (_) => ThemeService()),

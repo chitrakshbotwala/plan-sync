@@ -26,6 +26,8 @@ class SettingsViewModel extends ChangeNotifier {
 
   Future<void> logout() => _auth.logout();
 
+  Future<void> deleteAccount() => _auth.deleteCurrentUser();
+
   void togglePun() {
     isPunActivated = !isPunActivated;
     notifyListeners();

@@ -1,4 +1,4 @@
-import 'package:plan_sync/backend/models/timetable.dart';
+import 'package:plan_sync/features/schedule/model/timetable.dart';
 
 abstract class ElectivesRepository {
   /// Emits cached timetable first (if any), then the fresh network value.

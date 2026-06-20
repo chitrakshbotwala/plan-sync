@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
+import 'package:plan_sync/core/models/hud_notices_model.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';

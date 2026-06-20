@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'package:plan_sync/backend/models/timetable.dart';
+import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';

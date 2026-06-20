@@ -1,22 +1,22 @@
 import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/services/version_service.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
-import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/util/logger.dart';
 
 class AnalyticsService {
   AnalyticsService({
     required AuthRepository auth,
-    required FilterViewModel filters,
-    required VersionViewModel version,
+    required AppPreferencesRepository preferences,
+    required VersionService versionService,
   })  : _auth = auth,
-        _filters = filters,
-        _version = version;
+        _preferences = preferences,
+        _versionService = versionService;
 
   final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
   final AuthRepository _auth;
-  final FilterViewModel _filters;
-  final VersionViewModel _version;
+  final AppPreferencesRepository _preferences;
+  final VersionService _versionService;
 
   Future<void> onReady() async {
     Logger.i("Analytics service ready");
@@ -28,24 +28,25 @@ class AnalyticsService {
     await _analytics.setUserId(id: _auth.currentUser?.uid);
     await _analytics.setUserProperty(
       name: "userp_primary_year",
-      value: _filters.primaryYear ?? "null",
+      value: _preferences.getPrimaryYearPreference() ?? "null",
     );
     await _analytics.setUserProperty(
       name: "userp_primary_section",
-      value: _filters.primarySection ?? "null",
+      value: _preferences.getPrimarySectionPreference() ?? "null",
     );
     await _analytics.setUserProperty(
       name: "userp_primary_semester",
-      value: _filters.primarySemester ?? "null",
+      value: _preferences.getPrimarySemesterPreference() ?? "null",
     );
     Logger.i("user property reported in analytics.");
   }
 
   void logOpenApp() async {
+    final version = (await _versionService.getPackageInfo()).version;
     final parameters = {
-      'app_version': _version.clientVersion ?? "unknown",
-      'primary_section': _filters.primarySection ?? "null",
-      'primary_semester': _filters.primarySemester ?? "null",
+      'app_version': version,
+      'primary_section': _preferences.getPrimarySectionPreference() ?? "null",
+      'primary_semester': _preferences.getPrimarySemesterPreference() ?? "null",
     };
     try {
       await _analytics.logAppOpen();

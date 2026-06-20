@@ -1,7 +1,7 @@
 import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/backend/models/timetable.dart';
-import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
+import 'package:plan_sync/features/schedule/model/timetable.dart';
+import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';

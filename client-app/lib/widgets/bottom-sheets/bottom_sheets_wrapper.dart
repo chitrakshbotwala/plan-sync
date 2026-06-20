@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
-import 'package:plan_sync/widgets/bottom-sheets/contribute_schedule.dart';
-import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
-import 'package:plan_sync/widgets/bottom-sheets/report_error.dart';
-import 'package:plan_sync/widgets/bottom-sheets/schedule_preference.dart';
-import 'package:plan_sync/widgets/bottom-sheets/share_app.dart';
+import 'package:plan_sync/features/home/view/widgets/contribute_schedule.dart';
+import 'package:plan_sync/features/electives/view/widgets/elective_preference.dart';
+import 'package:plan_sync/features/home/view/widgets/report_error.dart';
+import 'package:plan_sync/features/schedule/view/widgets/schedule_preference.dart';
+import 'package:plan_sync/features/home/view/widgets/share_app.dart';
 import 'package:provider/provider.dart';
 
 class BottomSheets {

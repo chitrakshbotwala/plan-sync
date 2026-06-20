@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/backend/models/timetable_schedule_entry.dart';
+import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 
 class SubjectTile extends StatelessWidget {

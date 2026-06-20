@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/widgets/dropdowns/semester_bar.dart';
+import 'package:plan_sync/features/schedule/view/widgets/semester_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 

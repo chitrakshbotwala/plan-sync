@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
-import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
+import 'package:plan_sync/core/models/hud_notices_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/util/logger.dart';
 

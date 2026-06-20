@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/widgets/bottom-sheets/report_error.dart';
+import 'package:plan_sync/features/home/view/widgets/report_error.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';

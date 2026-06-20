@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:dio_cache_interceptor/dio_cache_interceptor.dart';
 import 'package:internet_connection_checker_plus/internet_connection_checker_plus.dart';
-import 'package:plan_sync/backend/models/timetable.dart';
+import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
 import 'package:plan_sync/util/logger.dart';

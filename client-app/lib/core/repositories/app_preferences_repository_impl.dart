@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:plan_sync/backend/models/in_app_review_model.dart';
+import 'package:plan_sync/core/models/in_app_review_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 

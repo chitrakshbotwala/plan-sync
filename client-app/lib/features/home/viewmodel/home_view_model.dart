@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
+import 'package:plan_sync/core/models/hud_notices_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';

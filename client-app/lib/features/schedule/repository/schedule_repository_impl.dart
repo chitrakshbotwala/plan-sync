@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'package:dio/dio.dart';
-import 'package:plan_sync/backend/models/timetable.dart';
+import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
