@@ -59,7 +59,7 @@ class _SemesterBarState extends State<SemesterBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                          color: Colors.black,
+                          color: colorScheme.onSurface,
                           size: 24,
                         ),
                         Icon(

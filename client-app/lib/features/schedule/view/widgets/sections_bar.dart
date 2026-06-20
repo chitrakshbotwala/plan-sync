@@ -59,7 +59,7 @@ class _SectionsBarState extends State<SectionsBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                          color: Colors.black,
+                          color: colorScheme.onSurface,
                           size: 24,
                         ),
                         Icon(
