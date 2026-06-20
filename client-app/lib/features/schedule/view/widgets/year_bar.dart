@@ -56,7 +56,7 @@ class _YearBarState extends State<YearBar> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         LoadingAnimationWidget.progressiveDots(
-                          color: colorScheme.onSurface,
+                          color: colorScheme.surface,
                           size: 24,
                         ),
                         Icon(
