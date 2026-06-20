@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
-import 'package:plan_sync/util/enums.dart';
+import 'package:plan_sync/core/util/enums.dart';
 import 'package:provider/provider.dart';
 
 class DateWidget extends StatelessWidget {

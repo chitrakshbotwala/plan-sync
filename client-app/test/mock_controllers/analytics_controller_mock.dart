@@ -1,6 +1,6 @@
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class MockAnalyticsService extends Mock implements AnalyticsService {
   @override

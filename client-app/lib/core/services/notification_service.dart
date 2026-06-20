@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class NotificationService {
   static String? initialNotificationRoute;

@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plan_sync/features/electives/view/widgets/electives_scheme_bar.dart';
 import 'package:plan_sync/features/electives/view/widgets/electives_sem_bar.dart';
 import 'package:plan_sync/features/electives/view/widgets/elective_year_bar.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:provider/provider.dart';
 

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:plan_sync/features/schedule/view/widgets/sections_bar.dart';
 import 'package:plan_sync/features/schedule/view/widgets/semester_bar.dart';
 import 'package:plan_sync/features/schedule/view/widgets/year_bar.dart';

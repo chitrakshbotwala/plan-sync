@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:plan_sync/util/external_links.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/external_links.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 
 class ReportErrorBottomSheet extends StatelessWidget {
   const ReportErrorBottomSheet({super.key});

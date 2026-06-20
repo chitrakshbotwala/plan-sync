@@ -2,7 +2,7 @@ import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/version_service.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class AnalyticsService {
   AnalyticsService({

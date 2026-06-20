@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
 import 'package:provider/provider.dart';

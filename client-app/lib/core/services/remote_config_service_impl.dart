@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:plan_sync/core/models/hud_notices_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class RemoteConfigServiceImpl implements RemoteConfigService {
   final remoteConfig = FirebaseRemoteConfig.instance;

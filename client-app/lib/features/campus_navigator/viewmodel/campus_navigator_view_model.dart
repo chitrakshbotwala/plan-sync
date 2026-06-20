@@ -2,7 +2,7 @@ import 'package:easy_debounce/easy_debounce.dart';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/features/campus_navigator/model/campus_navigation_model.dart';
 import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class CampusNavigatorViewModel extends ChangeNotifier {
   CampusNavigatorViewModel({required CampusNavigatorRepository repository})

@@ -4,7 +4,7 @@ import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class ScheduleRepositoryImpl implements ScheduleRepository {
   ScheduleRepositoryImpl({

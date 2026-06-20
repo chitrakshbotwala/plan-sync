@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class SectionsRepositoryImpl implements SectionsRepository {
   SectionsRepositoryImpl({required ApiClient apiClient})

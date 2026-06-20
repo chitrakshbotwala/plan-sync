@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
-import 'package:plan_sync/util/enums.dart';
+import 'package:plan_sync/core/util/enums.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class FakeSectionsRepository implements SectionsRepository {

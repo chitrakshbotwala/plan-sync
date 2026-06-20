@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:toastification/toastification.dart';
 
 enum _Type { info, error }

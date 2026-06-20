@@ -3,7 +3,7 @@ import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_
 import 'package:plan_sync/features/campus_navigator/view/widgets/campus_location_card.dart';
 import 'package:plan_sync/features/campus_navigator/view/widgets/empty_campus_widget.dart';
 import 'package:plan_sync/features/campus_navigator/viewmodel/campus_navigator_view_model.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 

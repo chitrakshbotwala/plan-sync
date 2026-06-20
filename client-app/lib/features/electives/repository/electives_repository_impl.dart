@@ -5,7 +5,7 @@ import 'package:internet_connection_checker_plus/internet_connection_checker_plu
 import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class ElectivesRepositoryImpl implements ElectivesRepository {
   ElectivesRepositoryImpl({required ApiClient apiClient})

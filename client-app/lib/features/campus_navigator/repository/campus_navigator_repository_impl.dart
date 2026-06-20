@@ -1,6 +1,6 @@
 import 'package:plan_sync/features/campus_navigator/model/campus_navigation_model.dart';
 import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class CampusNavigatorRepositoryImpl implements CampusNavigatorRepository {

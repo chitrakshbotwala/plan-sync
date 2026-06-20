@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/util/external_links.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/external_links.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 
 class InAppUpateFailedPopup extends StatelessWidget {
   const InAppUpateFailedPopup({

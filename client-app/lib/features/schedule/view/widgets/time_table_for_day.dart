@@ -5,8 +5,8 @@ import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart'
 
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
-import 'package:plan_sync/util/extensions.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/extensions.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:plan_sync/features/schedule/view/widgets/no_schedule_widget.dart';
 import 'package:plan_sync/features/schedule/view/widgets/indicators/schedule_freshness_indicator.dart';
 import 'package:plan_sync/features/schedule/view/widgets/subject_tile.dart';

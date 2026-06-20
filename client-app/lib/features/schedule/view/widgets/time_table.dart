@@ -4,7 +4,7 @@ import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
-import 'package:plan_sync/util/enums.dart';
+import 'package:plan_sync/core/util/enums.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:plan_sync/features/schedule/view/widgets/time_table_for_day.dart';
 import 'package:provider/provider.dart';

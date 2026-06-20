@@ -1,6 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
-import 'package:plan_sync/util/enums.dart';
+import 'package:plan_sync/core/util/enums.dart';
 
 class LoginViewModel extends ChangeNotifier {
   LoginViewModel({required AuthRepository repository})

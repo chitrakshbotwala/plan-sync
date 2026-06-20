@@ -1,14 +1,4 @@
-## MVVM Pending Items
-
-### Low priority / minor
-
-**5. `lib/util/` not yet moved to `lib/core/util/`**
-`logger.dart`, `snackbar.dart`, etc. — the skill says migrate opportunistically, no rush.
-
-**6. `RequestFeaturesPopup` has inline `isLoading` state + `ExternalLinks` call**
-`lib/widgets/popups/request_features_popup.dart:17-47` — it's a form that calls a URL launcher utility. This is borderline; the `isLoading` is pure local UI state and `ExternalLinks` isn't a repository. Lowest priority, arguably acceptable as-is.
-
----
+## MVVM Pending Items — all resolved ✓
 
 ### Completed
 

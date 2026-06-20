@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:plan_sync/core/cache/cache_service.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class HiveCacheService implements CacheService {
   static const _boxName = 'plan_sync_model_cache';

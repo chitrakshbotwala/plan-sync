@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:provider/provider.dart';
 
 class DeleteAccountPopup extends StatefulWidget {

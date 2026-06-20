@@ -1,7 +1,7 @@
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:plan_sync/core/services/api_client.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class VersionService {
   VersionService({required ApiClient apiClient}) : _apiClient = apiClient;

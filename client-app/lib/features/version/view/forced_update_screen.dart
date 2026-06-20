@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
-import 'package:plan_sync/util/external_links.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/core/util/external_links.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 
 class ForcedUpdateScreen extends StatelessWidget {
   const ForcedUpdateScreen({super.key});

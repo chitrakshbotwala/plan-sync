@@ -8,10 +8,10 @@ import 'package:package_info_plus/package_info_plus.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/version_service.dart';
-import 'package:plan_sync/util/app_version.dart';
-import 'package:plan_sync/util/external_links.dart';
-import 'package:plan_sync/util/snackbar.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/app_version.dart';
+import 'package:plan_sync/core/util/external_links.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
+import 'package:plan_sync/core/util/logger.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 
 class VersionViewModel extends ChangeNotifier {

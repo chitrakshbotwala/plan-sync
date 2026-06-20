@@ -5,7 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final _auth = FirebaseAuth.instance;

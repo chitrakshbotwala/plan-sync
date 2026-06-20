@@ -2,8 +2,8 @@ import 'package:collection/collection.dart';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
-import 'package:plan_sync/util/enums.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/util/enums.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
 class FilterViewModel extends ChangeNotifier {
   FilterViewModel({
