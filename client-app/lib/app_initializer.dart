@@ -2,12 +2,12 @@ import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:provider/provider.dart';
@@ -16,10 +16,10 @@ class AppInitializer {
   static Future<void> initializeApp(BuildContext context) async {
     try {
       await Provider.of<ApiClient>(context, listen: false).initialize();
-      Provider.of<AppTourController>(context, listen: false).onInit(context);
+      Provider.of<AppTourService>(context, listen: false).onInit(context);
       await Provider.of<AppPreferencesRepository>(context, listen: false)
           .onInit();
-      Provider.of<AppThemeController>(context, listen: false).onInit();
+      Provider.of<ThemeService>(context, listen: false).onInit();
 
       await Future.wait([
         Provider.of<VersionViewModel>(context, listen: false).onReady(context),

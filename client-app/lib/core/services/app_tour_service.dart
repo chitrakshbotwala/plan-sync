@@ -7,8 +7,8 @@ import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
 import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
-class AppTourController extends ChangeNotifier {
-  late AppPreferencesRepository appPreferencesController;
+class AppTourService {
+  late AppPreferencesRepository _appPreferences;
 
   late GlobalKey _schedulePreferencesButtonKey;
   GlobalKey get schedulePreferencesButtonKey => _schedulePreferencesButtonKey;
@@ -23,7 +23,7 @@ class AppTourController extends ChangeNotifier {
   GlobalKey get doneButtonKey => _doneButtonKey;
 
   void onInit(BuildContext context) {
-    appPreferencesController = Provider.of<AppPreferencesRepository>(
+    _appPreferences = Provider.of<AppPreferencesRepository>(
       context,
       listen: false,
     );
@@ -104,7 +104,7 @@ class AppTourController extends ChangeNotifier {
   }
 
   Future<bool> tourAlreadyCompleted() async {
-    return appPreferencesController.getTutorialStatus() ?? false;
+    return _appPreferences.getTutorialStatus() ?? false;
   }
 
   List<TargetFocus> getTutorialTargets(BuildContext context) {
@@ -140,10 +140,10 @@ class AppTourController extends ChangeNotifier {
   }
 
   Future<void> onTourComplete() async {
-    final res = await appPreferencesController.saveTutorialStatus(true);
+    final res = await _appPreferences.saveTutorialStatus(true);
     if (res != true) {
       final err = {
-        'origin': 'AppTourController.onTourComplete',
+        'origin': 'AppTourService.onTourComplete',
         'message': 'error saving to shared preferences'
       };
       return Future.error(err);

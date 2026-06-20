@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/auth/viewmodel/login_view_model.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:plan_sync/util/external_links.dart';
@@ -17,7 +17,7 @@ class LoginScreen extends StatelessWidget {
     final vm = context.watch<LoginViewModel>();
     final colorScheme = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
-    final appTheme = context.watch<AppThemeController>();
+    final appTheme = context.watch<ThemeService>();
 
     return Scaffold(
       backgroundColor: colorScheme.surface,

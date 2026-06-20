@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:provider/provider.dart';
 
@@ -23,7 +23,7 @@ class _SchedulePreferenceButtonState extends State<SchedulePreferenceButton> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final appTheme = Provider.of<AppThemeController>(context, listen: false);
+    final appTheme = Provider.of<ThemeService>(context, listen: false);
 
     return ElevatedButton(
       onPressed: () => BottomSheets.changeSectionPreference(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/util/enums.dart';
 import 'package:provider/provider.dart';
 
@@ -16,7 +16,7 @@ class DateWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     final colorScheme = Theme.of(context).colorScheme;
-    final appTheme = Provider.of<AppThemeController>(context, listen: false);
+    final appTheme = Provider.of<ThemeService>(context, listen: false);
 
     return Consumer<FilterViewModel>(
       builder: (ctx, filterController, child) {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/util/external_links.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:provider/provider.dart';
@@ -13,7 +13,7 @@ class ShareAppSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final colorScheme = Theme.of(context).colorScheme;
-    final appTheme = Provider.of<AppThemeController>(context, listen: false);
+    final appTheme = Provider.of<ThemeService>(context, listen: false);
 
     return Padding(
       padding: EdgeInsets.only(

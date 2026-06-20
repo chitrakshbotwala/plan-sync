@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:go_router/go_router.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
 import 'package:plan_sync/widgets/dropdowns/elective_year_bar.dart';
 import 'package:plan_sync/widgets/dropdowns/electives_scheme_bar.dart';
@@ -39,7 +39,7 @@ void main() {
     return tester.pumpWidget(
       wrapWithProviders(
         child: MaterialApp.router(
-          theme: AppThemeController.lightTheme,
+          theme: ThemeService.lightTheme,
           routeInformationParser: router.routeInformationParser,
           routeInformationProvider: router.routeInformationProvider,
           routerDelegate: router.routerDelegate,

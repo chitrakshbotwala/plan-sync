@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:loading_animation_widget/loading_animation_widget.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:provider/provider.dart';
 
@@ -30,7 +30,7 @@ class _LogoutButtonState extends State<LogoutButton> {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final appTheme = Provider.of<AppThemeController>(context, listen: false);
+    final appTheme = Provider.of<ThemeService>(context, listen: false);
 
     return ElevatedButton.icon(
       style: ButtonStyle(

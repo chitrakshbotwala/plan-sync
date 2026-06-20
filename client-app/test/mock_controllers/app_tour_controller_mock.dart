@@ -2,18 +2,15 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/util/logger.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
 import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
-class MockAppTourController extends Mock
-    with ChangeNotifier
-    implements AppTourController {
-  @override
-  late AppPreferencesRepository appPreferencesController;
+class MockAppTourController extends Mock implements AppTourService {
+  late AppPreferencesRepository _appPreferences;
 
   @override
   final GlobalKey schedulePreferencesButtonKey = GlobalKey();
@@ -29,7 +26,7 @@ class MockAppTourController extends Mock
 
   @override
   void onInit(BuildContext context) {
-    appPreferencesController = Provider.of<AppPreferencesRepository>(
+    _appPreferences = Provider.of<AppPreferencesRepository>(
       context,
       listen: false,
     );
@@ -91,7 +88,7 @@ class MockAppTourController extends Mock
 
   @override
   Future<bool> tourAlreadyCompleted() async {
-    return appPreferencesController.getTutorialStatus() ?? false;
+    return _appPreferences.getTutorialStatus() ?? false;
   }
 
   @override
@@ -123,7 +120,7 @@ class MockAppTourController extends Mock
 
   @override
   Future<void> onTourComplete() async {
-    final res = await appPreferencesController.saveTutorialStatus(true);
+    final res = await _appPreferences.saveTutorialStatus(true);
     if (res != true) {
       final err = {
         'origin': 'AppTourController.onTourComplete',

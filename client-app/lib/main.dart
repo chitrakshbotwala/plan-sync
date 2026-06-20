@@ -7,7 +7,7 @@ import 'package:go_router/go_router.dart';
 import 'package:plan_sync/app_initializer.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/core/services/app_review_service.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
@@ -27,7 +27,7 @@ import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/remote_config_service_impl.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/router_refresh_stream.dart';
 import 'package:plan_sync/features/campus_navigator/view/campus_navigator_view.dart';
@@ -97,7 +97,7 @@ class AppProvider extends StatelessWidget {
             preferences: context.read<AppPreferencesRepository>(),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => AppTourController()),
+        Provider(create: (_) => AppTourService()),
         Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
         Provider<RemoteConfigService>(
           create: (_) => RemoteConfigServiceImpl(),
@@ -121,7 +121,7 @@ class AppProvider extends StatelessWidget {
             version: context.read<VersionViewModel>(),
           ),
         ),
-        ChangeNotifierProvider(create: (_) => AppThemeController()),
+        ChangeNotifierProvider(create: (_) => ThemeService()),
         Provider(create: (_) => NotificationService()),
         Provider(
           create: (context) {
@@ -181,11 +181,11 @@ class _MainAppState extends State<MainApp> {
       future: _initializationFuture,
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return Selector<AppThemeController, ThemeMode>(
+          return Selector<ThemeService, ThemeMode>(
             selector: (context, controller) => controller.themeMode,
             builder: (context, mode, child) => MaterialApp(
-              theme: AppThemeController.lightTheme,
-              darkTheme: AppThemeController.darkTheme,
+              theme: ThemeService.lightTheme,
+              darkTheme: ThemeService.darkTheme,
               themeMode: mode,
               home: const Scaffold(
                 body: Center(
@@ -197,11 +197,11 @@ class _MainAppState extends State<MainApp> {
         }
 
         if (snapshot.hasError) {
-          return Selector<AppThemeController, ThemeMode>(
+          return Selector<ThemeService, ThemeMode>(
             selector: (context, controller) => controller.themeMode,
             builder: (context, mode, child) => MaterialApp(
-              theme: AppThemeController.lightTheme,
-              darkTheme: AppThemeController.darkTheme,
+              theme: ThemeService.lightTheme,
+              darkTheme: ThemeService.darkTheme,
               themeMode: mode,
               home: Scaffold(
                 body: Center(
@@ -216,11 +216,11 @@ class _MainAppState extends State<MainApp> {
           config: ToastificationConfig(
             maxToastLimit: 2,
           ),
-          child: Selector<AppThemeController, ThemeMode>(
+          child: Selector<ThemeService, ThemeMode>(
             builder: (context, mode, child) => MaterialApp.router(
               debugShowCheckedModeBanner: kDebugMode ? true : false,
-              theme: AppThemeController.lightTheme,
-              darkTheme: AppThemeController.darkTheme,
+              theme: ThemeService.lightTheme,
+              darkTheme: ThemeService.darkTheme,
               themeMode: mode,
               routerDelegate: _router.routerDelegate,
               routeInformationParser: _router.routeInformationParser,
@@ -259,7 +259,7 @@ final _router = GoRouter(
                   ),
                   ChangeNotifierProvider<HomeViewModel>(
                     create: (ctx) => HomeViewModel(
-                      appTour: ctx.read<AppTourController>(),
+                      appTour: ctx.read<AppTourService>(),
                       appPreferences: ctx.read<AppPreferencesRepository>(),
                     ),
                   ),

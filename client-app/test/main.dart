@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
@@ -28,10 +28,10 @@ late MockFilterViewModel mockFilterViewModel;
 late MockScheduleRepository mockScheduleRepository;
 late MockVersionViewModel mockVersionViewModel;
 late MockAnalyticsService mockAnalyticsService;
-late MockAppTourController mockAppTourController;
+late MockAppTourController mockAppTourService;
 late MockRemoteConfigController mockRemoteConfigController;
 late MockNotificationService mockNotificationService;
-late AppThemeController mockThemeController;
+late ThemeService mockThemeController;
 
 Future<void> injectMockDependencies() async {
   mockAuth = MockAuth();
@@ -41,10 +41,10 @@ Future<void> injectMockDependencies() async {
   mockScheduleRepository = MockScheduleRepository();
   mockVersionViewModel = MockVersionViewModel();
   mockAnalyticsService = MockAnalyticsService();
-  mockAppTourController = MockAppTourController();
+  mockAppTourService = MockAppTourController();
   mockRemoteConfigController = MockRemoteConfigController();
   mockNotificationService = MockNotificationService();
-  mockThemeController = AppThemeController();
+  mockThemeController = ThemeService();
 }
 
 /// Wraps [child] in the provider tree expected by widgets in lib/.
@@ -64,8 +64,8 @@ Widget wrapWithProviders({required Widget child}) {
       Provider<AnalyticsService>.value(
         value: mockAnalyticsService,
       ),
-      ChangeNotifierProvider<AppTourController>.value(
-        value: mockAppTourController,
+      Provider<AppTourService>.value(
+        value: mockAppTourService,
       ),
       Provider<RemoteConfigService>.value(
         value: mockRemoteConfigController,
@@ -73,7 +73,7 @@ Widget wrapWithProviders({required Widget child}) {
       Provider<NotificationService>.value(
         value: mockNotificationService,
       ),
-      ChangeNotifierProvider<AppThemeController>.value(
+      ChangeNotifierProvider<ThemeService>.value(
         value: mockThemeController,
       ),
       Provider<ScheduleRepository>.value(
@@ -81,14 +81,14 @@ Widget wrapWithProviders({required Widget child}) {
       ),
       ChangeNotifierProvider<HomeViewModel>(
         create: (_) => HomeViewModel(
-          appTour: mockAppTourController,
+          appTour: mockAppTourService,
           appPreferences: mockPreferences,
         ),
       ),
     ],
     child: Builder(
       builder: (ctx) {
-        mockAppTourController.onInit(ctx);
+        mockAppTourService.onInit(ctx);
         return ChangeNotifierProvider<ScheduleViewModel>(
           create: (_) => ScheduleViewModel(
             repository: mockScheduleRepository,
@@ -104,7 +104,7 @@ Widget wrapWithProviders({required Widget child}) {
 Widget testApp({required Widget child}) {
   return wrapWithProviders(
     child: MaterialApp(
-      theme: AppThemeController.lightTheme,
+      theme: ThemeService.lightTheme,
       home: child,
     ),
   );

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/util/snackbar.dart';
 import 'package:plan_sync/widgets/dropdowns/sections_bar.dart';
@@ -48,8 +48,8 @@ class SchedulePreferenceBottomSheetState
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
-    AppTourController appTourController =
-        Provider.of<AppTourController>(context, listen: false);
+    AppTourService appTourController =
+        Provider.of<AppTourService>(context, listen: false);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),

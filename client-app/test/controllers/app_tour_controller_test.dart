@@ -2,21 +2,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late AppTourController controller;
+  late AppTourService controller;
   late AppPreferencesRepositoryImpl preferences;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
     preferences = AppPreferencesRepositoryImpl();
     await preferences.onInit();
-    controller = AppTourController();
+    controller = AppTourService();
   });
 
   Future<void> pump(WidgetTester tester) async {
@@ -39,7 +39,6 @@ void main() {
     expect(controller.sectionBarKey, isA<GlobalKey>());
     expect(controller.savePreferenceSwitchKey, isA<GlobalKey>());
     expect(controller.doneButtonKey, isA<GlobalKey>());
-    expect(controller.appPreferencesController, same(preferences));
   });
 
   testWidgets('tourAlreadyCompleted reads from preferences', (tester) async {

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
-class AppThemeController extends ChangeNotifier {
+// Stays ChangeNotifier because MaterialApp rebuilds on ThemeMode changes.
+class ThemeService extends ChangeNotifier {
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: const Color(0xFF34A853), // Vibrant green
