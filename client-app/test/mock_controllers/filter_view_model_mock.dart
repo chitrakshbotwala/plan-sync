@@ -11,6 +11,13 @@ class MockFilterViewModel extends Mock
 
   final AppPreferencesRepository _prefsController;
 
+  @override
+  final GlobalKey savePreferenceSwitchKey = GlobalKey();
+  @override
+  final GlobalKey sectionBarKey = GlobalKey();
+  @override
+  final GlobalKey doneButtonKey = GlobalKey();
+
   // --- Schedule metadata ---
 
   @override
