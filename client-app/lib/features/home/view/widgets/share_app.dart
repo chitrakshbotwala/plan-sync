@@ -69,7 +69,7 @@ class ShareAppSheet extends StatelessWidget {
             trailing: const Icon(Icons.keyboard_arrow_right_rounded),
             onTap: () async {
               try {
-                await ExternalLinks.shareApp();
+                await ExternalLinks.shareApp(context: context);
               } catch (e) {
                 if (!context.mounted) return;
 

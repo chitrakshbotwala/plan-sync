@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:share_plus/share_plus.dart';
 import 'enums.dart';
@@ -141,13 +142,24 @@ Best regards,
     await _launchUrl(url);
   }
 
-  static Future<void> shareApp() async {
+  static Future<void> shareApp({BuildContext? context}) async {
     var text = "Check out the Plan Sync app! "
         "🚀 It's a game-changer for managing my classes. "
         "Makes life so much easier.";
 
     text += "\n\nGive it a try: https://plansync.in/#download";
-    Share.share(text);
+
+    Rect? sharePositionOrigin;
+    if (context != null) {
+      final box = context.findRenderObject() as RenderBox?;
+      if (box != null) {
+        sharePositionOrigin = box.localToGlobal(Offset.zero) & box.size;
+      }
+    }
+
+    await SharePlus.instance.share(
+      ShareParams(text: text, sharePositionOrigin: sharePositionOrigin),
+    );
   }
 
   static Future<void> _launchUrl(String url) async {
