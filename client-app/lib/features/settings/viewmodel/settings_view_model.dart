@@ -34,4 +34,6 @@ class SettingsViewModel extends ChangeNotifier {
   }
 
   void logShareSheetOpen() => _analytics.logShareSheetOpen();
+
+  void logShareViaExternalApps() => _analytics.logShareViaExternalApps();
 }

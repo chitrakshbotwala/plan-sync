@@ -1,18 +1,21 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/features/schedule/model/timetable.dart';
 
 class ElectivesViewModel extends ChangeNotifier {
   ElectivesViewModel({
     required ElectivesRepository repository,
     required FilterViewModel filterViewModel,
     required AppPreferencesRepository preferences,
+    required RemoteConfigService remoteConfig,
   })  : _repository = repository,
         _filterViewModel = filterViewModel,
-        _preferences = preferences {
+        _preferences = preferences,
+        _remoteConfig = remoteConfig {
     _filterViewModel.addListener(_onStateChanged);
     _loadStarredElectives();
     _tryLoad();
@@ -21,6 +24,7 @@ class ElectivesViewModel extends ChangeNotifier {
   final ElectivesRepository _repository;
   final FilterViewModel _filterViewModel;
   final AppPreferencesRepository _preferences;
+  final RemoteConfigService _remoteConfig;
   StreamSubscription<Timetable?>? _sub;
 
   String? _lastYear;
@@ -34,6 +38,8 @@ class ElectivesViewModel extends ChangeNotifier {
   final Set<String> _starredIds = {};
 
   bool get hasData => timetable != null;
+
+  bool get showSigmaEmoji => _remoteConfig.canShowSigmaEmoji();
 
   bool isElectiveStarred(String electiveId) => _starredIds.contains(electiveId);
 

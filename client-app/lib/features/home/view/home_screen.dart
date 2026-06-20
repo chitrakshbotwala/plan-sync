@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
-import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/home/view/widgets/schedule_preferences_button.dart';
 import 'package:plan_sync/features/home/view/widgets/date_widget.dart';
@@ -56,11 +54,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> _initNotifications() async {
     if (!mounted) return;
-    final service = context.read<NotificationService>();
-    final prefs = context.read<AppPreferencesRepository>();
-    final needsPerm = await service.needsPermission();
-    if (needsPerm && prefs.shouldPromptForNotifications() && mounted) {
-      final shouldRequest = await showDialog<bool>(
+    final vm = context.read<HomeViewModel>();
+    final shouldPrompt = await vm.shouldShowNotificationDialog();
+    if (shouldPrompt && mounted) {
+      final granted = await showDialog<bool>(
         context: context,
         barrierDismissible: false,
         builder: (ctx) => AlertDialog(
@@ -80,13 +77,13 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       );
-      if (shouldRequest == true) {
-        await service.requestPermission();
+      if (granted == true) {
+        await vm.onNotificationGranted();
       } else {
-        await prefs.saveNotificationDialogDismissedAt();
+        await vm.onNotificationDenied();
       }
     }
-    await service.initialize();
+    await vm.initNotifications();
   }
 
   @override

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
@@ -8,14 +9,17 @@ class ScheduleViewModel extends ChangeNotifier {
   ScheduleViewModel({
     required ScheduleRepository repository,
     required FilterViewModel filterViewModel,
+    required RemoteConfigService remoteConfig,
   })  : _repository = repository,
-        _filterViewModel = filterViewModel {
+        _filterViewModel = filterViewModel,
+        _remoteConfig = remoteConfig {
     _filterViewModel.addListener(_onStateChanged);
     _tryLoad();
   }
 
   final ScheduleRepository _repository;
   final FilterViewModel _filterViewModel;
+  final RemoteConfigService _remoteConfig;
   StreamSubscription<Timetable?>? _sub;
 
   // Track last-loaded params to avoid redundant fetches on unrelated notifies.
@@ -28,6 +32,8 @@ class ScheduleViewModel extends ChangeNotifier {
   String? errorMessage;
 
   bool get hasData => timetable != null;
+
+  bool get showSigmaEmoji => _remoteConfig.canShowSigmaEmoji();
 
   void _onStateChanged() => _tryLoad();
 

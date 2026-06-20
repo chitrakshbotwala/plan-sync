@@ -318,6 +318,7 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
             TimeTableForDay(
               day: filterController.weekday.key,
               data: vm.timetable!,
+              showSigmaEmoji: vm.showSigmaEmoji,
               searchEnabled: true,
               isElectiveStarred: vm.isElectiveStarred,
               onStarElective: vm.starElective,
@@ -467,6 +468,7 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
           TimeTableForDay(
             day: filterController.weekday.key,
             data: vm.timetable!,
+            showSigmaEmoji: vm.showSigmaEmoji,
             searchEnabled: false,
           ),
         ],

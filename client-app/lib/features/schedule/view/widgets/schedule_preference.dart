@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:plan_sync/features/schedule/view/widgets/sections_bar.dart';
@@ -48,8 +47,7 @@ class SchedulePreferenceBottomSheetState
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
     final size = MediaQuery.of(context).size;
-    AppTourService appTourController =
-        Provider.of<AppTourService>(context, listen: false);
+    final vm = Provider.of<FilterViewModel>(context, listen: false);
 
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
@@ -64,7 +62,7 @@ class SchedulePreferenceBottomSheetState
             children: [
               // preference switch
               ListTile(
-                key: appTourController.savePreferenceSwitchKey,
+                key: vm.savePreferenceSwitchKey,
                 enableFeedback: true,
                 leading: Icon(
                   Icons.downloading_rounded,
@@ -169,7 +167,7 @@ class SchedulePreferenceBottomSheetState
 
               // section selection
               ListTile(
-                key: appTourController.sectionBarKey,
+                key: vm.sectionBarKey,
                 enableFeedback: true,
                 leading: Icon(
                   Icons.book_rounded,
@@ -187,7 +185,7 @@ class SchedulePreferenceBottomSheetState
 
               // save and exit button
               ElevatedButton(
-                key: appTourController.doneButtonKey,
+                key: vm.doneButtonKey,
                 style: ButtonStyle(
                   backgroundColor:
                       WidgetStatePropertyAll(colorScheme.secondary),

@@ -16,6 +16,7 @@ import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository_impl.dart';
 import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository.dart';
 import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository_impl.dart';
+import 'package:plan_sync/features/campus_navigator/viewmodel/campus_navigator_view_model.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/api_client.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
@@ -98,14 +99,15 @@ class AppProvider extends StatelessWidget {
             apiClient: context.read<ApiClient>(),
           ),
         ),
-        // FilterViewModel needs SectionsRepository + AppPreferencesRepository
+        Provider(create: (_) => AppTourService()),
+        // FilterViewModel needs SectionsRepository + AppPreferencesRepository + AppTourService
         ChangeNotifierProvider(
           create: (context) => FilterViewModel(
             sectionsRepository: context.read<SectionsRepository>(),
             preferences: context.read<AppPreferencesRepository>(),
+            appTour: context.read<AppTourService>(),
           ),
         ),
-        Provider(create: (_) => AppTourService()),
         Provider<AuthRepository>(create: (_) => AuthRepositoryImpl()),
         Provider<RemoteConfigService>(
           create: (_) => RemoteConfigServiceImpl(),
@@ -265,6 +267,7 @@ final _router = GoRouter(
                     create: (ctx) => ScheduleViewModel(
                       repository: ctx.read<ScheduleRepository>(),
                       filterViewModel: ctx.read<FilterViewModel>(),
+                      remoteConfig: ctx.read<RemoteConfigService>(),
                     ),
                   ),
                   ChangeNotifierProvider<HomeViewModel>(
@@ -272,6 +275,7 @@ final _router = GoRouter(
                       appTour: ctx.read<AppTourService>(),
                       appPreferences: ctx.read<AppPreferencesRepository>(),
                       remoteConfig: ctx.read<RemoteConfigService>(),
+                      notifications: ctx.read<NotificationService>(),
                     ),
                   ),
                 ],
@@ -290,6 +294,7 @@ final _router = GoRouter(
                   repository: ctx.read<ElectivesRepository>(),
                   filterViewModel: ctx.read<FilterViewModel>(),
                   preferences: ctx.read<AppPreferencesRepository>(),
+                  remoteConfig: ctx.read<RemoteConfigService>(),
                 ),
                 child: const ElectiveScreen(),
               ),
@@ -301,7 +306,12 @@ final _router = GoRouter(
             GoRoute(
               path: '/navigator',
               name: 'navigator',
-              builder: (context, state) => const CampusNavigatorView(),
+              builder: (context, state) => ChangeNotifierProvider(
+                create: (ctx) => CampusNavigatorViewModel(
+                  repository: ctx.read<CampusNavigatorRepository>(),
+                )..load(),
+                child: const CampusNavigatorView(),
+              ),
             ),
           ],
         ),

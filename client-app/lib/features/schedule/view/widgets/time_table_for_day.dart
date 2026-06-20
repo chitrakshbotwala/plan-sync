@@ -17,6 +17,7 @@ class TimeTableForDay extends StatefulWidget {
     super.key,
     required this.data,
     required this.day,
+    required this.showSigmaEmoji,
     this.searchEnabled = false,
     this.isElectiveStarred,
     this.onStarElective,
@@ -25,6 +26,7 @@ class TimeTableForDay extends StatefulWidget {
 
   final Timetable data;
   final String day;
+  final bool showSigmaEmoji;
   final bool searchEnabled;
 
   /// Elective starring callbacks — only required when displaying electives.
@@ -230,6 +232,7 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
               const Spacer(),
               ScheduleFreshnessIndicator(
                 isFresh: widget.data.isFresh,
+                showSigmaEmoji: widget.showSigmaEmoji,
               ),
               const SizedBox(width: 8),
             ],

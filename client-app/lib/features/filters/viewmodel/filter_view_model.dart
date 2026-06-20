@@ -1,6 +1,7 @@
 import 'package:collection/collection.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/core/util/enums.dart';
 import 'package:plan_sync/core/util/logger.dart';
@@ -9,11 +10,18 @@ class FilterViewModel extends ChangeNotifier {
   FilterViewModel({
     required SectionsRepository sectionsRepository,
     required AppPreferencesRepository preferences,
+    required AppTourService appTour,
   })  : _repository = sectionsRepository,
-        _preferences = preferences;
+        _preferences = preferences,
+        _appTour = appTour;
 
   final SectionsRepository _repository;
   final AppPreferencesRepository _preferences;
+  final AppTourService _appTour;
+
+  GlobalKey get savePreferenceSwitchKey => _appTour.savePreferenceSwitchKey;
+  GlobalKey get sectionBarKey => _appTour.sectionBarKey;
+  GlobalKey get doneButtonKey => _appTour.doneButtonKey;
 
   // --- Schedule metadata ---
 

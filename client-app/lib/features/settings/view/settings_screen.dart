@@ -225,6 +225,7 @@ class SettingsPage extends StatelessWidget {
                   onTap: () {
                     BottomSheets.shareAppBottomSheet(context: context);
                     vm.logShareSheetOpen();
+                    vm.logShareViaExternalApps();
                   },
                 ),
                 Padding(
