@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:plan_sync/core/util/constants.dart';
 import 'package:plan_sync/core/util/external_links.dart';
@@ -157,6 +158,39 @@ class SettingsPage extends StatelessWidget {
                   onTap: () => BottomSheets.changeSectionPreference(
                     context: context,
                     save: true,
+                  ),
+                ),
+                Consumer<AttendanceViewModel>(
+                  builder: (context, attendance, _) => ListTile(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    enableFeedback: true,
+                    leading: Icon(
+                      Icons.fact_check_outlined,
+                      color: colorScheme.onSurface,
+                    ),
+                    title: Text(
+                      "KIIT Portal Login",
+                      style: TextStyle(
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    subtitle: Text(
+                      attendance.hasCredentials
+                          ? "Connected · ${attendance.registrationNumber}"
+                          : "Connect to track attendance",
+                      style: TextStyle(
+                        color: colorScheme.onSurface.withOpacity(0.6),
+                        fontSize: 12,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.keyboard_arrow_right_rounded,
+                      color: colorScheme.onSurface,
+                    ),
+                    onTap: () =>
+                        BottomSheets.kiitCredentials(context: context),
                   ),
                 ),
                 ListTile(
