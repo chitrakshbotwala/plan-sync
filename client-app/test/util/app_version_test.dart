@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/util/app_version.dart';
+import 'package:plan_sync/core/util/app_version.dart';
 
 void main() {
   group('AppVersion parsing', () {

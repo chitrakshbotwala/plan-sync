@@ -1,38 +1,19 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
-import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 
-class MockAuth extends Mock with ChangeNotifier implements Auth {
+class MockAuth extends Mock implements AuthRepository {
   MockFirebaseAuth _auth = MockFirebaseAuth();
 
   @override
-  List<Function> authChangeListeners = [];
+  User? get currentUser => _auth.currentUser;
 
   @override
-  void onInit() {
-    authChangeListeners = [];
-  }
+  Stream<User?> authStateChanges() => _auth.authStateChanges();
 
   @override
-  void addUserStatusListener(Function fn) => authChangeListeners.add(fn);
-
-  @override
-  void removeUserStatusListener(Function fn) => authChangeListeners.remove(fn);
-
-  @override
-  void notifyAuthStatusListeners() {
-    for (final fn in authChangeListeners) {
-      fn.call();
-    }
-  }
-
-  @override
-  User? get activeUser => _auth.currentUser;
-
-  @override
-  Future<void> loginWithGoogle(BuildContext context) async {
+  Future<void> loginWithGoogle() async {
     final user = MockUser(
       isAnonymous: false,
       uid: 'mock-user-uid',
@@ -40,12 +21,16 @@ class MockAuth extends Mock with ChangeNotifier implements Auth {
       displayName: 'MockUser',
     );
     _auth = MockFirebaseAuth(mockUser: user, signedIn: true);
-    return;
   }
+
+  @override
+  Future<void> loginWithApple() async {}
 
   @override
   Future<void> logout() async {
     await _auth.signOut();
-    return;
   }
+
+  @override
+  Future<void> deleteCurrentUser() async {}
 }

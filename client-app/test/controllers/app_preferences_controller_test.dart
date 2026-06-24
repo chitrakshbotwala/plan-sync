@@ -1,19 +1,17 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/backend/models/in_app_review_model.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
+import 'package:plan_sync/core/models/in_app_review_model.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  late AppPreferencesController perfs;
+  late AppPreferencesRepositoryImpl perfs;
 
   TestWidgetsFlutterBinding.ensureInitialized();
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    Get.reset();
-    Get.put(AppPreferencesController());
-    perfs = Get.find();
+    perfs = AppPreferencesRepositoryImpl();
     await perfs.onInit();
   });
 
@@ -108,7 +106,7 @@ void main() {
     });
 
     test('star then unstar reflects in checker and list', () async {
-      final id = AppPreferencesController.electiveId(
+      final id = AppPreferencesRepository.electiveId(
         academicYear: '2024',
         semester: 'SEM2',
         scheme: 'a',
@@ -125,7 +123,7 @@ void main() {
     });
 
     test('electiveId normalizes whitespace into dashes', () {
-      final id = AppPreferencesController.electiveId(
+      final id = AppPreferencesRepository.electiveId(
         academicYear: '2024',
         semester: 'SEM 2',
         scheme: 'a',

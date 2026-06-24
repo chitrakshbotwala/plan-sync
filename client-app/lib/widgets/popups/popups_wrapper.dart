@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/util/enums.dart';
-import 'package:plan_sync/widgets/popups/delete_account_popup.dart';
+import 'package:plan_sync/core/util/enums.dart';
+import 'package:plan_sync/features/settings/view/widgets/delete_account_popup.dart';
 import 'package:plan_sync/widgets/popups/inapp_upate_failed_popup.dart';
 import 'package:plan_sync/widgets/popups/report_error_mail_popup.dart';
-import 'package:plan_sync/widgets/popups/request_features_popup.dart';
+import 'package:plan_sync/features/settings/view/widgets/request_features_popup.dart';
 
 class PopupsWrapper {
   static void reportError({

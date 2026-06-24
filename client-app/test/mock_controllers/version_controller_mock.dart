@@ -1,20 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 
-class MockVersionController extends Mock
+class MockVersionViewModel extends Mock
     with ChangeNotifier
-    implements VersionController {
+    implements VersionViewModel {
   bool updateResult = true;
 
   @override
   bool isUpdateAvailable = false;
 
   @override
-  Future<void> onReady(BuildContext context) async {}
+  bool updateFailed = false;
 
   @override
-  Future<bool> checkForUpdate({required BuildContext context}) async {
+  Future<void> onReady() async {}
+
+  @override
+  Future<bool> checkForUpdate() async {
     return updateResult;
   }
 }

@@ -1,11 +1,8 @@
-import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/backend/models/remote_config/hud_notices_model.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
+import 'package:plan_sync/core/models/hud_notices_model.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 
-class MockRemoteConfigController extends Mock
-    with ChangeNotifier
-    implements RemoteConfigController {
+class MockRemoteConfigController extends Mock implements RemoteConfigService {
   @override
   Future<void> onReady() async {}
 

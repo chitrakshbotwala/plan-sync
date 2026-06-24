@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
-import 'package:plan_sync/util/enums.dart';
-import 'package:plan_sync/util/external_links.dart';
-import 'package:plan_sync/util/snackbar.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/core/util/enums.dart';
+import 'package:plan_sync/core/util/external_links.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:provider/provider.dart';
 
 class ReportErrorMailPopup extends StatelessWidget {
@@ -23,11 +22,10 @@ class ReportErrorMailPopup extends StatelessWidget {
         return;
       }
 
-      FilterController controller =
-          Provider.of<FilterController>(context, listen: false);
-      GitService git = Provider.of<GitService>(context, listen: false);
+      FilterViewModel controller =
+          Provider.of<FilterViewModel>(context, listen: false);
       await ExternalLinks.reportErrorViaMail(
-        academicYear: git.selectedYear,
+        academicYear: controller.selectedYear,
         course: controller.activeSemester,
         section: controller.activeSectionCode,
         weekday: controller.weekday.key,

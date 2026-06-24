@@ -1,42 +1,41 @@
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/core/cache/cache_service.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
+import 'package:plan_sync/core/services/api_client.dart';
 import 'package:provider/provider.dart';
 
 class AppInitializer {
   static Future<void> initializeApp(BuildContext context) async {
     try {
-      // First initialize sync operations
-      Provider.of<Auth>(context, listen: false).onInit();
-      await Provider.of<GitService>(context, listen: false).onInit();
-      Provider.of<AppTourController>(context, listen: false).onInit(context);
-      Provider.of<FilterController>(context, listen: false).onInit(context);
-      await Provider.of<AppPreferencesController>(context, listen: false)
+      await Provider.of<ApiClient>(context, listen: false).initialize();
+      await Provider.of<CacheService>(context, listen: false).initialize();
+      Provider.of<AppTourService>(context, listen: false).onInit(context);
+      await Provider.of<AppPreferencesRepository>(context, listen: false)
           .onInit();
-      Provider.of<AppThemeController>(context, listen: false).onInit();
+      Provider.of<ThemeService>(context, listen: false).onInit();
 
-      // Then handle async operations
       await Future.wait([
-        Provider.of<VersionController>(context, listen: false).onReady(context),
-        Provider.of<GitService>(context, listen: false).onReady(context),
-        Provider.of<RemoteConfigController>(context, listen: false).onReady(),
+        Provider.of<VersionViewModel>(context, listen: false).onReady(),
+        Provider.of<FilterViewModel>(context, listen: false).initialize(),
+        Provider.of<RemoteConfigService>(context, listen: false).onReady(),
       ]);
 
-      // Handle operations that depend on other initializations
-      final auth = Provider.of<Auth>(context, listen: false);
-      final analytics =
-          Provider.of<AnalyticsController>(context, listen: false);
-      await analytics.onReady(context);
-      auth.addUserStatusListener(() => analytics.setUserData());
+      final analytics = Provider.of<AnalyticsService>(context, listen: false);
+      await analytics.onReady();
+
+      // Keep analytics user data in sync with auth state for the app's lifetime.
+      Provider.of<AuthRepository>(context, listen: false)
+          .authStateChanges()
+          .listen((_) => analytics.setUserData());
     } catch (e, stackTrace) {
       if (kReleaseMode) {
         FirebaseCrashlytics.instance.recordError(e, stackTrace);

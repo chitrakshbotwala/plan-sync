@@ -1,82 +1,112 @@
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
-import 'package:plan_sync/controllers/notification_controller.dart';
-import 'package:plan_sync/controllers/remote_config_controller.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
+import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
+import 'package:plan_sync/core/services/notification_service.dart';
+import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
+import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
+import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:provider/provider.dart';
 import 'mock_controllers/analytics_controller_mock.dart';
 import 'mock_controllers/app_preferences_controller_mock.dart';
 import 'mock_controllers/app_tour_controller_mock.dart';
 import 'mock_controllers/auth_mock.dart';
-import 'mock_controllers/filter_controller_mock.dart';
-import 'mock_controllers/git_service_mock.dart';
+import 'mock_controllers/filter_view_model_mock.dart';
 import 'mock_controllers/notification_controller_mock.dart';
 import 'mock_controllers/remote_config_controller_mock.dart';
+import 'mock_controllers/schedule_repository_mock.dart';
 import 'mock_controllers/version_controller_mock.dart';
 
-Future<void> injectMockDependencies() async {
-  Get.reset();
-  final preferences = MockAppPreferencesController();
-  await preferences.onInit();
+late MockAuth mockAuth;
+late MockAppPreferencesController mockPreferences;
+late MockFilterViewModel mockFilterViewModel;
+late MockScheduleRepository mockScheduleRepository;
+late MockVersionViewModel mockVersionViewModel;
+late MockAnalyticsService mockAnalyticsService;
+late MockAppTourController mockAppTourService;
+late MockRemoteConfigController mockRemoteConfigController;
+late MockNotificationService mockNotificationService;
+late ThemeService mockThemeController;
 
-  Get.put<Auth>(MockAuth());
-  Get.put<AppPreferencesController>(preferences);
-  Get.put<GitService>(MockGitService());
-  Get.put<FilterController>(MockFilterController());
-  Get.put<VersionController>(MockVersionController());
-  Get.put<AnalyticsController>(MockAnalyticsController());
-  Get.put<AppTourController>(MockAppTourController());
-  Get.put<RemoteConfigController>(MockRemoteConfigController());
-  Get.put<NotificationController>(MockNotificationController());
-  Get.put<AppThemeController>(AppThemeController());
+Future<void> injectMockDependencies() async {
+  mockAuth = MockAuth();
+  mockPreferences = MockAppPreferencesController();
+  await mockPreferences.onInit();
+  mockFilterViewModel = MockFilterViewModel(mockPreferences);
+  mockScheduleRepository = MockScheduleRepository();
+  mockVersionViewModel = MockVersionViewModel();
+  mockAnalyticsService = MockAnalyticsService();
+  mockAppTourService = MockAppTourController();
+  mockRemoteConfigController = MockRemoteConfigController();
+  mockNotificationService = MockNotificationService();
+  mockThemeController = ThemeService();
 }
 
-/// Wraps [child] in the provider tree expected by widgets in lib/, using
-/// the mocks currently registered in [Get]. Tests should use [testApp]
-/// for a bare home page or [wrapWithProviders] when supplying a custom
-/// [MaterialApp.router].
+/// Wraps [child] in the provider tree expected by widgets in lib/.
 Widget wrapWithProviders({required Widget child}) {
   return MultiProvider(
     providers: [
-      ChangeNotifierProvider<Auth>.value(value: Get.find<Auth>()),
-      ChangeNotifierProvider<AppPreferencesController>.value(
-        value: Get.find<AppPreferencesController>(),
+      Provider<AuthRepository>.value(value: mockAuth),
+      Provider<AppPreferencesRepository>.value(
+        value: mockPreferences,
       ),
-      ChangeNotifierProvider<GitService>.value(value: Get.find<GitService>()),
-      ChangeNotifierProvider<FilterController>.value(
-        value: Get.find<FilterController>(),
+      ChangeNotifierProvider<FilterViewModel>.value(
+        value: mockFilterViewModel,
       ),
-      ChangeNotifierProvider<VersionController>.value(
-        value: Get.find<VersionController>(),
+      ChangeNotifierProvider<VersionViewModel>.value(
+        value: mockVersionViewModel,
       ),
-      ChangeNotifierProvider<AnalyticsController>.value(
-        value: Get.find<AnalyticsController>(),
+      Provider<AnalyticsService>.value(
+        value: mockAnalyticsService,
       ),
-      ChangeNotifierProvider<AppTourController>.value(
-        value: Get.find<AppTourController>(),
+      Provider<AppTourService>.value(
+        value: mockAppTourService,
       ),
-      ChangeNotifierProvider<RemoteConfigController>.value(
-        value: Get.find<RemoteConfigController>(),
+      Provider<RemoteConfigService>.value(
+        value: mockRemoteConfigController,
       ),
-      ChangeNotifierProvider<NotificationController>.value(
-        value: Get.find<NotificationController>(),
+      Provider<NotificationService>.value(
+        value: mockNotificationService,
       ),
-      ChangeNotifierProvider<AppThemeController>.value(
-        value: Get.find<AppThemeController>(),
+      ChangeNotifierProvider<ThemeService>.value(
+        value: mockThemeController,
+      ),
+      Provider<ScheduleRepository>.value(
+        value: mockScheduleRepository,
+      ),
+      ChangeNotifierProvider<HomeViewModel>(
+        create: (_) => HomeViewModel(
+          appTour: mockAppTourService,
+          appPreferences: mockPreferences,
+          remoteConfig: mockRemoteConfigController,
+          notifications: mockNotificationService,
+        ),
+      ),
+      ChangeNotifierProvider<SettingsViewModel>(
+        create: (_) => SettingsViewModel(
+          auth: mockAuth,
+          version: mockVersionViewModel,
+          analytics: mockAnalyticsService,
+        ),
       ),
     ],
     child: Builder(
       builder: (ctx) {
-        Get.find<AppTourController>().onInit(ctx);
-        Get.find<FilterController>().onInit(ctx);
-        return child;
+        mockAppTourService.onInit(ctx);
+        return ChangeNotifierProvider<ScheduleViewModel>(
+          create: (_) => ScheduleViewModel(
+            repository: mockScheduleRepository,
+            filterViewModel: mockFilterViewModel,
+            remoteConfig: mockRemoteConfigController,
+          ),
+          child: child,
+        );
       },
     ),
   );
@@ -85,7 +115,7 @@ Widget wrapWithProviders({required Widget child}) {
 Widget testApp({required Widget child}) {
   return wrapWithProviders(
     child: MaterialApp(
-      theme: AppThemeController.lightTheme,
+      theme: ThemeService.lightTheme,
       home: child,
     ),
   );

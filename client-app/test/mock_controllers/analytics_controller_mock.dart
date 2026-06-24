@@ -1,34 +1,26 @@
-import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
-import 'auth_mock.dart';
-import 'filter_controller_mock.dart';
-
-class MockAnalyticsController extends Mock
-    with ChangeNotifier
-    implements AnalyticsController {
+class MockAnalyticsService extends Mock implements AnalyticsService {
   @override
-  Auth auth = MockAuth();
-
-  @override
-  FilterController filters = MockFilterController();
-
-  @override
-  Future<void> onReady(BuildContext context) async {
-    Logger.i('mocking AnalyticsController.onReady');
-  }
-
-  @override
-  void logOpenApp(BuildContext context) {
-    Logger.i('mocking logOpenApp');
+  Future<void> onReady() async {
+    Logger.i('mocking AnalyticsService.onReady');
   }
 
   @override
   Future<void> setUserData() async {
     Logger.i('mocking setUserData');
   }
+
+  @override
+  void logOpenApp() {
+    Logger.i('mocking logOpenApp');
+  }
+
+  @override
+  void logShareSheetOpen() {}
+
+  @override
+  void logShareViaExternalApps() {}
 }

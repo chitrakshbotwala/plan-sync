@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/controllers/theme_controller.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
-  late AppThemeController controller;
+  late ThemeService controller;
 
   setUp(() {
-    controller = AppThemeController();
+    controller = ThemeService();
   });
 
   group('toggleTheme', () {
