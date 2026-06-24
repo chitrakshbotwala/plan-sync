@@ -5,6 +5,7 @@ import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
@@ -22,6 +23,10 @@ class AppInitializer {
       await Provider.of<AppPreferencesRepository>(context, listen: false)
           .onInit();
       Provider.of<ThemeService>(context, listen: false).onInit();
+
+      // KIIT attendance: load stored portal credentials and set initial status.
+      await Provider.of<AttendanceViewModel>(context, listen: false)
+          .initialize();
 
       await Future.wait([
         Provider.of<VersionViewModel>(context, listen: false).onReady(),

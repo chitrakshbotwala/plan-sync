@@ -12,6 +12,10 @@ import 'package:plan_sync/core/services/app_review_service.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository_impl.dart';
+import 'package:plan_sync/features/attendance/view/attendance_screen.dart';
+import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository_impl.dart';
 import 'package:plan_sync/features/campus_navigator/repository/campus_navigator_repository.dart';
@@ -156,6 +160,17 @@ class AppProvider extends StatelessWidget {
             cache: context.read<CacheService>(),
           ),
         ),
+        // Attendance: credentials repo + view-model are app-lifetime so both
+        // the Attendance tab and the Settings screen can access them.
+        Provider<AttendanceCredentialsRepository>(
+          create: (_) => AttendanceCredentialsRepositoryImpl(),
+        ),
+        ChangeNotifierProvider<AttendanceViewModel>(
+          create: (context) => AttendanceViewModel(
+            credentialsRepository:
+                context.read<AttendanceCredentialsRepository>(),
+          ),
+        ),
       ],
       child: const MainApp(),
     );
@@ -281,6 +296,15 @@ final _router = GoRouter(
                 ],
                 child: const HomeScreen(),
               ),
+            ),
+          ],
+        ),
+        StatefulShellBranch(
+          routes: <RouteBase>[
+            GoRoute(
+              path: '/attendance',
+              name: 'attendance_screen',
+              builder: (context, state) => const AttendanceScreen(),
             ),
           ],
         ),

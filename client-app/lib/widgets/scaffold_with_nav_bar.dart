@@ -65,6 +65,17 @@ class ScaffoldWithNavBar extends StatelessWidget {
               ),
             ),
             SalomonBottomBarItem(
+              icon: const Icon(FontAwesomeIcons.chartPie),
+              title: Text(
+                'Attendance',
+                style: TextStyle(
+                  color: appTheme.isDarkMode
+                      ? colorScheme.onSurface
+                      : colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            SalomonBottomBarItem(
               icon: const Icon(FontAwesomeIcons.clipboard),
               title: Text(
                 'Electives',
