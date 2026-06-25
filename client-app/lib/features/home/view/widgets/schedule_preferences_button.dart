@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
-import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
 
 /// Usually on the home screen used to select
@@ -26,7 +26,7 @@ class _SchedulePreferenceButtonState extends State<SchedulePreferenceButton> {
     final appTheme = Provider.of<ThemeService>(context, listen: false);
 
     return ElevatedButton(
-      onPressed: () => BottomSheets.changeSectionPreference(
+      onPressed: () => PopupsWrapper.changeSectionPreference(
         context: context,
       ),
       style: ButtonStyle(

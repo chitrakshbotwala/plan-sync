@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/util/enums.dart';
+import 'package:plan_sync/features/schedule/view/widgets/schedule_preference.dart';
 import 'package:plan_sync/features/settings/view/widgets/delete_account_popup.dart';
 import 'package:plan_sync/widgets/popups/inapp_upate_failed_popup.dart';
 import 'package:plan_sync/widgets/popups/report_error_mail_popup.dart';
@@ -54,6 +55,19 @@ class PopupsWrapper {
       context: context,
       builder: (context) => const InAppUpateFailedPopup(),
       barrierDismissible: true,
+    );
+  }
+
+  static void changeSectionPreference({
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showDialog(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: true,
+      barrierColor: colorScheme.onSurface.withValues(alpha: 0.32),
+      builder: (_) => const SchedulePreferenceDialog(),
     );
   }
 }

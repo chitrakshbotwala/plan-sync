@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:plan_sync/features/schedule/model/timetable.dart';
+import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
@@ -10,25 +11,13 @@ import 'package:plan_sync/features/schedule/view/widgets/time_table_for_day.dart
 import 'package:provider/provider.dart';
 
 class TimeTableWidget extends StatefulWidget {
-  final bool isElective;
-
-  const TimeTableWidget({
-    super.key,
-    this.isElective = false,
-  });
+  const TimeTableWidget({super.key});
 
   @override
   State<TimeTableWidget> createState() => _TimeTableWidgetState();
 }
 
 class _TimeTableWidgetState extends State<TimeTableWidget> {
-  int? sortColumnIndex;
-  bool sortAscending = false;
-
-  List sortedUniqueTime = [];
-  List<DataRow> rowList = [];
-  List<DataColumn> columnsList = [];
-
   void showMoreInfo(Timetable data, ColorScheme colorScheme) {
     Widget dialog = Dialog(
       backgroundColor: colorScheme.surface,
@@ -57,8 +46,6 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
               ),
             ),
             const SizedBox(height: 16),
-
-            // section details
             RichText(
               text: TextSpan(
                   text: 'Section:',
@@ -77,7 +64,6 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
                   ]),
             ),
             const SizedBox(height: 8),
-            // class type
             RichText(
               text: TextSpan(
                   text: 'Schedule Type:',
@@ -96,7 +82,6 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
                   ]),
             ),
             const SizedBox(height: 8),
-            // revision
             RichText(
               text: TextSpan(
                   text: 'Schedule Version:',
@@ -115,7 +100,6 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
                   ]),
             ),
             const SizedBox(height: 8),
-            // effective
             RichText(
               text: TextSpan(
                   text: 'Effective from:',
@@ -134,7 +118,6 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
                   ]),
             ),
             const SizedBox(height: 8),
-            // contributor
             RichText(
               text: TextSpan(
                   text: 'Contributor:',
@@ -165,173 +148,41 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
     );
   }
 
-  void reportError() {
-    PopupsWrapper.reportError(
-      context: context,
-      scheduleType: ScheduleType.regular,
-    );
+  /// Returns the merged list of regular entries + chosen elective entries
+  /// for [day], or null if no merging is needed/possible.
+  List<ScheduleEntry>? _mergedEntries({
+    required FilterViewModel filterVm,
+    required ElectivesViewModel electivesVm,
+    required String day,
+    required List<ScheduleEntry> regularEntries,
+  }) {
+    final chosen1 = filterVm.chosenElective1;
+    final chosen2 = filterVm.chosenElective2;
+    if ((chosen1 == null && chosen2 == null) || !electivesVm.hasData) {
+      return null;
+    }
+
+    final electiveEntries = electivesVm.timetable?.data[day] ?? [];
+    final extras = <ScheduleEntry>[];
+    for (final subject in [chosen1, chosen2]) {
+      if (subject == null) continue;
+      final entry = electiveEntries.firstWhere(
+        (e) => e.subject == subject,
+        orElse: () => ScheduleEntry(),
+      );
+      if (entry.subject != null) extras.add(entry);
+    }
+
+    if (extras.isEmpty) return null;
+    return [...regularEntries, ...extras];
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-
-    if (widget.isElective) {
-      final vm = context.watch<ElectivesViewModel>();
-      final filterController = context.watch<FilterViewModel>();
-
-      if (vm.isLoading && !vm.hasData) {
-        return Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const SizedBox(height: 32),
-            Center(
-                child: CircularProgressIndicator(
-              color: colorScheme.secondary,
-            )),
-          ],
-        );
-      } else if (vm.errorMessage != null && !vm.hasData) {
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 32),
-            Icon(
-              Icons.error,
-              color: colorScheme.error,
-              size: 40,
-            ),
-            const SizedBox(height: 16),
-            Flexible(child: MarkdownBody(data: "```${vm.errorMessage}```")),
-            const SizedBox(height: 16),
-            Text(
-              "A status report has been sent, this issue will be looked into.",
-              style: TextStyle(
-                color: colorScheme.error,
-              ),
-            )
-          ],
-        );
-      } else if (!vm.hasData) {
-        return Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 32),
-              Icon(
-                Icons.info,
-                color: colorScheme.secondary,
-                size: 40,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "No section selected.",
-                style: TextStyle(
-                  color: colorScheme.onSurfaceVariant,
-                ),
-              )
-            ],
-          ),
-        );
-      } else if (vm.timetable!.meta.isTimetableUpdating ?? false) {
-        return Center(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(height: 32),
-              Icon(
-                Icons.settings_outlined,
-                color: colorScheme.secondary,
-                size: 40,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                "We're working on this timetable,",
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                ),
-              ),
-              Text(
-                "Check back in soon!",
-                style: TextStyle(
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        );
-      } else {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Flexible(
-              child: Text(
-                "Effective from ${vm.timetable!.meta.effectiveDate}",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.onSurface,
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                InkWell(
-                  onTap: () => showMoreInfo(vm.timetable!, colorScheme),
-                  child: Row(
-                    children: [
-                      Icon(Icons.info_rounded, color: colorScheme.tertiary),
-                      const SizedBox(width: 8),
-                      Text(
-                        'More Info',
-                        style: TextStyle(color: colorScheme.tertiary),
-                      ),
-                    ],
-                  ),
-                ),
-                const Spacer(),
-                TextButton.icon(
-                  onPressed: () => PopupsWrapper.reportError(
-                    context: context,
-                    scheduleType: ScheduleType.electives,
-                  ),
-                  label: Text(
-                    'Report Error',
-                    style: TextStyle(color: colorScheme.error),
-                  ),
-                  icon: Icon(
-                    Icons.flag_rounded,
-                    color: colorScheme.error,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            TimeTableForDay(
-              day: filterController.weekday.key,
-              data: vm.timetable!,
-              showSigmaEmoji: vm.showSigmaEmoji,
-              searchEnabled: true,
-              isElectiveStarred: vm.isElectiveStarred,
-              onStarElective: vm.starElective,
-              onUnstarElective: vm.unstarElective,
-            ),
-          ],
-        );
-      }
-    }
-
-    // Non-elective: ScheduleViewModel owns the subscription.
     final vm = context.watch<ScheduleViewModel>();
     final filterController = context.watch<FilterViewModel>();
+    final electivesVm = context.watch<ElectivesViewModel>();
 
     if (vm.isLoading && !vm.hasData) {
       return Column(
@@ -419,6 +270,15 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
         ),
       );
     } else {
+      final day = filterController.weekday.key;
+      final regularEntries = vm.timetable!.data[day] ?? [];
+      final merged = _mergedEntries(
+        filterVm: filterController,
+        electivesVm: electivesVm,
+        day: day,
+        regularEntries: regularEntries,
+      );
+
       return Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -452,7 +312,10 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
               ),
               const Spacer(),
               TextButton.icon(
-                onPressed: () => reportError(),
+                onPressed: () => PopupsWrapper.reportError(
+                  context: context,
+                  scheduleType: ScheduleType.regular,
+                ),
                 label: Text(
                   'Report Error',
                   style: TextStyle(color: colorScheme.error),
@@ -466,20 +329,13 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
           ),
           const SizedBox(height: 16),
           TimeTableForDay(
-            day: filterController.weekday.key,
+            day: day,
             data: vm.timetable!,
             showSigmaEmoji: vm.showSigmaEmoji,
-            searchEnabled: false,
+            overrideEntries: merged,
           ),
         ],
       );
     }
-  }
-
-  void onSort(int columnIndex, bool ascending) {
-    setState(() {
-      sortColumnIndex = columnIndex;
-      sortAscending = ascending;
-    });
   }
 }

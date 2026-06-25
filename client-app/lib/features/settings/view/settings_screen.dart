@@ -7,8 +7,8 @@ import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
 import 'package:plan_sync/core/util/constants.dart';
 import 'package:plan_sync/core/util/external_links.dart';
 import 'package:plan_sync/core/util/snackbar.dart';
-import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/features/settings/view/widgets/logout_button.dart';
+import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
 
@@ -155,9 +155,8 @@ class SettingsPage extends StatelessWidget {
                     Icons.keyboard_arrow_right_rounded,
                     color: colorScheme.onSurface,
                   ),
-                  onTap: () => BottomSheets.changeSectionPreference(
+                  onTap: () => PopupsWrapper.changeSectionPreference(
                     context: context,
-                    save: true,
                   ),
                 ),
                 Consumer<AttendanceViewModel>(

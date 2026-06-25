@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/util/logger.dart';
-import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
 import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -16,9 +16,6 @@ class AppTourService {
   late GlobalKey _sectionBarKey;
   GlobalKey get sectionBarKey => _sectionBarKey;
 
-  late GlobalKey _savePreferenceSwitchKey;
-  GlobalKey get savePreferenceSwitchKey => _savePreferenceSwitchKey;
-
   late GlobalKey _doneButtonKey;
   GlobalKey get doneButtonKey => _doneButtonKey;
 
@@ -31,7 +28,6 @@ class AppTourService {
     _schedulePreferencesButtonKey = GlobalKey();
     _sectionBarKey = GlobalKey();
     _doneButtonKey = GlobalKey();
-    _savePreferenceSwitchKey = GlobalKey();
   }
 
   Future<void> startAppTour(BuildContext context) async {
@@ -81,12 +77,11 @@ class AppTourService {
       Logger.i('key match with schedule button');
 
       await Future.delayed(const Duration(milliseconds: 250));
-      BottomSheets.changeSectionPreference(
+      PopupsWrapper.changeSectionPreference(
         context: schedulePreferencesButtonKey.currentContext!,
       );
     }
 
-    // need to scroll when previous target was clicked on.
     if (target.identify == sectionBarKey.hashCode) {
       if (doneButtonKey.currentContext == null) {
         Logger.w('Done Button GK context is null.');
@@ -95,7 +90,7 @@ class AppTourService {
       await Future.delayed(const Duration(milliseconds: 250));
       await Scrollable.ensureVisible(
         doneButtonKey.currentContext!,
-        alignment: 1, // 1 being bottom should be visible, I believe
+        alignment: 1,
         duration: const Duration(milliseconds: 250),
       );
     }
@@ -118,18 +113,11 @@ class AppTourService {
       ),
     );
     targets.add(
-      AppTargetFocus.savePreferenceSwitch(
-        colorScheme: colorScheme,
-        buttonKey: savePreferenceSwitchKey,
-      ),
-    );
-    targets.add(
       AppTargetFocus.sectionBarButton(
         colorScheme: colorScheme,
         buttonKey: sectionBarKey,
       ),
     );
-
     targets.add(
       AppTargetFocus.doneButton(
         colorScheme: colorScheme,

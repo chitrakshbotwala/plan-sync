@@ -1,29 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/home/view/widgets/contribute_schedule.dart';
-import 'package:plan_sync/features/electives/view/widgets/elective_preference.dart';
 import 'package:plan_sync/features/home/view/widgets/report_error.dart';
-import 'package:plan_sync/features/schedule/view/widgets/schedule_preference.dart';
 import 'package:plan_sync/features/home/view/widgets/share_app.dart';
 import 'package:plan_sync/widgets/bottom-sheets/attendance_info_sheet.dart';
 import 'package:plan_sync/widgets/bottom-sheets/kiit_credentials_sheet.dart';
 
 class BottomSheets {
-  static void changeSectionPreference({
-    required BuildContext context,
-    bool save = false,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      builder: (context) => SchedulePreferenceBottomSheet(
-        save: save,
-      ),
-    );
-  }
-
   static void reportError({
     required BuildContext context,
   }) {
@@ -45,22 +27,6 @@ class BottomSheets {
       useRootNavigator: true,
       backgroundColor: colorScheme.surfaceContainerHighest,
       builder: (context) => const ContributeScheduleBottomSheet(),
-    );
-  }
-
-  static void changeElectiveSchemePreference({
-    required BuildContext context,
-    bool save = false,
-  }) {
-    final colorScheme = Theme.of(context).colorScheme;
-    showModalBottomSheet(
-      context: context,
-      useRootNavigator: true,
-      showDragHandle: true,
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      builder: (context) => ElectivePreferenceBottomSheet(
-        save: save,
-      ),
     );
   }
 

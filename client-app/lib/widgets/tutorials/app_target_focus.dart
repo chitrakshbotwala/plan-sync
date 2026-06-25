@@ -125,44 +125,4 @@ class AppTargetFocus {
     );
   }
 
-  static TargetFocus savePreferenceSwitch({
-    required ColorScheme colorScheme,
-    required GlobalKey buttonKey,
-  }) {
-    return TargetFocus(
-      identify: buttonKey.hashCode,
-      keyTarget: buttonKey,
-      shape: ShapeLightFocus.RRect,
-      radius: 24,
-      contents: [
-        TargetContent(
-          align: ContentAlign.top,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                "Save Everything",
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colorScheme.surface,
-                  fontSize: 20.0,
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: Text(
-                  "Turn this on to save your section details.\nWe'll open this up when you come back!",
-                  style: TextStyle(
-                    color: colorScheme.surface,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 48),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
 }

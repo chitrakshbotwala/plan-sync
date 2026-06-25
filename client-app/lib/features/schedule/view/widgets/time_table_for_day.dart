@@ -4,9 +4,7 @@ import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
-import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/util/extensions.dart';
-import 'package:plan_sync/core/util/snackbar.dart';
 import 'package:plan_sync/features/schedule/view/widgets/no_schedule_widget.dart';
 import 'package:plan_sync/features/schedule/view/widgets/indicators/schedule_freshness_indicator.dart';
 import 'package:plan_sync/features/schedule/view/widgets/subject_tile.dart';
@@ -18,87 +16,31 @@ class TimeTableForDay extends StatefulWidget {
     required this.data,
     required this.day,
     required this.showSigmaEmoji,
-    this.searchEnabled = false,
-    this.isElectiveStarred,
-    this.onStarElective,
-    this.onUnstarElective,
+    this.overrideEntries,
   });
 
   final Timetable data;
   final String day;
   final bool showSigmaEmoji;
-  final bool searchEnabled;
 
-  /// Elective starring callbacks — only required when displaying electives.
-  final bool Function(String electiveId)? isElectiveStarred;
-  final void Function(String electiveId)? onStarElective;
-  final void Function(String electiveId)? onUnstarElective;
+  /// When provided, these entries are displayed instead of data.data[day].
+  /// Used for merged regular+elective views. Already sorted by the caller.
+  final List<ScheduleEntry>? overrideEntries;
 
   @override
   State<TimeTableForDay> createState() => _TimeTableForDayState();
 }
 
 class _TimeTableForDayState extends State<TimeTableForDay> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-
-  List<ScheduleEntry> filteredSchedule = [];
+  List<ScheduleEntry> _displayEntries = [];
 
   late FilterViewModel filterProvider;
 
   @override
   void initState() {
     super.initState();
-    filterProvider = Provider.of<FilterViewModel>(
-      context,
-      listen: false,
-    );
-    _searchController.addListener(() {
-      EasyDebounce.debounce(
-        '_searchElective',
-        const Duration(milliseconds: 350),
-        () {
-          setState(() {
-            _searchQuery = _searchController.text.toLowerCase();
-            filteredSchedule = _getFilteredSchedule();
-            _sortElectives();
-          });
-        },
-      );
-    });
-    filteredSchedule = _getFilteredSchedule();
-    _sortElectives();
-  }
-
-  void _sortElectives() {
-    if (widget.data.meta.type != 'electives') return;
-    if (widget.isElectiveStarred == null) return;
-
-    final academicYear = filterProvider.selectedElectiveYear ?? '';
-    final semester = filterProvider.activeElectiveSemester ?? '';
-    final scheme = filterProvider.activeElectiveScheme ?? '';
-
-    filteredSchedule.sort((a, b) {
-      final aId = AppPreferencesRepository.electiveId(
-        academicYear: academicYear,
-        semester: semester,
-        scheme: scheme,
-        subjectName: a.subject ?? '',
-      );
-      final bId = AppPreferencesRepository.electiveId(
-        academicYear: academicYear,
-        semester: semester,
-        scheme: scheme,
-        subjectName: b.subject ?? '',
-      );
-      final aStarred = widget.isElectiveStarred!(aId);
-      final bStarred = widget.isElectiveStarred!(bId);
-
-      if (aStarred == bStarred) {
-        return (a.subject ?? '').compareTo(b.subject ?? '');
-      }
-      return aStarred ? -1 : 1;
-    });
+    filterProvider = Provider.of<FilterViewModel>(context, listen: false);
+    _displayEntries = _buildEntries();
   }
 
   @override
@@ -106,116 +48,54 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.day != widget.day ||
         oldWidget.data != widget.data ||
-        oldWidget.isElectiveStarred != widget.isElectiveStarred) {
+        oldWidget.overrideEntries != widget.overrideEntries) {
       setState(() {
-        filteredSchedule = _getFilteredSchedule();
-        _sortElectives();
+        _displayEntries = _buildEntries();
       });
     }
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
+  List<ScheduleEntry> _buildEntries() {
+    final entries = widget.overrideEntries ?? widget.data.data[widget.day] ?? [];
+    return List<ScheduleEntry>.from(entries)
+      ..sort((a, b) => _startMinutes(a.time).compareTo(_startMinutes(b.time)));
   }
 
-  List<ScheduleEntry> _getFilteredSchedule() {
-    final scheduleData = widget.data.data[widget.day];
-    if (scheduleData == null || !widget.searchEnabled || _searchQuery.isEmpty) {
-      return scheduleData ?? [];
-    }
+  /// Parses the leading time token from strings like:
+  ///   "10:00 AM - 11:00 AM", "10:00 - 11:00", "10AM-11AM"
+  /// Returns minutes-since-midnight for the start time, or 0 on parse failure.
+  static int _startMinutes(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 0;
+    final match = RegExp(r'(\d{1,2}):?(\d{2})?\s*(AM|PM)?',
+            caseSensitive: false)
+        .firstMatch(timeStr);
+    if (match == null) return 0;
+    int hours = int.tryParse(match.group(1) ?? '0') ?? 0;
+    int minutes = int.tryParse(match.group(2) ?? '0') ?? 0;
+    final period = match.group(3)?.toUpperCase();
+    if (period == 'PM' && hours != 12) hours += 12;
+    if (period == 'AM' && hours == 12) hours = 0;
+    return hours * 60 + minutes;
+  }
 
-    // Split search query into keywords by space and remove empty strings
-    final searchKeywords = _searchQuery
-        .split(' ')
-        .map((keyword) => keyword.trim().toLowerCase())
-        .where((keyword) => keyword.isNotEmpty)
-        .toList();
-
-    if (searchKeywords.isEmpty) {
-      return scheduleData;
-    }
-
-    return scheduleData.where((entry) {
-      final subject = entry.subject?.toLowerCase() ?? '';
-
-      // Normalize subject by replacing common separators with spaces
-      final normalizedSubject = subject
-          .replaceAll(RegExp(r'[_\-]'), ' ')
-          .replaceAll(
-              RegExp(r'\s+'), ' '); // Replace multiple spaces with single space
-
-      // Check if ALL keywords match ANY part of the normalized subject
-      return searchKeywords
-          .every((keyword) => normalizedSubject.contains(keyword));
-    }).toList();
+  @override
+  void dispose() {
+    EasyDebounce.cancel('_searchElective');
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
-    if (widget.data.data[widget.day] == null) {
+    if (_displayEntries.isEmpty && widget.overrideEntries == null &&
+        widget.data.data[widget.day] == null) {
       return const NoScheduleWidget();
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Search bar (only show if search is enabled)
-        if (widget.searchEnabled) ...[
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search Electives...',
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Colors.blueAccent,
-                    width: 1.0,
-                  ),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(
-                    color: Colors.blueAccent,
-                    width: 1.0,
-                  ),
-                ),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: colorScheme.onSurfaceVariant,
-                ),
-                suffixIcon: _searchQuery.isNotEmpty
-                    ? IconButton(
-                        icon: Icon(
-                          Icons.clear,
-                          color: colorScheme.onSurfaceVariant,
-                        ),
-                        onPressed: () {
-                          _searchController.clear();
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: colorScheme.surfaceContainerHighest,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
-
         Padding(
           padding: const EdgeInsets.only(left: 8.0),
           child: Row(
@@ -239,94 +119,28 @@ class _TimeTableForDayState extends State<TimeTableForDay> {
           ),
         ),
         const SizedBox(height: 8),
-
-        // Show filtered results or no results message
-        if (filteredSchedule.isEmpty &&
-            widget.searchEnabled &&
-            _searchQuery.isNotEmpty)
-          _buildNoSearchResults(colorScheme)
+        if (_displayEntries.isEmpty)
+          const NoScheduleWidget()
         else
           ListView.separated(
             key: const ValueKey('TimeTableForDay._buildForTimetable'),
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             itemBuilder: (context, index) {
-              final electiveId = AppPreferencesRepository.electiveId(
-                academicYear: filterProvider.selectedElectiveYear ?? '',
-                semester: filterProvider.activeElectiveSemester ?? '',
-                scheme: filterProvider.activeElectiveScheme ?? '',
-                subjectName: filteredSchedule[index].subject ?? '',
-              );
-              final showStar = widget.data.meta.type == 'electives' &&
-                  widget.isElectiveStarred != null;
-
               return SubjectTile(
-                starred: showStar
-                    ? widget.isElectiveStarred!(electiveId)
-                    : false,
-                showStar: showStar,
-                entry: filteredSchedule[index],
-                academicYear: filterProvider.selectedElectiveYear ?? '',
-                semester: filterProvider.activeElectiveSemester ?? '',
+                starred: false,
+                showStar: false,
+                entry: _displayEntries[index],
+                academicYear: filterProvider.activeYear ?? '',
+                semester: filterProvider.activeSemester ?? '',
                 scheme: filterProvider.activeElectiveScheme ?? '',
-                onStarToggle: showStar
-                    ? (newValue) {
-                        if (newValue) {
-                          widget.onStarElective?.call(electiveId);
-                          CustomSnackbar.info(
-                            "Elective Pinned",
-                            "${filteredSchedule[index].subject} has been pinned to top.",
-                            context,
-                          );
-                        } else {
-                          widget.onUnstarElective?.call(electiveId);
-                          CustomSnackbar.info(
-                            "Elective Unpinned",
-                            "${filteredSchedule[index].subject} has been removed from pins.",
-                            context,
-                          );
-                        }
-                        _sortElectives();
-                        setState(() {});
-                      }
-                    : null,
+                onStarToggle: null,
               );
             },
             separatorBuilder: (context, index) => const SizedBox(height: 8),
-            itemCount: filteredSchedule.length,
+            itemCount: _displayEntries.length,
           ),
       ],
-    );
-  }
-
-  Widget _buildNoSearchResults(ColorScheme colorScheme) {
-    return Center(
-      child: Column(
-        children: [
-          Icon(
-            Icons.search_off,
-            size: 48,
-            color: colorScheme.onSurfaceVariant.withOpacity(0.6),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'No classes found',
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 16,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Try searching with different keywords',
-            style: TextStyle(
-              color: colorScheme.onSurfaceVariant.withOpacity(0.7),
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }
