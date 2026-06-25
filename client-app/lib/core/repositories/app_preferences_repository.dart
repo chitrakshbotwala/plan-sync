@@ -42,6 +42,12 @@ abstract class AppPreferencesRepository {
   Future<void> saveNotificationDialogDismissedAt();
   bool shouldPromptForNotifications();
 
+  String? getChosenElective1();
+  Future<void> saveChosenElective1(String? subjectName);
+
+  String? getChosenElective2();
+  Future<void> saveChosenElective2(String? subjectName);
+
   static String electiveId({
     required String academicYear,
     required String semester,

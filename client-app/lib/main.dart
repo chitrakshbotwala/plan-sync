@@ -40,7 +40,6 @@ import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/router_refresh_stream.dart';
 import 'package:plan_sync/features/campus_navigator/view/campus_navigator_view.dart';
-import 'package:plan_sync/features/electives/view/electives_screen.dart';
 import 'package:plan_sync/features/version/view/forced_update_screen.dart';
 import 'package:plan_sync/features/home/view/home_screen.dart';
 import 'package:plan_sync/features/auth/view/login_screen.dart';
@@ -158,6 +157,14 @@ class AppProvider extends StatelessWidget {
           create: (context) => ElectivesRepositoryImpl(
             apiClient: context.read<ApiClient>(),
             cache: context.read<CacheService>(),
+          ),
+        ),
+        ChangeNotifierProvider<ElectivesViewModel>(
+          create: (context) => ElectivesViewModel(
+            repository: context.read<ElectivesRepository>(),
+            filterViewModel: context.read<FilterViewModel>(),
+            preferences: context.read<AppPreferencesRepository>(),
+            remoteConfig: context.read<RemoteConfigService>(),
           ),
         ),
         // Attendance: credentials repo + view-model are app-lifetime so both
@@ -305,23 +312,6 @@ final _router = GoRouter(
               path: '/attendance',
               name: 'attendance_screen',
               builder: (context, state) => const AttendanceScreen(),
-            ),
-          ],
-        ),
-        StatefulShellBranch(
-          routes: <RouteBase>[
-            GoRoute(
-              path: '/electives',
-              name: 'electives_screen',
-              builder: (context, state) => ChangeNotifierProvider<ElectivesViewModel>(
-                create: (ctx) => ElectivesViewModel(
-                  repository: ctx.read<ElectivesRepository>(),
-                  filterViewModel: ctx.read<FilterViewModel>(),
-                  preferences: ctx.read<AppPreferencesRepository>(),
-                  remoteConfig: ctx.read<RemoteConfigService>(),
-                ),
-                child: const ElectiveScreen(),
-              ),
             ),
           ],
         ),

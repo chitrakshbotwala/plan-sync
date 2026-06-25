@@ -41,13 +41,13 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
         child: DropdownButtonHideUnderline(
           child: Consumer<FilterViewModel>(
             builder: (ctx, filterController, child) {
-              if (filterController.activeElectiveSemester != null &&
+              if (filterController.activeSemester != null &&
                   filterController.electiveSchemes != null &&
                   filterController.electiveSchemes!.isNotEmpty) {
                 _hasShownSnackbar = false;
               }
 
-              if (filterController.activeElectiveSemester != null &&
+              if (filterController.activeSemester != null &&
                   (filterController.electiveSchemes == null ||
                       filterController.electiveSchemes!.isEmpty)) {
                 return GestureDetector(
@@ -98,7 +98,7 @@ class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
                           colorScheme.surface,
                         ))
                     .toList(),
-                onChanged: filterController.activeElectiveSemester == null
+                onChanged: filterController.activeSemester == null
                     ? null
                     : (String? newSelection) {
                         filterController.electiveSchemes

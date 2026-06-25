@@ -64,8 +64,8 @@ class ElectivesViewModel extends ChangeNotifier {
   void _onStateChanged() => _tryLoad();
 
   void _tryLoad() {
-    final year = _filterViewModel.activeElectiveYear;
-    final semester = _filterViewModel.activeElectiveSemester;
+    final year = _filterViewModel.activeYear;
+    final semester = _filterViewModel.activeSemester;
     final schemeCode = _filterViewModel.activeElectiveSchemeCode;
 
     if (year == null || semester == null || schemeCode == null) {
