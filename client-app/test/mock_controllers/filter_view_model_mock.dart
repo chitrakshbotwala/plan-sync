@@ -12,8 +12,6 @@ class MockFilterViewModel extends Mock
   final AppPreferencesRepository _prefsController;
 
   @override
-  final GlobalKey savePreferenceSwitchKey = GlobalKey();
-  @override
   final GlobalKey sectionBarKey = GlobalKey();
   @override
   final GlobalKey doneButtonKey = GlobalKey();
@@ -45,28 +43,7 @@ class MockFilterViewModel extends Mock
     notifyListeners();
   }
 
-  // --- Elective metadata ---
-
-  @override
-  List<String>? electiveYears = const ['2024', '2023', '2022'];
-
-  String? _selectedElectiveYear;
-  @override
-  String? get selectedElectiveYear => _selectedElectiveYear;
-  @override
-  set selectedElectiveYear(String? newYear) {
-    if (newYear == null || _selectedElectiveYear == newYear) return;
-    _selectedElectiveYear = newYear;
-    notifyListeners();
-  }
-
-  List<String>? _electivesSemesters = const ['SEM1', 'SEM2'];
-  @override
-  List<String>? get electivesSemesters => _electivesSemesters;
-  set electivesSemesters(List<String>? value) {
-    _electivesSemesters = value;
-    notifyListeners();
-  }
+  // --- Elective scheme metadata (tied to regular year + semester) ---
 
   Map<String, String>? _electiveSchemes = const {
     'a': 'Sch. A (BTECH-CSE)',
@@ -79,6 +56,10 @@ class MockFilterViewModel extends Mock
     _electiveSchemes = newSchemes;
     notifyListeners();
   }
+
+  @override
+  bool get hasElectivesForCurrentSchedule =>
+      _electiveSchemes != null && _electiveSchemes!.isNotEmpty;
 
   // --- Selection state ---
 
@@ -110,16 +91,6 @@ class MockFilterViewModel extends Mock
     _activeElectiveSchemeCode = newValue;
     notifyListeners();
   }
-
-  String? _activeElectiveSemester;
-  @override
-  set activeElectiveSemester(String? newValue) {
-    _activeElectiveSemester = newValue;
-    notifyListeners();
-  }
-
-  @override
-  String? get activeElectiveSemester => _activeElectiveSemester;
 
   Weekday _weekday = Weekday.today();
   @override
@@ -154,8 +125,29 @@ class MockFilterViewModel extends Mock
   @override
   String? get activeYear => _selectedYear;
 
+  // --- Chosen elective subjects (2 optional slots) ---
+
+  String? _chosenElective1;
   @override
-  String? get activeElectiveYear => _selectedElectiveYear;
+  String? get chosenElective1 => _chosenElective1;
+
+  String? _chosenElective2;
+  @override
+  String? get chosenElective2 => _chosenElective2;
+
+  @override
+  Future<void> setChosenElective1(String? subjectName) async {
+    _chosenElective1 = subjectName;
+    notifyListeners();
+    await _prefsController.saveChosenElective1(subjectName);
+  }
+
+  @override
+  Future<void> setChosenElective2(String? subjectName) async {
+    _chosenElective2 = subjectName;
+    notifyListeners();
+    await _prefsController.saveChosenElective2(subjectName);
+  }
 
   @override
   Future<void> initialize() async {}
@@ -172,12 +164,12 @@ class MockFilterViewModel extends Mock
 
   @override
   String getElectiveShortCode() {
-    final section = _activeElectiveSchemeCode;
-    final semester = _activeElectiveSemester;
-    if (section == null && semester == null) return 'Select Elective';
-    if (section == null) return semester!;
-    if (semester == null) return section;
-    return '$section | $semester'.toUpperCase();
+    final scheme = _activeElectiveSchemeCode;
+    final semester = _activeSemester;
+    if (scheme == null && semester == null) return 'Select Elective';
+    if (scheme == null) return semester!;
+    if (semester == null) return scheme;
+    return '$scheme | $semester'.toUpperCase();
   }
 
   AppPreferencesRepository get _prefs => _prefsController;
@@ -215,22 +207,6 @@ class MockFilterViewModel extends Mock
   }
 
   @override
-  Future<bool> storePrimaryElectiveSemester() async {
-    if (_activeElectiveSemester == null) return false;
-    final res = await _prefs.savePrimaryElectiveSemesterPreference(_activeElectiveSemester!);
-    if (res) notifyListeners();
-    return res;
-  }
-
-  @override
-  Future<bool> storePrimaryElectiveYear() async {
-    if (_selectedElectiveYear == null) return false;
-    final res = await _prefs.savePrimaryElectiveYearPreference(_selectedElectiveYear!);
-    if (res) notifyListeners();
-    return res;
-  }
-
-  @override
   String? get primarySection => null;
   @override
   String? get primarySemester => null;
@@ -238,8 +214,4 @@ class MockFilterViewModel extends Mock
   String? get primaryYear => null;
   @override
   String? get primaryElectiveScheme => null;
-  @override
-  String? get primaryElectiveSemester => null;
-  @override
-  String? get primaryElectiveYear => null;
 }

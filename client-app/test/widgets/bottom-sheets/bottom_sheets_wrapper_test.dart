@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:plan_sync/features/home/view/widgets/contribute_schedule.dart';
-import 'package:plan_sync/features/electives/view/widgets/elective_preference.dart';
 import 'package:plan_sync/features/home/view/widgets/report_error.dart';
 import 'package:plan_sync/features/schedule/view/widgets/schedule_preference.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../main.dart';
@@ -15,7 +15,7 @@ void main() {
     await injectMockDependencies();
   });
   testWidgets(
-    'BottomSheetsWrapper.changeSectionPreference returns correct widget',
+    'PopupsWrapper.changeSectionPreference returns correct widget',
     (WidgetTester tester) async {
       late BuildContext savedContext;
 
@@ -31,42 +31,12 @@ void main() {
         ),
       );
 
-      BottomSheets.changeSectionPreference(context: savedContext);
+      PopupsWrapper.changeSectionPreference(context: savedContext);
 
       await tester.pumpAndSettle();
-      expect(find.byType(SchedulePreferenceBottomSheet), findsOneWidget);
+      expect(find.byType(SchedulePreferenceDialog), findsOneWidget);
       expect(find.byType(ReportErrorBottomSheet), findsNothing);
       expect(find.byType(ContributeScheduleBottomSheet), findsNothing);
-      expect(find.byType(ElectivePreferenceBottomSheet), findsNothing);
-    },
-  );
-
-  //TODO: remove in 6 months (24-April-2025)
-  testWidgets(
-    'BottomSheetsWrapper.reportError returns correct widget (not used anymore)',
-    skip: true,
-    (WidgetTester tester) async {
-      late BuildContext savedContext;
-
-      await tester.pumpWidget(
-        testApp(child: Scaffold(
-            body: Builder(
-              builder: (context) {
-                savedContext = context;
-                return Container();
-              },
-            ),
-          ),
-        ),
-      );
-
-      BottomSheets.reportError(context: savedContext);
-
-      await tester.pumpAndSettle();
-      expect(find.byType(SchedulePreferenceBottomSheet), findsNothing);
-      expect(find.byType(ReportErrorBottomSheet), findsOneWidget);
-      expect(find.byType(ContributeScheduleBottomSheet), findsNothing);
-      expect(find.byType(ElectivePreferenceBottomSheet), findsNothing);
     },
   );
 
@@ -90,37 +60,9 @@ void main() {
       BottomSheets.contributeTimeTable(context: savedContext);
 
       await tester.pumpAndSettle();
-      expect(find.byType(SchedulePreferenceBottomSheet), findsNothing);
+      expect(find.byType(SchedulePreferenceDialog), findsNothing);
       expect(find.byType(ReportErrorBottomSheet), findsNothing);
       expect(find.byType(ContributeScheduleBottomSheet), findsOneWidget);
-      expect(find.byType(ElectivePreferenceBottomSheet), findsNothing);
-    },
-  );
-
-  testWidgets(
-    'BottomSheetsWrapper.changeElectiveSchemePreference returns correct widget',
-    (WidgetTester tester) async {
-      late BuildContext savedContext;
-
-      await tester.pumpWidget(
-        testApp(child: Scaffold(
-            body: Builder(
-              builder: (context) {
-                savedContext = context;
-                return Container();
-              },
-            ),
-          ),
-        ),
-      );
-
-      BottomSheets.changeElectiveSchemePreference(context: savedContext);
-
-      await tester.pumpAndSettle();
-      expect(find.byType(SchedulePreferenceBottomSheet), findsNothing);
-      expect(find.byType(ReportErrorBottomSheet), findsNothing);
-      expect(find.byType(ContributeScheduleBottomSheet), findsNothing);
-      expect(find.byType(ElectivePreferenceBottomSheet), findsOneWidget);
     },
   );
 }

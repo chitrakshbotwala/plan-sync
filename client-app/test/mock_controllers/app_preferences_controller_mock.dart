@@ -1,4 +1,5 @@
 import 'package:mockito/mockito.dart';
+import 'package:plan_sync/core/models/in_app_review_model.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -94,4 +95,40 @@ class MockAppPreferencesController extends Mock
 
   @override
   Future<void> cleanupOldNoticeDismissals() async {}
+
+  @override
+  InAppReviewCacheModel? getAppReviewRequest() => null;
+
+  @override
+  Future<void> saveAppReviewRequest(InAppReviewCacheModel model) async {}
+
+  @override
+  Future<void> saveNotificationDialogDismissedAt() async {}
+
+  @override
+  bool shouldPromptForNotifications() => false;
+
+  @override
+  String? getChosenElective1() => perfs.getString('chosen-elective-1');
+
+  @override
+  Future<void> saveChosenElective1(String? subjectName) async {
+    if (subjectName == null) {
+      await perfs.remove('chosen-elective-1');
+    } else {
+      await perfs.setString('chosen-elective-1', subjectName);
+    }
+  }
+
+  @override
+  String? getChosenElective2() => perfs.getString('chosen-elective-2');
+
+  @override
+  Future<void> saveChosenElective2(String? subjectName) async {
+    if (subjectName == null) {
+      await perfs.remove('chosen-elective-2');
+    } else {
+      await perfs.setString('chosen-elective-2', subjectName);
+    }
+  }
 }

@@ -37,7 +37,6 @@ void main() {
     await pump(tester);
     expect(controller.schedulePreferencesButtonKey, isA<GlobalKey>());
     expect(controller.sectionBarKey, isA<GlobalKey>());
-    expect(controller.savePreferenceSwitchKey, isA<GlobalKey>());
     expect(controller.doneButtonKey, isA<GlobalKey>());
   });
 
@@ -61,6 +60,6 @@ void main() {
     await pump(tester);
     final ctx = tester.element(find.byType(Scaffold));
     final targets = controller.getTutorialTargets(ctx);
-    expect(targets, hasLength(4));
+    expect(targets, hasLength(3));
   });
 }

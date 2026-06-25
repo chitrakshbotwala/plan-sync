@@ -36,7 +36,7 @@ void main() {
     (WidgetTester tester) async {
       final filterController = mockFilterViewModel;
 
-      filterController.activeElectiveSemester = "SEM1";
+      filterController.activeSemester = "SEM1";
       filterController.electiveSchemes = {
         "a": "Scheme A",
         "b": "Scheme B",
@@ -54,7 +54,7 @@ void main() {
     (WidgetTester tester) async {
       final filterController = mockFilterViewModel;
 
-      filterController.activeElectiveSemester = "SEM1";
+      filterController.activeSemester = "SEM1";
       filterController.electiveSchemes = {
         "a": "Scheme A",
         "b": "Scheme B",

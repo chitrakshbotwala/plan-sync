@@ -1,4 +1,3 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/features/home/view/home_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -32,8 +31,7 @@ void main() {
   testWidgets(
     'Tutorial stops when skip button is pressed',
     (WidgetTester tester) async {
-      final perfs =
-          mockPreferences;
+      final perfs = mockPreferences;
       perfs.saveTutorialStatus(false);
 
       await pumpTutorialWidget(tester);
@@ -53,8 +51,7 @@ void main() {
   testWidgets(
     'Tutorial starts if user has not completed',
     (WidgetTester tester) async {
-      final perfs =
-          mockPreferences;
+      final perfs = mockPreferences;
 
       await perfs.resetPreferencesToNull();
 
@@ -67,19 +64,6 @@ void main() {
       // see if animation starts
       expect(find.text('Select your section here'), findsOneWidget);
       expect(find.text('SKIP'), findsOneWidget);
-
-      // Continue into bottomSheet
-      await tester.tapAt(tester.getCenter(find.text('Select Sections')));
-      await pumpTutorialWidget(tester);
-      expect(find.byType(Switch), findsOneWidget);
-      expect(find.text("Save Preferences"), findsOneWidget);
-
-      // continue to highlight SectionBar
-      await tester.tapAt(tester.getCenter(find.text("Save Preferences")));
-      await pumpTutorialWidget(tester);
-
-      await tester.tapAt(tester.getCenter(find.text("Section")));
-      await pumpTutorialWidget(tester);
     },
   );
 }
