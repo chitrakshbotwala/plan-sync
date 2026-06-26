@@ -513,7 +513,7 @@ const String _agentTemplate = r'''
         var total = parseFloat(cells[3]);
         var pct = parseFloat(cells[4]);
         if (subj && /[A-Za-z]/.test(subj) && !isNaN(present) && !isNaN(total) && !isNaN(pct)) {
-          records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct });
+          records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct, facultyId: cells.length > 5 ? cells[5] : '' });
         }
       }
     }
@@ -539,6 +539,15 @@ const String _agentTemplate = r'''
   // triggers a server round-trip; programmatic scrollTop alone does not),
   // accumulating UNIQUE rows until nothing new appears — so rows below the fold
   // are captured too.
+  // Tunables. Worst case is roughly MAX_STEPS * SETTLE_MS of scrolling.
+  // SETTLE_MS must be long enough to clear the SAP scroll round-trip (the table
+  // re-renders rows from the server); the loop ends early once STABLE_LIMIT
+  // consecutive steps add nothing, or aria-rowcount is reached. Fixed-delay
+  // polling is used on purpose: the grid updates via cross-origin XHR deltas, so
+  // a MutationObserver would fire mid-delta and settle before all rows arrive.
+  var SCROLL_MAX_STEPS = 80;
+  var SCROLL_SETTLE_MS = 900;
+  var SCROLL_STABLE_LIMIT = 8;
   async function scrapeAll() {
     var seen = {}, out = [], name = '';
     function harvest() {
@@ -546,7 +555,9 @@ const String _agentTemplate = r'''
       if (d.name) name = d.name;
       for (var i = 0; i < d.records.length; i++) {
         var r = d.records[i];
-        var key = (r.subject || '').toLowerCase();
+        // Dedupe on subject + facultyId: a subject split across faculty/sections
+        // can legitimately appear as two rows, so subject alone would drop one.
+        var key = ((r.subject || '') + '|' + (r.facultyId || '')).toLowerCase();
         if (key && !seen[key]) { seen[key] = 1; out.push(r); }
       }
     }
@@ -554,7 +565,7 @@ const String _agentTemplate = r'''
     var expected = grid ? (parseInt(grid.getAttribute('aria-rowcount'), 10) || 0) : 0;
     harvest();
     var last = -1, stable = 0;
-    for (var step = 0; step < 80; step++) {
+    for (var step = 0; step < SCROLL_MAX_STEPS; step++) {
       var rows = document.querySelectorAll('[role=row]');
       var lastRow = rows.length ? rows[rows.length - 1] : null;
       if (lastRow) {
@@ -575,10 +586,10 @@ const String _agentTemplate = r'''
           els[s].dispatchEvent(new Event('scroll', { bubbles: true }));
         } catch (e) {}
       }
-      await sleep(900); // allow the scroll round-trip to re-render rows
+      await sleep(SCROLL_SETTLE_MS); // allow the scroll round-trip to re-render rows
       harvest();
       if (expected > 0 && out.length >= expected - 1) break; // -1: header counted
-      if (out.length === last) { stable++; if (stable >= 8) break; } else { stable = 0; }
+      if (out.length === last) { stable++; if (stable >= SCROLL_STABLE_LIMIT) break; } else { stable = 0; }
       last = out.length;
     }
     return { name: name, records: out };
