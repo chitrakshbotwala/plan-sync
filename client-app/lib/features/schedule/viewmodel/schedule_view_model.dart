@@ -43,10 +43,14 @@ class ScheduleViewModel extends ChangeNotifier {
     final section = _filterViewModel.activeSectionCode;
 
     if (year == null || semester == null || section == null) {
-      if (isLoading) {
-        isLoading = false;
-        notifyListeners();
-      }
+      _sub?.cancel();
+      _lastYear = null;
+      _lastSemester = null;
+      _lastSection = null;
+      timetable = null;
+      isLoading = false;
+      errorMessage = null;
+      notifyListeners();
       return;
     }
 
