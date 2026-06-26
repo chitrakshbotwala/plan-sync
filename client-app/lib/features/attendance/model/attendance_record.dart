@@ -192,10 +192,12 @@ class AttendanceResult {
 
   int get totalClasses => records.fold(0, (sum, r) => sum + r.totalDays);
 
-  /// Overall attendance weighted by total classes (present / total),
-  /// not a naive average of per-subject percentages.
-  double get overallPercentage =>
-      totalClasses == 0 ? 0 : (totalPresent / totalClasses) * 100;
+  /// Overall attendance = mean of the per-subject percentages
+  /// (Σ percentage / subject count).
+  double get overallPercentage => records.isEmpty
+      ? 0
+      : records.fold<double>(0, (sum, r) => sum + r.percentage) /
+          records.length;
 
   int get subjectsBelowThreshold =>
       records.where((r) => r.percentage < 75).length;

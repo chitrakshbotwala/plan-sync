@@ -519,6 +519,70 @@ const String _agentTemplate = r'''
     }
     return { name: name, records: records };
   }
+  function sendKey(el, k, code) {
+    try { el.dispatchEvent(new KeyboardEvent('keydown', { key: k, code: k, keyCode: code, which: code, bubbles: true })); } catch (e) {}
+    try { el.dispatchEvent(new KeyboardEvent('keyup', { key: k, code: k, keyCode: code, which: code, bubbles: true })); } catch (e) {}
+  }
+  function scrollEls() {
+    var arr = [];
+    var named = document.querySelectorAll('[role=scrollbar], [class*="scroll" i]');
+    for (var i = 0; i < named.length; i++) arr.push(named[i]);
+    var divs = document.querySelectorAll('div');
+    for (var j = 0; j < divs.length; j++) {
+      var e = divs[j];
+      if (e.clientHeight > 0 && e.scrollHeight > e.clientHeight + 4) arr.push(e);
+    }
+    return arr;
+  }
+  // WebDynpro grids virtualize rows: only the visible window is in the DOM and
+  // nodes recycle on scroll. Drive the table's own virtual scroll (keyboard nav
+  // triggers a server round-trip; programmatic scrollTop alone does not),
+  // accumulating UNIQUE rows until nothing new appears — so rows below the fold
+  // are captured too.
+  async function scrapeAll() {
+    var seen = {}, out = [], name = '';
+    function harvest() {
+      var d = scrape();
+      if (d.name) name = d.name;
+      for (var i = 0; i < d.records.length; i++) {
+        var r = d.records[i];
+        var key = (r.subject || '').toLowerCase();
+        if (key && !seen[key]) { seen[key] = 1; out.push(r); }
+      }
+    }
+    var grid = document.querySelector('[role=grid],[role=treegrid]');
+    var expected = grid ? (parseInt(grid.getAttribute('aria-rowcount'), 10) || 0) : 0;
+    harvest();
+    var last = -1, stable = 0;
+    for (var step = 0; step < 80; step++) {
+      var rows = document.querySelectorAll('[role=row]');
+      var lastRow = rows.length ? rows[rows.length - 1] : null;
+      if (lastRow) {
+        var cell = lastRow.querySelector('[role=gridcell]') || lastRow;
+        try { cell.focus(); } catch (e) {}
+        try { cell.click(); } catch (e) {}
+        sendKey(cell, 'End', 35);
+        sendKey(cell, 'PageDown', 34);
+        sendKey(cell, 'ArrowDown', 40);
+        sendKey(cell, 'ArrowDown', 40);
+        try { lastRow.scrollIntoView({ block: 'end' }); } catch (e) {}
+        try { lastRow.dispatchEvent(new WheelEvent('wheel', { deltaY: 800, bubbles: true })); } catch (e) {}
+      }
+      var els = scrollEls();
+      for (var s = 0; s < els.length; s++) {
+        try {
+          els[s].scrollTop = els[s].scrollHeight;
+          els[s].dispatchEvent(new Event('scroll', { bubbles: true }));
+        } catch (e) {}
+      }
+      await sleep(900); // allow the scroll round-trip to re-render rows
+      harvest();
+      if (expected > 0 && out.length >= expected - 1) break; // -1: header counted
+      if (out.length === last) { stable++; if (stable >= 8) break; } else { stable = 0; }
+      last = out.length;
+    }
+    return { name: name, records: out };
+  }
   async function run() {
     if (window.__kiitRan) return;
     window.__kiitRan = true;
@@ -532,15 +596,8 @@ const String _agentTemplate = r'''
       }
       if (btn) { relay('kiitLog', 'Clicking Submit to load the attendance table.'); btn.click(); await sleep(3000); }
       else { relay('kiitLog', 'Submit button not found; reading whatever is rendered.'); }
-      // Wait until the row count is stable (table re-renders progressively).
-      relay('kiitLog', 'Reading the attendance table…');
-      var data = null, prev = -1;
-      for (var k = 0; k < 6; k++) {
-        data = scrape();
-        if (data.records.length > 0 && data.records.length === prev) break;
-        prev = data.records.length;
-        await sleep(800);
-      }
+      relay('kiitLog', 'Reading the attendance table (scrolling for all rows)…');
+      var data = await scrapeAll();
       if (!data || data.records.length === 0) {
         relay('kiitError', JSON.stringify({ code: 'no_data', message: 'The attendance table was empty for the selected year/session.' }));
         return;

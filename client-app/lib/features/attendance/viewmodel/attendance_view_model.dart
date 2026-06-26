@@ -43,8 +43,18 @@ class AttendanceViewModel extends ChangeNotifier {
   final List<String> logs = [];
   String? currentStep;
 
+  // Currently *picked* year/session (what the dropdowns show).
   late String academicYear = currentAcademicYear();
   late String session = currentSession();
+
+  // The year/session the loaded [result] actually reflects.
+  String? _appliedYear;
+  String? _appliedSession;
+
+  /// True when the picked year/session differ from what [result] shows — i.e.
+  /// the user changed a dropdown but hasn't applied it yet.
+  bool get selectionDirty =>
+      academicYear != _appliedYear || session != _appliedSession;
 
   bool _fetchedOnce = false;
 
@@ -131,6 +141,8 @@ class AttendanceViewModel extends ChangeNotifier {
       );
       _fetchedOnce = true;
       result = fetched;
+      _appliedYear = academicYear;
+      _appliedSession = session;
       _set(AttendanceStatus.success);
     } on ScrapeException catch (e) {
       // Bad credentials are no longer useful — clear them so the user is
@@ -150,13 +162,18 @@ class AttendanceViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> changeSelection({String? year, String? session}) async {
-    final newYear = year ?? academicYear;
-    final newSession = session ?? this.session;
-    if (newYear == academicYear && newSession == this.session) return;
-    academicYear = newYear;
-    this.session = newSession;
+  /// Update the picked year/session WITHOUT fetching. The user applies the
+  /// choice explicitly (see [applySelection]) so a single dropdown tap doesn't
+  /// kick off a whole scrape mid-selection.
+  void changeSelection({String? year, String? session}) {
+    academicYear = year ?? academicYear;
+    this.session = session ?? this.session;
     notifyListeners();
+  }
+
+  /// Re-fetch for the currently-picked year/session, only if it changed.
+  Future<void> applySelection() async {
+    if (!selectionDirty) return;
     await refresh();
   }
 

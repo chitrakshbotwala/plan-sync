@@ -14,29 +14,57 @@ class AttendanceFilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Column(
       children: [
-        Expanded(
-          flex: 3,
-          child: _Dropdown(
-            label: 'Academic Year',
-            value: viewModel.academicYear,
-            items: viewModel.yearOptions,
-            enabled: enabled,
-            onChanged: (v) => viewModel.changeSelection(year: v),
-          ),
+        Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: _Dropdown(
+                label: 'Academic Year',
+                value: viewModel.academicYear,
+                items: viewModel.yearOptions,
+                enabled: enabled,
+                onChanged: (v) => viewModel.changeSelection(year: v),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              flex: 2,
+              child: _Dropdown(
+                label: 'Session',
+                value: viewModel.session,
+                items: viewModel.sessionOptions,
+                enabled: enabled,
+                onChanged: (v) => viewModel.changeSelection(session: v),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 12),
-        Expanded(
-          flex: 2,
-          child: _Dropdown(
-            label: 'Session',
-            value: viewModel.session,
-            items: viewModel.sessionOptions,
-            enabled: enabled,
-            onChanged: (v) => viewModel.changeSelection(session: v),
+        // Only fetch once the user is done choosing both fields.
+        if (viewModel.selectionDirty) ...[
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: enabled ? viewModel.applySelection : null,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: Text(
+                'Load ${viewModel.academicYear} · ${viewModel.session}',
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: colorScheme.primary,
+                foregroundColor: colorScheme.onPrimary,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
           ),
-        ),
+        ],
       ],
     );
   }
