@@ -148,8 +148,9 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
     );
   }
 
-  /// Returns the merged list of regular entries + chosen elective entries
-  /// for [day], or null if no merging is needed/possible.
+  /// Replaces "Electives" placeholder entries in [regularEntries] with the
+  /// user's chosen elective entries for [day]. Returns null when no preferences
+  /// are set (caller shows the raw API data unchanged).
   List<ScheduleEntry>? _mergedEntries({
     required FilterViewModel filterVm,
     required ElectivesViewModel electivesVm,
@@ -158,23 +159,49 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
   }) {
     final chosen1 = filterVm.chosenElective1;
     final chosen2 = filterVm.chosenElective2;
-    if ((chosen1 == null && chosen2 == null) || !electivesVm.hasData) {
-      return null;
-    }
+    if (chosen1 == null && chosen2 == null) return null;
 
+    // Scheme not loaded yet — show raw API data (including "Electives" placeholder)
+    if (!electivesVm.hasData) return null;
+
+    // Find which of the chosen electives are scheduled on this specific day.
     final electiveEntries = electivesVm.timetable?.data[day] ?? [];
-    final extras = <ScheduleEntry>[];
+    final chosenToday = <ScheduleEntry>[];
     for (final subject in [chosen1, chosen2]) {
       if (subject == null) continue;
       final entry = electiveEntries.firstWhere(
         (e) => e.subject == subject,
         orElse: () => ScheduleEntry(),
       );
-      if (entry.subject != null) extras.add(entry);
+      if (entry.subject != null) chosenToday.add(entry);
     }
 
-    if (extras.isEmpty) return null;
-    return [...regularEntries, ...extras];
+    // No chosen elective runs today — leave the raw "Electives" placeholder.
+    if (chosenToday.isEmpty) return null;
+
+    // Replace each "Electives" placeholder with a chosen elective entry.
+    // Time comes from the main schedule (authoritative); subject/room from scheme.
+    var replacementIdx = 0;
+    final result = <ScheduleEntry>[];
+    for (final entry in regularEntries) {
+      if (entry.subject == 'Electives' && replacementIdx < chosenToday.length) {
+        final scheme = chosenToday[replacementIdx++];
+        result.add(ScheduleEntry(
+          subject: scheme.subject,
+          room: scheme.room ?? entry.room,
+          time: entry.time,
+        ));
+      } else {
+        result.add(entry);
+      }
+    }
+
+    // Edge case: more chosen electives on this day than "Electives" placeholders.
+    while (replacementIdx < chosenToday.length) {
+      result.add(chosenToday[replacementIdx++]);
+    }
+
+    return result;
   }
 
   @override
