@@ -157,4 +157,43 @@ void main() {
     expect(loaded!.firstOpen, ts);
     expect(loaded.lastAppVersion, '4.1.4');
   });
+
+  group('shouldPromptForNotifications', () {
+    test('returns true when no dismissal timestamp stored', () {
+      expect(perfs.shouldPromptForNotifications(), isTrue);
+    });
+
+    test('returns false when dismissed less than 7 days ago', () async {
+      await perfs.saveNotificationDialogDismissedAt();
+      expect(perfs.shouldPromptForNotifications(), isFalse);
+    });
+
+    test('returns true when dismissed more than 7 days ago', () async {
+      final stale = DateTime.now().subtract(const Duration(days: 8));
+      await perfs.perfs
+          .setString('notification_dialog_dismissed_at', stale.toIso8601String());
+      expect(perfs.shouldPromptForNotifications(), isTrue);
+    });
+  });
+
+  group('clearSchedulePreferences', () {
+    test('removes year, semester, section, elective scheme, and chosen electives',
+        () async {
+      await perfs.savePrimaryYearPreference('2024');
+      await perfs.savePrimarySemesterPreference('SEM1');
+      await perfs.savePrimarySectionPreference('A16');
+      await perfs.savePrimaryElectiveSchemePreference('a');
+      await perfs.saveChosenElective1('Machine Learning');
+      await perfs.saveChosenElective2('Data Structures');
+
+      await perfs.clearSchedulePreferences();
+
+      expect(perfs.getPrimaryYearPreference(), isNull);
+      expect(perfs.getPrimarySemesterPreference(), isNull);
+      expect(perfs.getPrimarySectionPreference(), isNull);
+      expect(perfs.getPrimaryElectiveSchemePreference(), isNull);
+      expect(perfs.getChosenElective1(), isNull);
+      expect(perfs.getChosenElective2(), isNull);
+    });
+  });
 }

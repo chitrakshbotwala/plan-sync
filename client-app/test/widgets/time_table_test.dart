@@ -6,6 +6,7 @@ import 'package:plan_sync/features/schedule/view/widgets/time_table.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
+import '../mock_controllers/electives_repository_mock.dart';
 import '../mock_controllers/schedule_repository_mock.dart';
 
 void main() {
@@ -132,5 +133,29 @@ void main() {
     //returns info page when no data is returned
     expect(find.byIcon(Icons.info), findsOneWidget);
     expect(find.text("No section selected."), findsOneWidget);
+  });
+
+  testWidgets(
+      'TimeTableWidget replaces Electives placeholder with chosen elective',
+      (WidgetTester tester) async {
+    final scheduleRepo = mockScheduleRepository;
+    final electivesRepo = mockElectivesRepository;
+    final filterController = mockFilterViewModel;
+
+    scheduleRepo.stage = MockScheduleRepositoryStage.success;
+    electivesRepo.stage = MockElectivesRepositoryStage.success;
+
+    filterController.selectedYear = '2024';
+    filterController.activeSemester = 'SEM1';
+    filterController.activeSectionCode = 'A';
+    filterController.activeElectiveSchemeCode = 'a';
+    filterController.weekday = Weekday.monday;
+    await filterController.setChosenElective1('Machine Learning');
+
+    await pumpBaseWidget(tester);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Machine Learning'), findsOneWidget);
+    expect(find.text('Electives'), findsNothing);
   });
 }

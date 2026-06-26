@@ -124,5 +124,53 @@ void main() {
       });
       expect(r.canSkip, 20);
     });
+
+    test('is 0 at exactly 75% (no buffer to skip)', () {
+      // 75/100 = 75%. floor(75/0.75)=100 max days -> 100-100 = 0.
+      final r = AttendanceRecord.fromScrape({
+        'subject': 'Z',
+        'absent': '25',
+        'present': '75',
+        'totalDays': '100',
+        'percentage': '75.00',
+      });
+      expect(r.canSkip, 0);
+    });
+  });
+
+  group('AttendanceResult edge cases', () {
+    AttendanceResult build(List<Map<String, dynamic>> records) =>
+        AttendanceResult.fromScrape(
+          {'records': records},
+          academicYear: '2025-2026',
+          session: 'Spring',
+        );
+
+    test('empty result: totals are zero and isEmpty is true', () {
+      final r = build([]);
+      expect(r.isEmpty, isTrue);
+      expect(r.totalPresent, 0);
+      expect(r.totalClasses, 0);
+      expect(r.subjectsBelowThreshold, 0);
+    });
+
+    test('overallPercentage is 0 when there are no classes (no divide-by-zero)',
+        () {
+      expect(build([]).overallPercentage, 0);
+    });
+
+    test('a subject at exactly 75% is not counted as below threshold', () {
+      final r = build([
+        {
+          'subject': 'A',
+          'absent': '25',
+          'present': '75',
+          'totalDays': '100',
+          'percentage': '75.00',
+        },
+      ]);
+      expect(r.subjectsBelowThreshold, 0);
+      expect(r.isEmpty, isFalse);
+    });
   });
 }
