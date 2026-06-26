@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 // Stays ChangeNotifier because MaterialApp rebuilds on ThemeMode changes.
-class ThemeService extends ChangeNotifier {
+class ThemeService extends ChangeNotifier with WidgetsBindingObserver {
   static final ThemeData lightTheme = ThemeData(
     brightness: Brightness.light,
     primaryColor: const Color(0xFF34A853), // Vibrant green
@@ -85,13 +85,19 @@ class ThemeService extends ChangeNotifier {
 
   void onInit() {
     initThemeMode();
+    WidgetsBinding.instance.addObserver(this);
+  }
 
-    // listen to system theme changes, and notify app listeners
-    WidgetsBinding.instance.platformDispatcher.onPlatformBrightnessChanged =
-        () {
-      initThemeMode();
-      notifyListeners();
-    };
+  @override
+  void didChangePlatformBrightness() {
+    initThemeMode();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
   }
 
   void initThemeMode() {

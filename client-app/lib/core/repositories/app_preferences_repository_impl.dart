@@ -145,6 +145,33 @@ class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
     return current.contains(electiveId);
   }
 
+  static const String _chosenElective1Key = 'chosen-elective-1';
+  static const String _chosenElective2Key = 'chosen-elective-2';
+
+  @override
+  String? getChosenElective1() => perfs.getString(_chosenElective1Key);
+
+  @override
+  Future<void> saveChosenElective1(String? subjectName) async {
+    if (subjectName == null) {
+      await perfs.remove(_chosenElective1Key);
+    } else {
+      await perfs.setString(_chosenElective1Key, subjectName);
+    }
+  }
+
+  @override
+  String? getChosenElective2() => perfs.getString(_chosenElective2Key);
+
+  @override
+  Future<void> saveChosenElective2(String? subjectName) async {
+    if (subjectName == null) {
+      await perfs.remove(_chosenElective2Key);
+    } else {
+      await perfs.setString(_chosenElective2Key, subjectName);
+    }
+  }
+
   static const String _notificationDialogDismissedKey =
       'notification_dialog_dismissed_at';
 

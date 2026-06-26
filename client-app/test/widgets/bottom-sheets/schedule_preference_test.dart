@@ -25,7 +25,7 @@ void main() {
               path: 'home',
               builder: (context, state) => const Scaffold(
                 body: Center(
-                  child: SchedulePreferenceBottomSheet(),
+                  child: SchedulePreferenceDialog(),
                 ),
               ),
             )
@@ -53,22 +53,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     await injectMockDependencies();
   });
-  testWidgets('SchedulePreferenceBottomSheet switch toggles',
-      (WidgetTester tester) async {
-    await pumpBaseWidget(tester);
-    final SchedulePreferenceBottomSheetState widgetState = tester.state(
-      find.byType(SchedulePreferenceBottomSheet),
-    );
 
-    await tester.pump();
-    expect(widgetState.savePreferencesOnExit, false);
-
-    await tester.tap(find.byType(Switch));
-    await tester.pump();
-    expect(widgetState.savePreferencesOnExit, true);
-  });
-
-  testWidgets('SchedulePreferenceBottomSheet opens yearbar',
+  testWidgets('SchedulePreferenceDialog opens yearbar',
       (WidgetTester tester) async {
     final filterController = mockFilterViewModel;
 
@@ -88,7 +74,7 @@ void main() {
     expect(filterController.selectedYear, '2024');
   });
 
-  testWidgets('SchedulePreferenceBottomSheet opens SemestersBar',
+  testWidgets('SchedulePreferenceDialog opens SemestersBar',
       (WidgetTester tester) async {
     final filterController = mockFilterViewModel;
 
@@ -113,7 +99,7 @@ void main() {
     expect(filterController.activeSemester, 'SEM1');
   });
 
-  testWidgets('SchedulePreferenceBottomSheet opens SectionBar',
+  testWidgets('SchedulePreferenceDialog opens SectionBar',
       (WidgetTester tester) async {
     final filterController = mockFilterViewModel;
 
@@ -131,7 +117,6 @@ void main() {
     await tester.tap(find.byType(SectionsBar));
     await tester.pumpAndSettle();
 
-    // ensure 3 items are visible
     expect(find.textContaining('B13'), findsOneWidget);
     expect(find.textContaining('B16'), findsOneWidget);
     expect(find.textContaining('B18'), findsOneWidget);
@@ -139,11 +124,10 @@ void main() {
     await tester.tap(find.textContaining('B13'));
     await tester.pumpAndSettle();
 
-    // ensure controller field is updated
     expect(filterController.activeSection, 'B13 CSE');
   });
 
-  testWidgets('SchedulePreferenceBottomSheet saves config to SharedPreferences',
+  testWidgets('Done saves config to SharedPreferences',
       (WidgetTester tester) async {
     final perfs = mockPreferences;
     final filterController = mockFilterViewModel;
@@ -158,47 +142,33 @@ void main() {
     filterController.activeSectionCode = 'b18';
     filterController.activeSemester = 'SEM2';
 
-    // pump widget with above config
     await pumpBaseWidget(tester);
-    await tester.tap(find.byType(Switch));
     await tester.pumpAndSettle();
 
-    final SchedulePreferenceBottomSheetState widgetState = tester.state(
-      find.byType(SchedulePreferenceBottomSheet),
-    );
-
-    // test controller mutation
-    expect(widgetState.savePreferencesOnExit, true);
     expect(filterController.activeSection, 'B18 CSE');
     expect(filterController.activeSectionCode, 'b18');
     expect(filterController.activeSemester, 'SEM2');
     expect(filterController.selectedYear, '2023');
 
-    // verify existing perfs
     expect(perfs.getPrimarySectionPreference(), isNull);
     expect(perfs.getPrimarySemesterPreference(), isNull);
     expect(perfs.getPrimaryYearPreference(), isNull);
 
-    // save
     await tester.tap(find.text('Done'));
-    // Toast from exitBottomSheet auto-closes after 5s; pump past it
-    // so no toastification timers are left pending at teardown.
+    // Snackbar auto-closes after 5s; pump past it so no timers remain.
     await tester.pump(const Duration(seconds: 6));
     await tester.pumpAndSettle();
 
-    // verify post saving perfs
     expect(perfs.getPrimarySectionPreference(), 'b18');
     expect(perfs.getPrimarySemesterPreference(), 'SEM2');
     expect(perfs.getPrimaryYearPreference(), '2023');
   });
 
-  testWidgets(
-      'SchedulePreferenceBottomSheet does not save config to SharedPreferences',
+  testWidgets('Cancel does not save config to SharedPreferences',
       (WidgetTester tester) async {
     final perfs = mockPreferences;
     final filterController = mockFilterViewModel;
 
-    // reset existing SharedPreferences data from previous test
     perfs.resetPreferencesToNull();
 
     filterController.sections = {
@@ -211,31 +181,16 @@ void main() {
     filterController.activeSectionCode = 'b18';
     filterController.activeSemester = 'SEM2';
 
-    // pump widget with above config
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
 
-    final SchedulePreferenceBottomSheetState widgetState = tester.state(
-      find.byType(SchedulePreferenceBottomSheet),
-    );
-
-    // test controller mutation
-    expect(widgetState.savePreferencesOnExit, false);
-    expect(filterController.activeSection, 'B18 CSE');
-    expect(filterController.activeSectionCode, 'b18');
-    expect(filterController.activeSemester, 'SEM2');
-    expect(filterController.selectedYear, '2023');
-
-    // verify existing perfs
     expect(perfs.getPrimarySectionPreference(), isNull);
     expect(perfs.getPrimarySemesterPreference(), isNull);
     expect(perfs.getPrimaryYearPreference(), isNull);
 
-    // save
-    await tester.tap(find.text('Done'));
+    await tester.tap(find.text('Cancel'));
     await tester.pumpAndSettle();
 
-    // verify post saving perfs
     expect(perfs.getPrimarySectionPreference(), isNull);
     expect(perfs.getPrimarySemesterPreference(), isNull);
     expect(perfs.getPrimaryYearPreference(), isNull);

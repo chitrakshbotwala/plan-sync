@@ -30,7 +30,6 @@ class _HomeScreenState extends State<HomeScreen> {
       if (vm.shouldInitializeNotifications) {
         _initNotifications();
       }
-      // Handle update failure that occurred before this screen mounted
       if (_versionVm.updateFailed) _showUpdateFailedPopup();
     });
   }
@@ -145,3 +144,4 @@ class _HomeScreenState extends State<HomeScreen> {
         ));
   }
 }
+

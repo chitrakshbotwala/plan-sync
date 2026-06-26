@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
@@ -19,7 +21,6 @@ class FilterViewModel extends ChangeNotifier {
   final AppPreferencesRepository _preferences;
   final AppTourService _appTour;
 
-  GlobalKey get savePreferenceSwitchKey => _appTour.savePreferenceSwitchKey;
   GlobalKey get sectionBarKey => _appTour.sectionBarKey;
   GlobalKey get doneButtonKey => _appTour.doneButtonKey;
 
@@ -37,6 +38,7 @@ class FilterViewModel extends ChangeNotifier {
     _activeSectionCode = null;
     _activeSection = null;
     _sections = null;
+    _clearElectiveScheme();
     notifyListeners();
     _loadSemesters();
   }
@@ -47,28 +49,12 @@ class FilterViewModel extends ChangeNotifier {
   Map<String, String>? _sections;
   Map<String, String>? get sections => _sections;
 
-  // --- Elective metadata ---
-
-  List<String>? electiveYears;
-
-  String? _selectedElectiveYear;
-  String? get selectedElectiveYear => _selectedElectiveYear;
-  set selectedElectiveYear(String? newYear) {
-    if (newYear == null || _selectedElectiveYear == newYear) return;
-    _selectedElectiveYear = newYear;
-    _electivesSemesters = null;
-    _activeElectiveSemester = null;
-    _activeElectiveScheme = null;
-    _activeElectiveSchemeCode = null;
-    electiveSchemes = null;
-    notifyListeners();
-    _loadElectiveSemesters();
-  }
-
-  List<String>? _electivesSemesters;
-  List<String>? get electivesSemesters => _electivesSemesters?.toList();
+  // --- Elective scheme metadata (tied to regular year + semester) ---
 
   Map<String, String>? electiveSchemes;
+
+  bool get hasElectivesForCurrentSchedule =>
+      electiveSchemes != null && electiveSchemes!.isNotEmpty;
 
   // --- Selection state ---
 
@@ -84,6 +70,8 @@ class FilterViewModel extends ChangeNotifier {
     }
     _activeSection = newSection;
     activeSectionCode = newSection;
+    // After code is resolved, auto-derive scheme for early semesters.
+    _autoSelectScheme();
   }
 
   String? _activeSectionCode;
@@ -104,18 +92,9 @@ class FilterViewModel extends ChangeNotifier {
     _activeSectionCode = null;
     _activeSection = null;
     _sections = null;
+    _clearElectiveScheme();
     notifyListeners();
     _loadSections();
-  }
-
-  String? _activeElectiveSemester;
-  String? get activeElectiveSemester => _activeElectiveSemester;
-  set activeElectiveSemester(String? newValue) {
-    _activeElectiveSemester = newValue;
-    _activeElectiveScheme = null;
-    _activeElectiveSchemeCode = null;
-    electiveSchemes = null;
-    notifyListeners();
     _loadElectiveSchemes();
   }
 
@@ -135,6 +114,26 @@ class FilterViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
+  // --- Chosen elective subjects (up to 2, both optional) ---
+
+  String? _chosenElective1;
+  String? get chosenElective1 => _chosenElective1;
+
+  String? _chosenElective2;
+  String? get chosenElective2 => _chosenElective2;
+
+  Future<void> setChosenElective1(String? subjectName) async {
+    _chosenElective1 = subjectName;
+    notifyListeners();
+    await _preferences.saveChosenElective1(subjectName);
+  }
+
+  Future<void> setChosenElective2(String? subjectName) async {
+    _chosenElective2 = subjectName;
+    notifyListeners();
+    await _preferences.saveChosenElective2(subjectName);
+  }
+
   late Weekday _weekday;
   Weekday get weekday => _weekday;
   set weekday(Weekday newWeekday) {
@@ -143,13 +142,14 @@ class FilterViewModel extends ChangeNotifier {
   }
 
   String? get activeYear => _selectedYear;
-  String? get activeElectiveYear => _selectedElectiveYear;
 
   // --- Initialization ---
 
   Future<void> initialize() async {
     _weekday = Weekday.today();
-    await Future.wait([_loadYears(), _loadElectiveYears()]);
+    _chosenElective1 = _preferences.getChosenElective1();
+    _chosenElective2 = _preferences.getChosenElective2();
+    await _loadYears();
   }
 
   Future<void> _loadYears() async {
@@ -176,7 +176,8 @@ class FilterViewModel extends ChangeNotifier {
   Future<void> _loadSections() async {
     if (_selectedYear == null || _activeSemester == null) return;
     try {
-      _sections = await _repository.getSections(_selectedYear!, _activeSemester!);
+      _sections =
+          await _repository.getSections(_selectedYear!, _activeSemester!);
       _setPrimarySection();
       notifyListeners();
     } catch (e) {
@@ -184,38 +185,71 @@ class FilterViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> _loadElectiveYears() async {
-    try {
-      electiveYears = await _repository.getElectiveYears();
-      _setPrimaryElectiveYear();
-      notifyListeners();
-    } catch (e) {
-      Logger.e('FilterViewModel._loadElectiveYears error: $e');
-    }
-  }
-
-  Future<void> _loadElectiveSemesters() async {
-    if (_selectedElectiveYear == null) return;
-    try {
-      _electivesSemesters =
-          await _repository.getElectiveSemesters(_selectedElectiveYear!);
-      _setPrimaryElectiveSemester();
-      notifyListeners();
-    } catch (e) {
-      Logger.e('FilterViewModel._loadElectiveSemesters error: $e');
-    }
-  }
-
   Future<void> _loadElectiveSchemes() async {
-    if (_selectedElectiveYear == null || _activeElectiveSemester == null) return;
+    if (_selectedYear == null || _activeSemester == null) return;
     try {
       electiveSchemes = await _repository.getElectiveSchemes(
-          _selectedElectiveYear!, _activeElectiveSemester!);
-      _setPrimaryElectiveScheme();
+          _selectedYear!, _activeSemester!);
+      _autoSelectScheme();
       notifyListeners();
     } catch (e) {
       Logger.e('FilterViewModel._loadElectiveSchemes error: $e');
     }
+  }
+
+  // --- Scheme auto-selection ---
+
+  /// Returns true when [semester] represents semester 1 or 2.
+  /// Works for values like "1", "2", "SEM1", "SEM2", "Sem 1", "Semester 2", etc.
+  static bool isEarlySemester(String? semester) {
+    if (semester == null) return false;
+    final match = RegExp(r'\d+').firstMatch(semester);
+    if (match == null) return false;
+    final num = int.tryParse(match.group(0) ?? '');
+    return num == 1 || num == 2;
+  }
+
+  /// Automatically picks the elective scheme without user input:
+  ///   - Semesters 1 & 2: derive from the first letter of the section name
+  ///     (e.g. section "A-16" → scheme code "a").
+  ///   - Other semesters: auto-select the sole scheme if there is exactly one.
+  /// Call this whenever section or the schemes map changes.
+  void _autoSelectScheme() {
+    if (electiveSchemes == null || electiveSchemes!.isEmpty) return;
+
+    if (isEarlySemester(_activeSemester)) {
+      // Derive scheme from first letter of the section display name.
+      if (_activeSection == null) return;
+      final letter = _activeSection![0].toUpperCase();
+      // Scheme code is conventionally the lowercase letter (e.g. 'a', 'b').
+      final schemeCode = electiveSchemes!.keys
+          .firstWhereOrNull((code) => code.toUpperCase() == letter);
+      if (schemeCode != null && schemeCode != _activeElectiveSchemeCode) {
+        _activeElectiveSchemeCode = schemeCode;
+        _activeElectiveScheme = electiveSchemes![schemeCode];
+        notifyListeners();
+      }
+    } else {
+      // For other semesters, if there is exactly one scheme, auto-select it.
+      if (electiveSchemes!.length == 1) {
+        final entry = electiveSchemes!.entries.first;
+        if (entry.key != _activeElectiveSchemeCode) {
+          _activeElectiveSchemeCode = entry.key;
+          _activeElectiveScheme = entry.value;
+          notifyListeners();
+        }
+      }
+    }
+  }
+
+  void _clearElectiveScheme() {
+    electiveSchemes = null;
+    _activeElectiveScheme = null;
+    _activeElectiveSchemeCode = null;
+    _chosenElective1 = null;
+    _chosenElective2 = null;
+    unawaited(_preferences.saveChosenElective1(null));
+    unawaited(_preferences.saveChosenElective2(null));
   }
 
   // --- Short codes ---
@@ -230,12 +264,12 @@ class FilterViewModel extends ChangeNotifier {
   }
 
   String getElectiveShortCode() {
-    final section = _activeElectiveSchemeCode;
-    final semester = _activeElectiveSemester;
-    if (section == null && semester == null) return 'Select Elective';
-    if (section == null) return semester!;
-    if (semester == null) return section;
-    return '$section | $semester'.toUpperCase();
+    final scheme = _activeElectiveSchemeCode;
+    final semester = _activeSemester;
+    if (scheme == null && semester == null) return 'Select Elective';
+    if (scheme == null) return semester!;
+    if (semester == null) return scheme;
+    return '$scheme | $semester'.toUpperCase();
   }
 
   // --- Primary preference reads ---
@@ -245,12 +279,8 @@ class FilterViewModel extends ChangeNotifier {
   String? get primaryYear => _preferences.getPrimaryYearPreference();
   String? get primaryElectiveScheme =>
       _preferences.getPrimaryElectiveSchemePreference();
-  String? get primaryElectiveSemester =>
-      _preferences.getPrimaryElectiveSemesterPreference();
-  String? get primaryElectiveYear =>
-      _preferences.getPrimaryElectiveYearPreference();
 
-  // --- Primary preference saves (no BuildContext) ---
+  // --- Primary preference saves ---
 
   Future<bool> storePrimarySection() async {
     if (_activeSectionCode == null) return false;
@@ -295,28 +325,6 @@ class FilterViewModel extends ChangeNotifier {
     return res;
   }
 
-  Future<bool> storePrimaryElectiveSemester() async {
-    if (_activeElectiveSemester == null) return false;
-    final res = await _preferences
-        .savePrimaryElectiveSemesterPreference(_activeElectiveSemester!);
-    if (res) {
-      Logger.i('set $_activeElectiveSemester as primary elective-semester');
-      notifyListeners();
-    }
-    return res;
-  }
-
-  Future<bool> storePrimaryElectiveYear() async {
-    if (_selectedElectiveYear == null) return false;
-    final res = await _preferences
-        .savePrimaryElectiveYearPreference(_selectedElectiveYear!);
-    if (res) {
-      Logger.i('set $_selectedElectiveYear as primary year');
-      notifyListeners();
-    }
-    return res;
-  }
-
   // --- Primary preference auto-apply ---
 
   void _setPrimarySection() {
@@ -340,32 +348,6 @@ class FilterViewModel extends ChangeNotifier {
     final primary = _preferences.getPrimaryYearPreference();
     if (primary != null && years?.contains(primary) == true) {
       selectedYear = primary;
-    }
-  }
-
-  void _setPrimaryElectiveScheme() {
-    _activeElectiveScheme = null;
-    final primary = _preferences.getPrimaryElectiveSchemePreference();
-    if (primary != null &&
-        electiveSchemes != null &&
-        electiveSchemes!.containsKey(primary)) {
-      _activeElectiveScheme = electiveSchemes![primary];
-      _activeElectiveSchemeCode = primary;
-      notifyListeners();
-    }
-  }
-
-  void _setPrimaryElectiveSemester() {
-    final primary = _preferences.getPrimaryElectiveSemesterPreference();
-    if (primary != null && _electivesSemesters?.contains(primary) == true) {
-      activeElectiveSemester = primary;
-    }
-  }
-
-  void _setPrimaryElectiveYear() {
-    final primary = _preferences.getPrimaryElectiveYearPreference();
-    if (primary != null && electiveYears?.contains(primary) == true) {
-      selectedElectiveYear = primary;
     }
   }
 }

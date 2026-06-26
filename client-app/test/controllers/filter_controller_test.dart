@@ -21,11 +21,6 @@ class FakeSectionsRepository implements SectionsRepository {
       'SEM1': {'A16': 'A-16'},
     },
   };
-  List<String> fakeElectiveYears = ['2024', '2023'];
-  Map<String, List<String>> fakeElectiveSemesters = {
-    '2024': ['SEM1', 'SEM2'],
-    '2023': ['SEM1'],
-  };
   Map<String, Map<String, Map<String, String>?>> fakeElectiveSchemes = {
     '2024': {
       'SEM1': {'a': 'Scheme A', 'b': 'Scheme B'},
@@ -45,11 +40,10 @@ class FakeSectionsRepository implements SectionsRepository {
       fakeSections[year]?[semester] ?? {};
 
   @override
-  Future<List<String>> getElectiveYears() async => fakeElectiveYears;
+  Future<List<String>> getElectiveYears() async => fakeYears;
 
   @override
-  Future<List<String>> getElectiveSemesters(String year) async =>
-      fakeElectiveSemesters[year] ?? [];
+  Future<List<String>> getElectiveSemesters(String year) async => [];
 
   @override
   Future<Map<String, String>?> getElectiveSchemes(
@@ -80,11 +74,10 @@ void main() {
   });
 
   group('initialize', () {
-    test('loads years and electiveYears from repository', () async {
+    test('loads years from repository', () async {
       await controller.initialize();
       await Future.delayed(Duration.zero);
       expect(controller.years, ['2024', '2023']);
-      expect(controller.electiveYears, ['2024', '2023']);
     });
 
     test('restores primary year when saved in preferences', () async {
@@ -134,6 +127,19 @@ void main() {
       controller.selectedYear = '2024';
       expect(controller.semesters, semsBefore);
     });
+
+    test('changing year clears elective schemes', () async {
+      await controller.initialize();
+      await Future.delayed(Duration.zero);
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero); // schemes load for 2024/SEM1
+
+      controller.selectedYear = '2023';
+      expect(controller.electiveSchemes, isNull);
+      expect(controller.activeElectiveSchemeCode, isNull);
+    });
   });
 
   group('activeSemester setter', () {
@@ -171,6 +177,31 @@ void main() {
       final sectionsBefore = controller.sections;
       controller.activeSemester = 'SEM1';
       expect(controller.sections, sectionsBefore);
+    });
+
+    test('setting semester triggers elective scheme load', () async {
+      await controller.initialize();
+      await Future.delayed(Duration.zero);
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+
+      expect(controller.hasElectivesForCurrentSchedule, isTrue);
+      expect(controller.electiveSchemes,
+          containsPair('a', 'Scheme A'));
+    });
+
+    test('changing semester clears elective schemes', () async {
+      await controller.initialize();
+      await Future.delayed(Duration.zero);
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+
+      controller.activeSemester = 'SEM2';
+      expect(controller.electiveSchemes, isNull);
     });
   });
 
@@ -212,22 +243,7 @@ void main() {
     });
   });
 
-  group('elective setters', () {
-    test('activeElectiveSemester resets scheme and code and fetches schemes',
-        () async {
-      await controller.initialize();
-      await Future.delayed(Duration.zero);
-      controller.selectedElectiveYear = '2024';
-      await Future.delayed(Duration.zero);
-      controller.activeElectiveScheme = 'Scheme A';
-      controller.activeElectiveSchemeCode = 'a';
-      controller.activeElectiveSemester = 'SEM1';
-      await Future.delayed(Duration.zero);
-
-      expect(controller.activeElectiveSemester, 'SEM1');
-      expect(controller.electiveSchemes, {'a': 'Scheme A', 'b': 'Scheme B'});
-    });
-
+  group('elective scheme setters', () {
     test('activeElectiveScheme ignores null assignment', () {
       controller.activeElectiveScheme = 'Scheme A';
       controller.activeElectiveScheme = null;
@@ -238,6 +254,22 @@ void main() {
       controller.activeElectiveSchemeCode = 'a';
       controller.activeElectiveSchemeCode = null;
       expect(controller.activeElectiveSchemeCode, 'a');
+    });
+  });
+
+  group('hasElectivesForCurrentSchedule', () {
+    test('is false when no schemes loaded', () {
+      expect(controller.hasElectivesForCurrentSchedule, isFalse);
+    });
+
+    test('is true after year+semester with electives are set', () async {
+      await controller.initialize();
+      await Future.delayed(Duration.zero);
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+      expect(controller.hasElectivesForCurrentSchedule, isTrue);
     });
   });
 
@@ -268,18 +300,18 @@ void main() {
       expect(controller.getElectiveShortCode(), 'Select Elective');
     });
 
-    test('returns semester only', () {
-      controller.activeElectiveSemester = 'SEM2';
+    test('returns semester only when no scheme selected', () {
+      controller.activeSemester = 'SEM2';
       expect(controller.getElectiveShortCode(), 'SEM2');
     });
 
-    test('returns schemeCode only', () {
+    test('returns schemeCode only when no semester selected', () {
       controller.activeElectiveSchemeCode = 'a';
       expect(controller.getElectiveShortCode(), 'a');
     });
 
     test('returns both in uppercase', () {
-      controller.activeElectiveSemester = 'sem2';
+      controller.activeSemester = 'sem2';
       controller.activeElectiveSchemeCode = 'a';
       expect(controller.getElectiveShortCode(), 'A | SEM2');
     });
@@ -291,15 +323,11 @@ void main() {
       await preferences.savePrimarySemesterPreference('SEM1');
       await preferences.savePrimaryYearPreference('2024');
       await preferences.savePrimaryElectiveSchemePreference('a');
-      await preferences.savePrimaryElectiveSemesterPreference('SEM2');
-      await preferences.savePrimaryElectiveYearPreference('2024');
 
       expect(controller.primarySection, 'A16');
       expect(controller.primarySemester, 'SEM1');
       expect(controller.primaryYear, '2024');
       expect(controller.primaryElectiveScheme, 'a');
-      expect(controller.primaryElectiveSemester, 'SEM2');
-      expect(controller.primaryElectiveYear, '2024');
     });
 
     test('returns null when preference is absent', () {
@@ -379,36 +407,91 @@ void main() {
     });
   });
 
-  group('storePrimaryElectiveSemester', () {
-    test('saves selected elective semester', () async {
-      controller.activeElectiveSemester = 'SEM2';
-      final result = await controller.storePrimaryElectiveSemester();
-      expect(result, isTrue);
-      expect(preferences.getPrimaryElectiveSemesterPreference(), 'SEM2');
+  group('setChosenElective1', () {
+    test('persists chosen subject and reads it back', () async {
+      await controller.setChosenElective1('Machine Learning');
+      expect(controller.chosenElective1, 'Machine Learning');
+      expect(preferences.getChosenElective1(), 'Machine Learning');
     });
 
-    test('returns false when no semester is selected', () async {
-      final result = await controller.storePrimaryElectiveSemester();
-      expect(result, isFalse);
+    test('clearing chosen subject removes it from preferences', () async {
+      await controller.setChosenElective1('Machine Learning');
+      await controller.setChosenElective1(null);
+      expect(controller.chosenElective1, isNull);
+      expect(preferences.getChosenElective1(), isNull);
     });
   });
 
-  group('storePrimaryElectiveYear', () {
-    test('saves selected elective year', () async {
+  group('setChosenElective2', () {
+    test('persists independently of slot 1', () async {
+      await controller.setChosenElective1('Machine Learning');
+      await controller.setChosenElective2('Data Structures');
+      expect(controller.chosenElective1, 'Machine Learning');
+      expect(controller.chosenElective2, 'Data Structures');
+      expect(preferences.getChosenElective1(), 'Machine Learning');
+      expect(preferences.getChosenElective2(), 'Data Structures');
+    });
+
+    test('clearing slot 2 does not affect slot 1', () async {
+      await controller.setChosenElective1('Machine Learning');
+      await controller.setChosenElective2('Data Structures');
+      await controller.setChosenElective2(null);
+      expect(controller.chosenElective1, 'Machine Learning');
+      expect(controller.chosenElective2, isNull);
+    });
+  });
+
+  group('isEarlySemester', () {
+    test('returns true for "1"', () {
+      expect(FilterViewModel.isEarlySemester('1'), isTrue);
+    });
+
+    test('returns true for "2"', () {
+      expect(FilterViewModel.isEarlySemester('2'), isTrue);
+    });
+
+    test('returns true for "SEM1"', () {
+      expect(FilterViewModel.isEarlySemester('SEM1'), isTrue);
+    });
+
+    test('returns true for "Semester 2"', () {
+      expect(FilterViewModel.isEarlySemester('Semester 2'), isTrue);
+    });
+
+    test('returns false for "3"', () {
+      expect(FilterViewModel.isEarlySemester('3'), isFalse);
+    });
+
+    test('returns false for null', () {
+      expect(FilterViewModel.isEarlySemester(null), isFalse);
+    });
+  });
+
+  group('auto scheme selection', () {
+    setUp(() async {
       await controller.initialize();
       await Future.delayed(Duration.zero);
-      controller.selectedElectiveYear = '2024';
+      controller.selectedYear = '2024';
       await Future.delayed(Duration.zero);
-
-      final result = await controller.storePrimaryElectiveYear();
-      expect(result, isTrue);
-      expect(preferences.getPrimaryElectiveYearPreference(), '2024');
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
     });
 
-    test('returns false when no elective year selected', () async {
-      final result = await controller.storePrimaryElectiveYear();
-      expect(result, isFalse);
+    test('auto-selects scheme from section letter A in SEM1', () {
+      controller.activeSection = 'A-16';
+      expect(controller.activeElectiveSchemeCode, 'a');
+    });
+
+    test('auto-selects scheme from section letter B in SEM1', () {
+      controller.activeSection = 'B-16';
+      expect(controller.activeElectiveSchemeCode, 'b');
+    });
+
+    test('scheme updates when section changes', () {
+      controller.activeSection = 'A-16';
+      expect(controller.activeElectiveSchemeCode, 'a');
+      controller.activeSection = 'B-16';
+      expect(controller.activeElectiveSchemeCode, 'b');
     });
   });
-
 }

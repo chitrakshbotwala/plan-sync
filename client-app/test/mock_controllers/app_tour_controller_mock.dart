@@ -4,7 +4,7 @@ import 'package:mockito/mockito.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
 import 'package:plan_sync/core/util/logger.dart';
-import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
 import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
@@ -17,9 +17,6 @@ class MockAppTourController extends Mock implements AppTourService {
 
   @override
   final GlobalKey sectionBarKey = GlobalKey();
-
-  @override
-  final GlobalKey savePreferenceSwitchKey = GlobalKey();
 
   @override
   final GlobalKey doneButtonKey = GlobalKey();
@@ -79,7 +76,7 @@ class MockAppTourController extends Mock implements AppTourService {
       Logger.i('key match with schedule button');
 
       await Future.delayed(const Duration(milliseconds: 250));
-      BottomSheets.changeSectionPreference(
+      PopupsWrapper.changeSectionPreference(
         context: schedulePreferencesButtonKey.currentContext!,
       );
     }
@@ -103,15 +100,15 @@ class MockAppTourController extends Mock implements AppTourService {
       ),
     );
     targets.add(
-      AppTargetFocus.savePreferenceSwitch(
-        colorScheme: colorScheme,
-        buttonKey: savePreferenceSwitchKey,
-      ),
-    );
-    targets.add(
       AppTargetFocus.sectionBarButton(
         colorScheme: colorScheme,
         buttonKey: sectionBarKey,
+      ),
+    );
+    targets.add(
+      AppTargetFocus.doneButton(
+        colorScheme: colorScheme,
+        buttonKey: doneButtonKey,
       ),
     );
 

@@ -9,6 +9,8 @@ import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
+import 'package:plan_sync/features/electives/repository/electives_repository.dart';
+import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/schedule/repository/schedule_repository.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/features/settings/viewmodel/settings_view_model.dart';
@@ -17,6 +19,7 @@ import 'mock_controllers/analytics_controller_mock.dart';
 import 'mock_controllers/app_preferences_controller_mock.dart';
 import 'mock_controllers/app_tour_controller_mock.dart';
 import 'mock_controllers/auth_mock.dart';
+import 'mock_controllers/electives_repository_mock.dart';
 import 'mock_controllers/filter_view_model_mock.dart';
 import 'mock_controllers/notification_controller_mock.dart';
 import 'mock_controllers/remote_config_controller_mock.dart';
@@ -27,6 +30,7 @@ late MockAuth mockAuth;
 late MockAppPreferencesController mockPreferences;
 late MockFilterViewModel mockFilterViewModel;
 late MockScheduleRepository mockScheduleRepository;
+late MockElectivesRepository mockElectivesRepository;
 late MockVersionViewModel mockVersionViewModel;
 late MockAnalyticsService mockAnalyticsService;
 late MockAppTourController mockAppTourService;
@@ -40,6 +44,7 @@ Future<void> injectMockDependencies() async {
   await mockPreferences.onInit();
   mockFilterViewModel = MockFilterViewModel(mockPreferences);
   mockScheduleRepository = MockScheduleRepository();
+  mockElectivesRepository = MockElectivesRepository();
   mockVersionViewModel = MockVersionViewModel();
   mockAnalyticsService = MockAnalyticsService();
   mockAppTourService = MockAppTourController();
@@ -80,6 +85,9 @@ Widget wrapWithProviders({required Widget child}) {
       Provider<ScheduleRepository>.value(
         value: mockScheduleRepository,
       ),
+      Provider<ElectivesRepository>.value(
+        value: mockElectivesRepository,
+      ),
       ChangeNotifierProvider<HomeViewModel>(
         create: (_) => HomeViewModel(
           appTour: mockAppTourService,
@@ -99,12 +107,24 @@ Widget wrapWithProviders({required Widget child}) {
     child: Builder(
       builder: (ctx) {
         mockAppTourService.onInit(ctx);
-        return ChangeNotifierProvider<ScheduleViewModel>(
-          create: (_) => ScheduleViewModel(
-            repository: mockScheduleRepository,
-            filterViewModel: mockFilterViewModel,
-            remoteConfig: mockRemoteConfigController,
-          ),
+        return MultiProvider(
+          providers: [
+            ChangeNotifierProvider<ScheduleViewModel>(
+              create: (_) => ScheduleViewModel(
+                repository: mockScheduleRepository,
+                filterViewModel: mockFilterViewModel,
+                remoteConfig: mockRemoteConfigController,
+              ),
+            ),
+            ChangeNotifierProvider<ElectivesViewModel>(
+              create: (_) => ElectivesViewModel(
+                repository: mockElectivesRepository,
+                filterViewModel: mockFilterViewModel,
+                preferences: mockPreferences,
+                remoteConfig: mockRemoteConfigController,
+              ),
+            ),
+          ],
           child: child,
         );
       },
