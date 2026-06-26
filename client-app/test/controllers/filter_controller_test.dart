@@ -494,4 +494,37 @@ void main() {
       expect(controller.activeElectiveSchemeCode, 'b');
     });
   });
+
+  group('clearPreferences', () {
+    test('resets all in-memory state and removes persisted preferences',
+        () async {
+      await controller.initialize();
+      await Future.delayed(Duration.zero);
+      controller.selectedYear = '2024';
+      await Future.delayed(Duration.zero);
+      controller.activeSemester = 'SEM1';
+      await Future.delayed(Duration.zero);
+      controller.activeSection = 'A-16';
+      await controller.storePrimaryYear();
+      await controller.storePrimarySemester();
+      await controller.storePrimarySection();
+      await controller.setChosenElective1('Machine Learning');
+      await controller.setChosenElective2('Data Structures');
+
+      await controller.clearPreferences();
+
+      expect(controller.selectedYear, isNull);
+      expect(controller.activeSemester, isNull);
+      expect(controller.activeSectionCode, isNull);
+      expect(controller.activeSection, isNull);
+      expect(controller.electiveSchemes, isNull);
+      expect(controller.activeElectiveSchemeCode, isNull);
+      expect(controller.chosenElective1, isNull);
+      expect(controller.chosenElective2, isNull);
+
+      expect(preferences.getPrimaryYearPreference(), isNull);
+      expect(preferences.getPrimarySemesterPreference(), isNull);
+      expect(preferences.getPrimarySectionPreference(), isNull);
+    });
+  });
 }
