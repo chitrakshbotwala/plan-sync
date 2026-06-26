@@ -102,11 +102,16 @@ class MockAppPreferencesController extends Mock
   @override
   Future<void> saveAppReviewRequest(InAppReviewCacheModel model) async {}
 
-  @override
-  Future<void> saveNotificationDialogDismissedAt() async {}
+  /// Toggle to drive the home-screen notification permission dialog in tests.
+  bool promptForNotifications = false;
+  int notificationDialogDismissedCalls = 0;
 
   @override
-  bool shouldPromptForNotifications() => false;
+  Future<void> saveNotificationDialogDismissedAt() async =>
+      notificationDialogDismissedCalls++;
+
+  @override
+  bool shouldPromptForNotifications() => promptForNotifications;
 
   @override
   String? getChosenElective1() => perfs.getString('chosen-elective-1');

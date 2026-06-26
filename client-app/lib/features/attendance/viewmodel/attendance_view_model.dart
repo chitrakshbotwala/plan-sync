@@ -24,9 +24,15 @@ enum AttendanceStatus {
 class AttendanceViewModel extends ChangeNotifier {
   AttendanceViewModel({
     required AttendanceCredentialsRepository credentialsRepository,
-  }) : _credentials = credentialsRepository;
+    KiitAttendanceScraper Function()? scraperFactory,
+  })  : _credentials = credentialsRepository,
+        _scraperFactory = scraperFactory ?? KiitAttendanceScraper.new;
 
   final AttendanceCredentialsRepository _credentials;
+
+  /// Builds the scraper used by [refresh]. Injectable so tests can supply a
+  /// fake that returns canned results instead of launching a headless WebView.
+  final KiitAttendanceScraper Function() _scraperFactory;
 
   AttendanceStatus status = AttendanceStatus.needsCredentials;
   AttendanceResult? result;
@@ -114,7 +120,7 @@ class AttendanceViewModel extends ChangeNotifier {
     errorMessage = null;
     _set(AttendanceStatus.loading);
 
-    final scraper = KiitAttendanceScraper();
+    final scraper = _scraperFactory();
     try {
       final fetched = await scraper.scrape(
         username: creds.$1,
