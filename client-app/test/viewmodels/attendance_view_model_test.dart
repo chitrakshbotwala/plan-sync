@@ -113,7 +113,7 @@ void main() {
       final yearBefore = vm.academicYear;
       final sessionBefore = vm.session;
 
-      await vm.changeSelection(year: yearBefore, session: sessionBefore);
+      vm.changeSelection(year: yearBefore, session: sessionBefore);
 
       expect(vm.academicYear, yearBefore);
       expect(vm.session, sessionBefore);
@@ -124,7 +124,7 @@ void main() {
       final vm = AttendanceViewModel(credentialsRepository: creds);
       await vm.initialize();
 
-      await vm.changeSelection(year: '2019-2020');
+      vm.changeSelection(year: '2019-2020');
 
       expect(vm.academicYear, '2019-2020');
     });
