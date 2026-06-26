@@ -172,6 +172,18 @@ class AppPreferencesRepositoryImpl implements AppPreferencesRepository {
     }
   }
 
+  @override
+  Future<void> clearSchedulePreferences() async {
+    await Future.wait([
+      perfs.remove('primary-year'),
+      perfs.remove('primary-semester'),
+      perfs.remove('primary-section'),
+      perfs.remove('elective-primary-section'),
+      perfs.remove(_chosenElective1Key),
+      perfs.remove(_chosenElective2Key),
+    ]);
+  }
+
   static const String _notificationDialogDismissedKey =
       'notification_dialog_dismissed_at';
 

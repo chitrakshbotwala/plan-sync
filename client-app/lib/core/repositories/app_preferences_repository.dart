@@ -48,6 +48,8 @@ abstract class AppPreferencesRepository {
   String? getChosenElective2();
   Future<void> saveChosenElective2(String? subjectName);
 
+  Future<void> clearSchedulePreferences();
+
   static String electiveId({
     required String academicYear,
     required String semester,
