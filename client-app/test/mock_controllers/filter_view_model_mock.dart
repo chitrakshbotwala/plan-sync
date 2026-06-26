@@ -105,6 +105,18 @@ class MockFilterViewModel extends Mock
   @override
   set activeSection(String? newSection) {
     _activeSection = newSection;
+    // Mirror real FilterViewModel: resolve the section code from the display
+    // name so UI-driven section selection populates activeSectionCode too.
+    String? code;
+    if (newSection != null && _sections != null) {
+      for (final entry in _sections!.entries) {
+        if (entry.value == newSection) {
+          code = entry.key;
+          break;
+        }
+      }
+    }
+    _activeSectionCode = code;
     notifyListeners();
   }
 
@@ -151,6 +163,21 @@ class MockFilterViewModel extends Mock
 
   @override
   Future<void> initialize() async {}
+
+  @override
+  Future<void> clearPreferences() async {
+    // Mirror real FilterViewModel: reset all selection + elective state.
+    _selectedYear = null;
+    _activeSemester = null;
+    _activeSection = null;
+    _activeSectionCode = null;
+    _sections = null;
+    _activeElectiveScheme = null;
+    _activeElectiveSchemeCode = null;
+    _chosenElective1 = null;
+    _chosenElective2 = null;
+    notifyListeners();
+  }
 
   @override
   String getShortCode() {
