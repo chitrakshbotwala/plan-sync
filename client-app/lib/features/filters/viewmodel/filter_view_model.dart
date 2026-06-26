@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:collection/collection.dart';
 import 'package:flutter/widgets.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
@@ -174,7 +176,8 @@ class FilterViewModel extends ChangeNotifier {
   Future<void> _loadSections() async {
     if (_selectedYear == null || _activeSemester == null) return;
     try {
-      _sections = await _repository.getSections(_selectedYear!, _activeSemester!);
+      _sections =
+          await _repository.getSections(_selectedYear!, _activeSemester!);
       _setPrimarySection();
       notifyListeners();
     } catch (e) {
@@ -245,8 +248,8 @@ class FilterViewModel extends ChangeNotifier {
     _activeElectiveSchemeCode = null;
     _chosenElective1 = null;
     _chosenElective2 = null;
-    _preferences.saveChosenElective1(null);
-    _preferences.saveChosenElective2(null);
+    unawaited(_preferences.saveChosenElective1(null));
+    unawaited(_preferences.saveChosenElective2(null));
   }
 
   // --- Short codes ---
@@ -347,5 +350,4 @@ class FilterViewModel extends ChangeNotifier {
       selectedYear = primary;
     }
   }
-
 }

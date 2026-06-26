@@ -103,20 +103,7 @@ class SchedulePreferenceDialog extends StatelessWidget {
                               );
                             }
 
-                            final subjectNames = <String>[];
-                            if (electivesVm.hasData) {
-                              final seen = <String>{};
-                              for (final entries
-                                  in electivesVm.timetable!.data.values) {
-                                for (final entry in entries) {
-                                  if (entry.subject != null &&
-                                      seen.add(entry.subject!)) {
-                                    subjectNames.add(entry.subject!);
-                                  }
-                                }
-                              }
-                              subjectNames.sort();
-                            }
+                            final subjectNames = electivesVm.uniqueSubjectNames;
 
                             return Column(
                               children: [

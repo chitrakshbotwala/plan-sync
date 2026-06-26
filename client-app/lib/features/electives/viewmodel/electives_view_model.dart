@@ -41,6 +41,22 @@ class ElectivesViewModel extends ChangeNotifier {
 
   bool get showSigmaEmoji => _remoteConfig.canShowSigmaEmoji();
 
+  /// Sorted, deduplicated subject names across all days in the loaded timetable.
+  List<String> get uniqueSubjectNames {
+    if (timetable == null) return const [];
+    final seen = <String>{};
+    final names = <String>[];
+    for (final entries in timetable!.data.values) {
+      for (final entry in entries) {
+        if (entry.subject != null && seen.add(entry.subject!)) {
+          names.add(entry.subject!);
+        }
+      }
+    }
+    names.sort();
+    return names;
+  }
+
   bool isElectiveStarred(String electiveId) => _starredIds.contains(electiveId);
 
   void starElective(String electiveId) {
