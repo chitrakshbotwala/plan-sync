@@ -40,17 +40,31 @@ class SchedulePreferenceDialog extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Preferences',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: colorScheme.onSurface,
+              padding: const EdgeInsets.fromLTRB(20, 20, 12, 16),
+              child: Row(
+                children: [
+                  Text(
+                    'Preferences',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                      color: colorScheme.onSurface,
+                    ),
                   ),
-                ),
+                  const Spacer(),
+                  Tooltip(
+                    message: 'Clear Preferences',
+                    child: IconButton(
+                      icon: Icon(Icons.delete_outline_rounded,
+                          color: colorScheme.error),
+                      onPressed: () {
+                        final vm =
+                            Provider.of<FilterViewModel>(context, listen: false);
+                        vm.clearPreferences();
+                      },
+                    ),
+                  ),
+                ],
               ),
             ),
             Flexible(
@@ -245,7 +259,7 @@ class _ElectiveDropdown extends StatelessWidget {
             elevation: 0,
             style: TextStyle(color: colorScheme.surface, fontSize: 13),
             icon: Icon(Icons.arrow_drop_down, color: colorScheme.surface),
-            value: chosen,
+            value: subjects.contains(chosen) ? chosen : null,
             dropdownColor: colorScheme.onSurface,
             hint: Text(
               'None',

@@ -191,6 +191,8 @@ class FilterViewModel extends ChangeNotifier {
       electiveSchemes = await _repository.getElectiveSchemes(
           _selectedYear!, _activeSemester!);
       _autoSelectScheme();
+      _chosenElective1 = _preferences.getChosenElective1();
+      _chosenElective2 = _preferences.getChosenElective2();
       notifyListeners();
     } catch (e) {
       Logger.e('FilterViewModel._loadElectiveSchemes error: $e');
@@ -248,8 +250,6 @@ class FilterViewModel extends ChangeNotifier {
     _activeElectiveSchemeCode = null;
     _chosenElective1 = null;
     _chosenElective2 = null;
-    unawaited(_preferences.saveChosenElective1(null));
-    unawaited(_preferences.saveChosenElective2(null));
   }
 
   // --- Short codes ---
@@ -312,6 +312,18 @@ class FilterViewModel extends ChangeNotifier {
       notifyListeners();
     }
     return res;
+  }
+
+  Future<void> clearPreferences() async {
+    await _preferences.clearSchedulePreferences();
+    _selectedYear = null;
+    _activeSemester = null;
+    _activeSectionCode = null;
+    _activeSection = null;
+    _sections = null;
+    _semesters = null;
+    _clearElectiveScheme();
+    notifyListeners();
   }
 
   Future<bool> storePrimaryElectiveScheme() async {
