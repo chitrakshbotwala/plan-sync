@@ -211,10 +211,20 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
     final filterController = context.watch<FilterViewModel>();
     final electivesVm = context.watch<ElectivesViewModel>();
 
+    Widget timesheetTitle = Text(
+      "Time Sheet",
+      style: TextStyle(
+        color: colorScheme.onSurfaceVariant,
+        fontSize: 24,
+      ),
+    );
+
     if (vm.isLoading && !vm.hasData) {
       return Column(
         mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          timesheetTitle,
           const SizedBox(height: 32),
           Center(
               child: CircularProgressIndicator(
@@ -224,14 +234,17 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
       );
     } else if (vm.errorMessage != null && !vm.hasData) {
       return Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
+          timesheetTitle,
           const SizedBox(height: 32),
-          Icon(
-            Icons.error,
-            color: colorScheme.error,
-            size: 40,
+          Center(
+            child: Icon(
+              Icons.error,
+              color: colorScheme.error,
+              size: 40,
+            ),
           ),
           const SizedBox(height: 16),
           Flexible(child: MarkdownBody(data: "```${vm.errorMessage}```")),
@@ -245,56 +258,70 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
         ],
       );
     } else if (!vm.hasData) {
-      return Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 32),
-            Icon(
-              Icons.info,
-              color: colorScheme.secondary,
-              size: 40,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          timesheetTitle,
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.info,
+                  color: colorScheme.secondary,
+                  size: 40,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "No section selected.",
+                  style: TextStyle(
+                    color: colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              "No section selected.",
-              style: TextStyle(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            )
-          ],
-        ),
+          ),
+        ],
       );
     } else if (vm.timetable!.meta.isTimetableUpdating ?? false) {
-      return Center(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          mainAxisAlignment: MainAxisAlignment.center,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 32),
-            Icon(
-              Icons.settings_outlined,
-              color: colorScheme.secondary,
-              size: 40,
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          timesheetTitle,
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.settings_outlined,
+                  color: colorScheme.secondary,
+                  size: 40,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  "We're working on this timetable,",
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+                Text(
+                  "Check back in soon!",
+                  style: TextStyle(
+                    color: colorScheme.onSurface,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            Text(
-              "We're working on this timetable,",
-              style: TextStyle(
-                color: colorScheme.onSurface,
-              ),
-            ),
-            Text(
-              "Check back in soon!",
-              style: TextStyle(
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       );
     } else {
       final day = filterController.weekday.key;
@@ -310,48 +337,60 @@ class _TimeTableWidgetState extends State<TimeTableWidget> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Flexible(
-            child: Text(
-              "Effective from ${vm.timetable!.meta.effectiveDate}",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: colorScheme.onSurface,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
           Row(
-            mainAxisSize: MainAxisSize.min,
-            mainAxisAlignment: MainAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              InkWell(
-                onTap: () => showMoreInfo(vm.timetable!, colorScheme),
-                child: Row(
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Icons.info_rounded, color: colorScheme.tertiary),
-                    const SizedBox(width: 8),
+                    timesheetTitle,
                     Text(
-                      'More Info',
-                      style: TextStyle(color: colorScheme.tertiary),
+                      "Effective from ${vm.timetable!.meta.effectiveDate}",
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Spacer(),
-              TextButton.icon(
+              OutlinedButton.icon(
+                onPressed: () => showMoreInfo(vm.timetable!, colorScheme),
+                icon: Icon(Icons.info_outline_rounded,
+                    color: colorScheme.tertiary, size: 16),
+                label: Text(
+                  'Info',
+                  style: TextStyle(color: colorScheme.tertiary),
+                ),
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colorScheme.tertiary),
+                  shape: const StadiumBorder(),
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+              const SizedBox(width: 8),
+              OutlinedButton.icon(
                 onPressed: () => PopupsWrapper.reportError(
                   context: context,
                   scheduleType: ScheduleType.regular,
                 ),
+                icon: Icon(Icons.flag_rounded,
+                    color: colorScheme.error, size: 16),
                 label: Text(
-                  'Report Error',
+                  'Report',
                   style: TextStyle(color: colorScheme.error),
                 ),
-                icon: Icon(
-                  Icons.flag_rounded,
-                  color: colorScheme.error,
+                style: OutlinedButton.styleFrom(
+                  side: BorderSide(color: colorScheme.error),
+                  shape: const StadiumBorder(),
+                  visualDensity: VisualDensity.compact,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 ),
-              )
+              ),
             ],
           ),
           const SizedBox(height: 16),

@@ -127,14 +127,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   const TopNoticeHud(),
                   const DateWidget(),
                   const SizedBox(height: 16),
-                  Text(
-                    "Time Sheet",
-                    style: TextStyle(
-                      color: colorScheme.onSurfaceVariant,
-                      fontSize: 24,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
                   const TimeTableWidget()
                 ],
               ),
