@@ -513,6 +513,10 @@ const String _agentTemplate = r'''
         var total = parseFloat(cells[3]);
         var pct = parseFloat(cells[4]);
         if (subj && /[A-Za-z]/.test(subj) && !isNaN(present) && !isNaN(total) && !isNaN(pct)) {
+          // Column order on the portal: Subject, No.of Absent, No.of Present,
+          // Total No. of Days, Total %, Faculty ID, Faculty Name, No. of Excuses
+          // — so cells[5] is the faculty id. Falls back to '' (dedupe by subject
+          // only) if the column is missing.
           records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct, facultyId: cells.length > 5 ? cells[5] : '' });
         }
       }

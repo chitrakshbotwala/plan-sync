@@ -23,10 +23,10 @@ class AttendanceSuccessState extends StatelessWidget {
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
         children: [
-          AttendanceFilterBar(
-            viewModel: viewModel,
-            enabled: viewModel.status != AttendanceStatus.loading,
-          ),
+          // Always enabled: this view only renders for idle/success; a scrape
+          // swaps the whole screen for AttendanceLoadingState, so the Load
+          // button is already gone while fetching.
+          AttendanceFilterBar(viewModel: viewModel, enabled: true),
           const SizedBox(height: 16),
           OverallAttendanceCard(result: result),
           const SizedBox(height: 20),
