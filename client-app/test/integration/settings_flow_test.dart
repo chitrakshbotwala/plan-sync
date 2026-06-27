@@ -8,6 +8,7 @@ import 'package:plan_sync/features/settings/view/settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/fake_cache_service.dart';
 import '../helpers/fake_network_images.dart';
 import '../main.dart';
 
@@ -66,7 +67,10 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AttendanceViewModel>(
         create: (_) =>
-            AttendanceViewModel(credentialsRepository: creds),
+            AttendanceViewModel(
+              credentialsRepository: creds,
+              cache: FakeCacheService(),
+            ),
         child: testApp(child: const SettingsPage()),
       ),
     );

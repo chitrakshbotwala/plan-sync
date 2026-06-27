@@ -9,6 +9,8 @@ import 'package:plan_sync/features/attendance/view/attendance_screen.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:provider/provider.dart';
 
+import '../helpers/fake_cache_service.dart';
+
 class _FakeCredentials implements AttendanceCredentialsRepository {
   _FakeCredentials({bool hasCredentials = false, String? registrationNumber})
       : _has = hasCredentials,
@@ -101,6 +103,7 @@ void main() {
     final vm = AttendanceViewModel(
       credentialsRepository: creds,
       scraperFactory: scraperFactory,
+      cache: FakeCacheService(),
     );
     await tester.pumpWidget(
       MultiProvider(
