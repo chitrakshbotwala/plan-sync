@@ -3,10 +3,10 @@ import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/home/view/widgets/schedule_preferences_button.dart';
 import 'package:plan_sync/features/home/view/widgets/date_widget.dart';
 import 'package:plan_sync/features/home/view/widgets/hud/top_notice_hud.dart';
+import 'package:plan_sync/features/home/view/today_view.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:provider/provider.dart';
-import 'package:plan_sync/features/schedule/view/widgets/time_table.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -127,7 +127,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   const TopNoticeHud(),
                   const DateWidget(),
                   const SizedBox(height: 16),
-                  const TimeTableWidget()
+                  const TodayView(),
                 ],
               ),
               const SizedBox(height: 60)
