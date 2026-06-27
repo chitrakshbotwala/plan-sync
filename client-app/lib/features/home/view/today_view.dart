@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:plan_sync/core/util/enums.dart';
 import 'package:plan_sync/core/util/extensions.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
@@ -301,6 +302,29 @@ class _TodayViewState extends State<TodayView> {
     }
 
     if (!vm.hasData) {
+      if (vm.errorMessage != null) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Time Sheet',
+              style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 24),
+            ),
+            const SizedBox(height: 32),
+            Center(
+              child: Icon(Icons.error, color: colorScheme.error, size: 40),
+            ),
+            const SizedBox(height: 16),
+            Flexible(child: MarkdownBody(data: '```${vm.errorMessage}```')),
+            const SizedBox(height: 16),
+            Text(
+              'A status report has been sent, this issue will be looked into.',
+              style: TextStyle(color: colorScheme.error),
+            ),
+          ],
+        );
+      }
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -313,6 +337,39 @@ class _TodayViewState extends State<TodayView> {
             ),
           ],
         ),
+      );
+    }
+
+    if (vm.timetable!.meta.isTimetableUpdating ?? false) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            'Time Sheet',
+            style: TextStyle(color: colorScheme.onSurfaceVariant, fontSize: 24),
+          ),
+          const SizedBox(height: 32),
+          Center(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.center,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.settings_outlined, color: colorScheme.secondary, size: 40),
+                const SizedBox(height: 16),
+                Text(
+                  "We're working on this timetable,",
+                  style: TextStyle(color: colorScheme.onSurface),
+                ),
+                Text(
+                  'Check back in soon!',
+                  style: TextStyle(color: colorScheme.onSurface),
+                ),
+              ],
+            ),
+          ),
+        ],
       );
     }
 

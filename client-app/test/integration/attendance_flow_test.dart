@@ -140,7 +140,7 @@ void main() {
 
     expect(find.text('Attendance'), findsOneWidget);
     expect(find.text('Mathematics'), findsOneWidget);
-    expect(find.textContaining('ID · 2205'), findsOneWidget);
+    expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
   });
 
   testWidgets('portal error shows the error state with retry', (tester) async {

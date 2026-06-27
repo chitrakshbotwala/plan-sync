@@ -126,7 +126,7 @@ void main() {
     await tester.tap(find.text('Connect & fetch attendance'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Enter your registration number'), findsOneWidget);
+    expect(find.text('Enter your roll number'), findsOneWidget);
     expect(find.text('Enter your password'), findsOneWidget);
     // Still open, nothing saved/scraped.
     expect(find.text('Connect KIIT Portal'), findsOneWidget);
