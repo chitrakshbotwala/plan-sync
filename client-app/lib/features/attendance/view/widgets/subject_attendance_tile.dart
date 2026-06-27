@@ -14,12 +14,14 @@ class SubjectAttendanceTile extends StatelessWidget {
     final color = attendanceColorForPercentage(record.percentage, colorScheme);
 
     return Card(
-      elevation: 1.5,
+      elevation: 2.0,
       color: colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(8),
         side: BorderSide(
-            color: colorScheme.onSurfaceVariant.withOpacity(0.32)),
+          strokeAlign: 2.0,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 16),
@@ -57,7 +59,7 @@ class SubjectAttendanceTile extends StatelessWidget {
                 value: (record.percentage / 100).clamp(0.0, 1.0),
                 minHeight: 7,
                 backgroundColor:
-                    colorScheme.onSurfaceVariant.withOpacity(0.12),
+                    colorScheme.onSurfaceVariant.withValues(alpha: 0.12),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
@@ -66,7 +68,7 @@ class SubjectAttendanceTile extends StatelessWidget {
               '${record.present}/${record.totalDays} classes'
               '${record.canSkip > 0 ? '  ·  can skip ${record.canSkip}' : ''}',
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.65),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.65),
                 fontSize: 11,
               ),
             ),
