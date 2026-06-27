@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/kiit_attendance_scraper.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
@@ -24,20 +25,28 @@ enum AttendanceStatus {
 class AttendanceViewModel extends ChangeNotifier {
   AttendanceViewModel({
     required AttendanceCredentialsRepository credentialsRepository,
+    required CacheService cache,
     KiitAttendanceScraper Function()? scraperFactory,
   })  : _credentials = credentialsRepository,
+        _cache = cache,
         _scraperFactory = scraperFactory ?? KiitAttendanceScraper.new;
 
   final AttendanceCredentialsRepository _credentials;
+  final CacheService _cache;
 
   /// Builds the scraper used by [refresh]. Injectable so tests can supply a
   /// fake that returns canned results instead of launching a headless WebView.
   final KiitAttendanceScraper Function() _scraperFactory;
 
+  static const _cacheTtl = Duration(hours: 6);
+
   AttendanceStatus status = AttendanceStatus.needsCredentials;
   AttendanceResult? result;
   ScrapeErrorKind? errorKind;
   String? errorMessage;
+
+  /// True while a background refresh is running (data already exists on screen).
+  bool isRefreshing = false;
 
   /// Live progress lines from the scrape, newest last.
   final List<String> logs = [];
@@ -56,15 +65,38 @@ class AttendanceViewModel extends ChangeNotifier {
   bool get selectionDirty =>
       academicYear != _appliedYear || session != _appliedSession;
 
-  bool _fetchedOnce = false;
+  String _cacheKey(String regNo, String year, String sess) =>
+      'attendance/$regNo/$year/$sess';
 
-  /// Reads credentials from storage and sets the initial status.
+  /// Reads credentials from storage and pre-populates [result] from Hive so the
+  /// Attendance tab renders cached data immediately without any loading screen.
   /// Call once at app startup (from [AppInitializer]).
   Future<void> initialize() async {
     await _credentials.initialize();
-    status = _credentials.hasCredentials
-        ? AttendanceStatus.idle
-        : AttendanceStatus.needsCredentials;
+
+    if (!_credentials.hasCredentials) {
+      status = AttendanceStatus.needsCredentials;
+      notifyListeners();
+      return;
+    }
+
+    // Pre-load from cache so result is non-null before the tab first renders.
+    final creds = await _credentials.read();
+    if (creds != null) {
+      final key = _cacheKey(creds.$1, academicYear, session);
+      final cached = await _cache.get<AttendanceResult>(
+        key,
+        fromJson: AttendanceResult.fromJson,
+      );
+      if (cached != null) {
+        result = cached;
+        _appliedYear = cached.academicYear;
+        _appliedSession = cached.session;
+      }
+    }
+
+    status =
+        result != null ? AttendanceStatus.success : AttendanceStatus.idle;
     notifyListeners();
   }
 
@@ -104,19 +136,35 @@ class AttendanceViewModel extends ChangeNotifier {
 
   // --- actions --------------------------------------------------------------
 
-  /// Called when the Attendance tab is opened. Fetches once if we have
-  /// credentials and haven't fetched yet this session.
+  /// Called each time the Attendance tab is opened.
+  ///
+  /// If [result] is already populated (from cache or a prior scrape):
+  ///   - fresh data  → no-op, keep showing it
+  ///   - stale data  → silent background refresh ([isRefreshing] = true),
+  ///                   the existing result stays visible
+  /// If there is no [result] yet (first-ever use), a full scrape is started
+  /// and the loading screen is shown.
   Future<void> ensureLoaded() async {
     if (!hasCredentials) {
       _set(AttendanceStatus.needsCredentials);
       return;
     }
-    if (_fetchedOnce || status == AttendanceStatus.loading) return;
+    if (status == AttendanceStatus.loading || isRefreshing) return;
+
+    if (result != null) {
+      // Data is already on screen. Silently refresh only when stale.
+      if (DateTime.now().difference(result!.fetchedAt) >= _cacheTtl) {
+        await refresh(); // refresh() sees result != null → uses isRefreshing
+      }
+      return;
+    }
+
+    // No data yet (first-ever use) — full scrape with loading screen.
     await refresh();
   }
 
   Future<void> refresh() async {
-    if (status == AttendanceStatus.loading) return;
+    if (status == AttendanceStatus.loading || isRefreshing) return;
 
     final creds = await _credentials.read();
     if (creds == null) {
@@ -128,7 +176,15 @@ class AttendanceViewModel extends ChangeNotifier {
     currentStep = 'Starting…';
     errorKind = null;
     errorMessage = null;
-    _set(AttendanceStatus.loading);
+
+    // If data is already on screen, refresh silently (no loading screen).
+    final hasData = result != null;
+    if (hasData) {
+      isRefreshing = true;
+      notifyListeners();
+    } else {
+      _set(AttendanceStatus.loading);
+    }
 
     final scraper = _scraperFactory();
     try {
@@ -139,10 +195,17 @@ class AttendanceViewModel extends ChangeNotifier {
         session: session,
         onLog: pushLog,
       );
-      _fetchedOnce = true;
       result = fetched;
       _appliedYear = academicYear;
       _appliedSession = session;
+
+      await _cache.set<AttendanceResult>(
+        _cacheKey(creds.$1, fetched.academicYear, fetched.session),
+        fetched,
+        toJson: (r) => r.toJson(),
+      );
+
+      isRefreshing = false;
       _set(AttendanceStatus.success);
     } on ScrapeException catch (e) {
       // Bad credentials are no longer useful — clear them so the user is
@@ -152,12 +215,14 @@ class AttendanceViewModel extends ChangeNotifier {
       }
       errorKind = e.kind;
       errorMessage = e.message;
+      isRefreshing = false;
       _set(e.kind == ScrapeErrorKind.invalidCredentials
           ? AttendanceStatus.needsCredentials
           : AttendanceStatus.error);
     } catch (e) {
       errorKind = ScrapeErrorKind.unknown;
       errorMessage = e.toString();
+      isRefreshing = false;
       _set(AttendanceStatus.error);
     }
   }
@@ -171,9 +236,33 @@ class AttendanceViewModel extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Re-fetch for the currently-picked year/session, only if it changed.
+  /// Load the currently-picked year/session, checking cache first before
+  /// falling back to a full scrape. Stale cache is shown immediately while a
+  /// background refresh runs.
   Future<void> applySelection() async {
     if (!selectionDirty) return;
+
+    final creds = await _credentials.read();
+    if (creds != null) {
+      final key = _cacheKey(creds.$1, academicYear, session);
+      final cached = await _cache.get<AttendanceResult>(
+        key,
+        fromJson: AttendanceResult.fromJson,
+      );
+      if (cached != null) {
+        // Show whatever we have from cache immediately.
+        result = cached;
+        _appliedYear = academicYear;
+        _appliedSession = session;
+        _set(AttendanceStatus.success);
+
+        if (DateTime.now().difference(cached.fetchedAt) < _cacheTtl) {
+          return; // Fresh — no scrape needed.
+        }
+        // Stale — fall through; refresh() will use isRefreshing (data is visible).
+      }
+    }
+
     await refresh();
   }
 
@@ -186,14 +275,12 @@ class AttendanceViewModel extends ChangeNotifier {
       registrationNumber: registrationNumber,
       password: password,
     );
-    _fetchedOnce = false;
     await refresh();
   }
 
   Future<void> disconnect() async {
     await _credentials.clear();
     result = null;
-    _fetchedOnce = false;
     errorKind = null;
     errorMessage = null;
     _set(AttendanceStatus.needsCredentials);

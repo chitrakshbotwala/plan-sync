@@ -176,6 +176,7 @@ class AppProvider extends StatelessWidget {
           create: (context) => AttendanceViewModel(
             credentialsRepository:
                 context.read<AttendanceCredentialsRepository>(),
+            cache: context.read<CacheService>(),
           ),
         ),
       ],
