@@ -4,9 +4,12 @@ import 'package:plan_sync/core/services/kiit_attendance_scraper.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/widgets/bottom-sheets/kiit_credentials_sheet.dart';
 import 'package:provider/provider.dart';
+
+import '../helpers/fake_cache_service.dart';
 
 class _FakeCredentials implements AttendanceCredentialsRepository {
   _FakeCredentials({bool hasCredentials = false, String? registrationNumber})
@@ -74,7 +77,10 @@ void main() {
   Future<void> openSheet(WidgetTester tester) async {
     final vm = AttendanceViewModel(
       credentialsRepository: creds,
-      scraperFactory: () => scraper,
+      repository: AttendanceRepositoryImpl(
+        cache: FakeCacheService(),
+        scraperFactory: () => scraper,
+      ),
     );
     await tester.pumpWidget(
       ChangeNotifierProvider<AttendanceViewModel>.value(
@@ -123,7 +129,7 @@ void main() {
     await tester.tap(find.text('Connect & fetch attendance'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Enter your registration number'), findsOneWidget);
+    expect(find.text('Enter your roll number'), findsOneWidget);
     expect(find.text('Enter your password'), findsOneWidget);
     // Still open, nothing saved/scraped.
     expect(find.text('Connect KIIT Portal'), findsOneWidget);
