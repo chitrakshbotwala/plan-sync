@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:plan_sync/core/util/enums.dart';
+import 'package:plan_sync/features/home/view/widgets/holiday_hero_card.dart';
 import 'package:plan_sync/features/home/view/widgets/today_class_timeline.dart';
 import 'package:plan_sync/features/home/view/widgets/today_hero_card.dart';
 import 'package:plan_sync/features/home/viewmodel/today_view_model.dart';
@@ -216,13 +217,19 @@ class TodayView extends StatelessWidget {
 
     final board = vm.board;
     final timetable = vm.timetable!;
+    final holiday = vm.dayHoliday;
 
     if (board.entries.isEmpty) {
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _headingBlock(context, vm.dayLabel, timetable, colorScheme),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
+          if (holiday != null) ...[
+            HolidayHeroCard(holiday: holiday),
+            const SizedBox(height: 14),
+          ],
+          const SizedBox(height: 8),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -253,6 +260,10 @@ class TodayView extends StatelessWidget {
       children: [
         _headingBlock(context, vm.dayLabel, timetable, colorScheme),
         const SizedBox(height: 16),
+        if (holiday != null) ...[
+          HolidayHeroCard(holiday: holiday),
+          const SizedBox(height: 14),
+        ],
         if (board.current != null) ...[
           TodayHeroCard(
             entry: board.current!,

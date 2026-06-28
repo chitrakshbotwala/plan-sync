@@ -323,6 +323,7 @@ final _router = GoRouter(
                       schedule: ctx.read<ScheduleViewModel>(),
                       filter: ctx.read<FilterViewModel>(),
                       electives: ctx.read<ElectivesViewModel>(),
+                      holidays: ctx.read<HolidaysRepository>(),
                     ),
                   ),
                 ],

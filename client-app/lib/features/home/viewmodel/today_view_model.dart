@@ -5,6 +5,8 @@ import 'package:plan_sync/core/util/enums.dart';
 import 'package:plan_sync/core/util/extensions.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
 import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/features/holidays/model/holiday.dart';
+import 'package:plan_sync/features/holidays/repository/holidays_repository.dart';
 import 'package:plan_sync/features/home/today_schedule.dart';
 import 'package:plan_sync/features/schedule/model/timetable.dart';
 import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
@@ -40,21 +42,79 @@ class TodayViewModel extends ChangeNotifier {
     required ScheduleViewModel schedule,
     required FilterViewModel filter,
     required ElectivesViewModel electives,
+    required HolidaysRepository holidays,
   })  : _schedule = schedule,
         _filter = filter,
-        _electives = electives {
+        _electives = electives,
+        _holidaysRepo = holidays {
     _schedule.addListener(_onSourceChanged);
     _filter.addListener(_onSourceChanged);
     _electives.addListener(_onSourceChanged);
+    _filter.addListener(_loadHolidays);
+    _loadHolidays();
     _ticker = Timer.periodic(const Duration(minutes: 1), (_) => notifyListeners());
   }
 
   final ScheduleViewModel _schedule;
   final FilterViewModel _filter;
   final ElectivesViewModel _electives;
+  final HolidaysRepository _holidaysRepo;
   Timer? _ticker;
 
   void _onSourceChanged() => notifyListeners();
+
+  // ── holidays ──────────────────────────────────────────────────────────────
+
+  StreamSubscription<List<Holiday>>? _holidaySub;
+  String? _holidayYear;
+  List<Holiday> _holidays = const [];
+
+  /// Subscribes to the active year's holidays so we can surface whether the
+  /// selected day is a holiday. Holiday info is supplementary here — any error
+  /// is swallowed and simply leaves the list empty (schedule must never block).
+  void _loadHolidays() {
+    final year = _filter.activeYear;
+    if (year == _holidayYear) return;
+    _holidayYear = year;
+    _holidaySub?.cancel();
+
+    if (year == null) {
+      _holidays = const [];
+      notifyListeners();
+      return;
+    }
+
+    _holidaySub = _holidaysRepo.getHolidays(year: year).listen(
+      (data) {
+        _holidays = data;
+        notifyListeners();
+      },
+      onError: (Object _) {
+        _holidays = const [];
+        notifyListeners();
+      },
+    );
+  }
+
+  /// The calendar date of the selected weekday within the current week, mapped
+  /// the same way the date selector lays out its row (most recent Sunday +
+  /// weekday index). Lets holidays resolve for any day the user browses, not
+  /// just today.
+  DateTime get _selectedDate {
+    final now = DateTime.now();
+    final sunday = DateTime(now.year, now.month, now.day - now.weekday % 7);
+    return sunday.add(Duration(days: _filter.weekday.weekdayIndex));
+  }
+
+  /// The holiday covering the selected day, or null. Holidays are date-based,
+  /// so we resolve them against [_selectedDate] rather than the weekday key.
+  Holiday? get dayHoliday {
+    final date = _selectedDate;
+    for (final h in _holidays) {
+      if (h.isOngoing(date)) return h;
+    }
+    return null;
+  }
 
   // ── status ──────────────────────────────────────────────────────────────
 
@@ -105,9 +165,11 @@ class TodayViewModel extends ChangeNotifier {
   @override
   void dispose() {
     _ticker?.cancel();
+    _holidaySub?.cancel();
     _schedule.removeListener(_onSourceChanged);
     _filter.removeListener(_onSourceChanged);
     _electives.removeListener(_onSourceChanged);
+    _filter.removeListener(_loadHolidays);
     super.dispose();
   }
 }
