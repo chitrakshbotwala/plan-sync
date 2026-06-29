@@ -492,11 +492,44 @@ const String _agentTemplate = r'''
     await sleep(2600); // SAP server round-trip
     return true;
   }
+  // Build a column-name -> index map from the table header. SAP lets a user
+  // reorder columns and persists that view across logins, so reading columns by
+  // a fixed index would break for them. Header and data rows are filtered
+  // identically (drop the blank selection column) so the indices line up.
+  // Returns null if no header is found (caller falls back to the default order).
+  function buildColMap() {
+    var rows = document.querySelectorAll('[role=row]');
+    for (var i = 0; i < rows.length; i++) {
+      var hc = rows[i].querySelectorAll('[role=columnheader]');
+      if (hc.length < 4) continue;
+      var headers = [];
+      for (var h = 0; h < hc.length; h++) {
+        var ht = (hc[h].innerText || hc[h].textContent || '').replace(/\s+/g, ' ').trim();
+        if (ht && !/select a row|spacebar/i.test(ht)) headers.push(ht.toLowerCase());
+      }
+      var map = { subject: null, present: null, total: null, percentage: null, facultyId: null };
+      for (var k = 0; k < headers.length; k++) {
+        var t = headers[k];
+        // Test percentage before days so "Total Percentage" doesn't grab the
+        // "Total No. of Days" slot.
+        if (map.subject == null && /subject/.test(t)) map.subject = k;
+        else if (map.percentage == null && /percent|%/.test(t)) map.percentage = k;
+        else if (map.present == null && /present/.test(t)) map.present = k;
+        else if (map.total == null && /day/.test(t)) map.total = k;
+        else if (map.facultyId == null && /faculty.*id|fac.*id/.test(t)) map.facultyId = k;
+      }
+      if (map.subject != null && map.present != null && map.total != null && map.percentage != null) {
+        return map;
+      }
+    }
+    return null;
+  }
   function scrape() {
     var name = '';
     var bt = document.body ? (document.body.innerText || '').replace(/\s+/g, ' ') : '';
     var m = bt.match(/Student Name\s*:\s*([A-Za-z .]+?)\s+Reg/i);
     if (m) name = m[1].trim();
+    var colMap = buildColMap();
     var records = [];
     var rows = document.querySelectorAll('[role=row]');
     for (var i = 0; i < rows.length; i++) {
@@ -506,19 +539,26 @@ const String _agentTemplate = r'''
         var x = (gc[j].innerText || '').trim();
         if (x && !/select a row|spacebar/i.test(x)) cells.push(x);
       }
-      // Columns: Subject, No.of Absent, No.of Present, Total No. of Days, Total %
-      if (cells.length >= 5) {
-        var subj = cells[0];
-        var present = parseFloat(cells[2]);
-        var total = parseFloat(cells[3]);
-        var pct = parseFloat(cells[4]);
-        if (subj && /[A-Za-z]/.test(subj) && !isNaN(present) && !isNaN(total) && !isNaN(pct)) {
-          // Column order on the portal: Subject, No.of Absent, No.of Present,
-          // Total No. of Days, Total %, Faculty ID, Faculty Name, No. of Excuses
-          // — so cells[5] is the faculty id. Falls back to '' (dedupe by subject
-          // only) if the column is missing.
-          records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct, facultyId: cells.length > 5 ? cells[5] : '' });
-        }
+      if (cells.length < 5) continue;
+      var subj, present, total, pct, facId;
+      if (colMap) {
+        // Header-driven: robust to user-reordered columns.
+        subj = cells[colMap.subject];
+        present = parseFloat(cells[colMap.present]);
+        total = parseFloat(cells[colMap.total]);
+        pct = parseFloat(cells[colMap.percentage]);
+        facId = colMap.facultyId != null ? cells[colMap.facultyId] : '';
+      } else {
+        // Fallback default order: Subject, No.of Absent, No.of Present,
+        // Total No. of Days, Total %, Faculty ID, Faculty Name, No. of Excuses.
+        subj = cells[0];
+        present = parseFloat(cells[2]);
+        total = parseFloat(cells[3]);
+        pct = parseFloat(cells[4]);
+        facId = cells.length > 5 ? cells[5] : '';
+      }
+      if (subj && /[A-Za-z]/.test(subj) && !isNaN(present) && !isNaN(total) && !isNaN(pct)) {
+        records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct, facultyId: facId || '' });
       }
     }
     return { name: name, records: records };
