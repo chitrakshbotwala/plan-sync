@@ -20,7 +20,10 @@ class OverallAttendanceCard extends StatelessWidget {
       color: colorScheme.surfaceContainerHighest,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colorScheme.onSurfaceVariant.withOpacity(0.4)),
+        side: BorderSide(
+          strokeAlign: 2.0,
+          color: colorScheme.onSurfaceVariant,
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
@@ -30,7 +33,7 @@ class OverallAttendanceCard extends StatelessWidget {
             Text(
               'Overall Attendance',
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.8),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.8),
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
               ),
@@ -64,7 +67,7 @@ class OverallAttendanceCard extends StatelessWidget {
                 value: (percentage / 100).clamp(0.0, 1.0),
                 minHeight: 8,
                 backgroundColor:
-                    colorScheme.onSurfaceVariant.withOpacity(0.15),
+                    colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
@@ -72,7 +75,7 @@ class OverallAttendanceCard extends StatelessWidget {
             Text(
               '${result.totalPresent}/${result.totalClasses} classes attended',
               style: TextStyle(
-                color: colorScheme.onSurfaceVariant.withOpacity(0.7),
+                color: colorScheme.onSurfaceVariant.withValues(alpha: 0.7),
                 fontSize: 12,
               ),
             ),
@@ -94,7 +97,7 @@ class _Pill extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.14),
+        color: color.withValues(alpha: 0.14),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

@@ -148,7 +148,7 @@ void main() {
     await selectScheduleFilters(tester);
     await tapDone(tester);
 
-    // ScheduleViewModel.onError -> TimeTableWidget error branch.
+    // ScheduleViewModel.onError -> TodayView error branch.
     expect(find.byIcon(Icons.error), findsOneWidget);
     expect(
       find.text(
@@ -247,7 +247,7 @@ void main() {
     await tapDone(tester);
     expect(find.text('Monday', skipOffstage: false), findsOneWidget);
 
-    await tester.tap(find.text('More Info'));
+    await tester.tap(find.text('Info'));
     await tester.pumpAndSettle();
 
     // Details live in RichText TextSpans; the plain-text title confirms the

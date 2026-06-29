@@ -3,11 +3,13 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/settings/view/settings_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../helpers/fake_cache_service.dart';
 import '../helpers/fake_network_images.dart';
 import '../main.dart';
 
@@ -66,7 +68,10 @@ void main() {
     await tester.pumpWidget(
       ChangeNotifierProvider<AttendanceViewModel>(
         create: (_) =>
-            AttendanceViewModel(credentialsRepository: creds),
+            AttendanceViewModel(
+              credentialsRepository: creds,
+              repository: AttendanceRepositoryImpl(cache: FakeCacheService()),
+            ),
         child: testApp(child: const SettingsPage()),
       ),
     );

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_error_state.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_loading_state.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_needs_credentials.dart';
+import 'package:plan_sync/features/attendance/view/widgets/attendance_preference_dialog.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_success_state.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:provider/provider.dart';
@@ -29,7 +30,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor:
-            colorScheme.surfaceContainerHighest.withOpacity(0.98),
+            colorScheme.surfaceContainerHighest.withValues(alpha: 0.98),
         elevation: 0.0,
         toolbarHeight: 80,
         shape: const RoundedRectangleBorder(
@@ -51,22 +52,27 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 12, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: colorScheme.primary.withOpacity(0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'ID · $id',
-                      style: TextStyle(
-                        color: colorScheme.onSurface,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                  // When data is loaded show the period selector; otherwise
+                  // fall back to the plain ID badge so there's always context.
+                  if (viewModel.result != null)
+                    AttendancePreferenceButton(viewModel: viewModel)
+                  else
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: colorScheme.primary.withValues(alpha: 0.18),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'ID · $id',
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
-                  ),
                   IconButton(
                     tooltip: 'Log out of KIIT portal',
                     onPressed: () => _logoutSap(context, viewModel),
@@ -103,7 +109,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
           'Your saved registration number and password will be removed '
           'from this device.',
           style: TextStyle(
-              color: colorScheme.onSurface.withOpacity(0.7)),
+              color: colorScheme.onSurface.withValues(alpha: 0.7)),
         ),
         actions: [
           TextButton(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_actions_row.dart';
-import 'package:plan_sync/features/attendance/view/widgets/attendance_filter_bar.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_inline_notice.dart';
 import 'package:plan_sync/features/attendance/view/widgets/overall_attendance_card.dart';
 import 'package:plan_sync/features/attendance/view/widgets/subject_attendance_tile.dart';
@@ -9,6 +8,27 @@ import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.da
 class AttendanceSuccessState extends StatelessWidget {
   const AttendanceSuccessState({super.key, required this.viewModel});
   final AttendanceViewModel viewModel;
+
+  String _formatFetchedAt(DateTime dt) {
+    final now = DateTime.now();
+    final hour = dt.hour > 12
+        ? dt.hour - 12
+        : (dt.hour == 0 ? 12 : dt.hour);
+    final minute = dt.minute.toString().padLeft(2, '0');
+    final period = dt.hour >= 12 ? 'PM' : 'AM';
+    final time = '$hour:$minute $period';
+
+    final sameDay = now.year == dt.year &&
+        now.month == dt.month &&
+        now.day == dt.day;
+    if (sameDay) return 'Last updated at $time';
+
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return 'Last updated ${dt.day} ${months[dt.month - 1]}, $time';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,26 +41,20 @@ class AttendanceSuccessState extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(
           parent: BouncingScrollPhysics(),
         ),
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 80),
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 120),
         children: [
-          // Always enabled: this view only renders for idle/success; a scrape
-          // swaps the whole screen for AttendanceLoadingState, so the Load
-          // button is already gone while fetching.
-          AttendanceFilterBar(viewModel: viewModel, enabled: true),
-          const SizedBox(height: 16),
           OverallAttendanceCard(result: result),
           const SizedBox(height: 20),
+          AttendanceActionsRow(viewModel: viewModel),
+          const SizedBox(height: 4),
           Text(
-            'Attendance',
+            _formatFetchedAt(result.fetchedAt),
             style: TextStyle(
-              color: colorScheme.onSurfaceVariant,
-              fontSize: 22,
-              fontWeight: FontWeight.w600,
+              color: colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+              fontSize: 11,
             ),
           ),
-          const SizedBox(height: 4),
-          const AttendanceActionsRow(),
-          const SizedBox(height: 8),
+          const SizedBox(height: 10),
           if (result.isEmpty)
             AttendanceInlineNotice(
               icon: Icons.inbox_outlined,

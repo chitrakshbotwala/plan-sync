@@ -14,6 +14,8 @@ import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository_impl.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/view/attendance_screen.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
@@ -33,6 +35,7 @@ import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository_impl.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
+import 'package:plan_sync/features/home/viewmodel/today_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/remote_config_service_impl.dart';
@@ -172,10 +175,15 @@ class AppProvider extends StatelessWidget {
         Provider<AttendanceCredentialsRepository>(
           create: (_) => AttendanceCredentialsRepositoryImpl(),
         ),
+        Provider<AttendanceRepository>(
+          create: (context) =>
+              AttendanceRepositoryImpl(cache: context.read<CacheService>()),
+        ),
         ChangeNotifierProvider<AttendanceViewModel>(
           create: (context) => AttendanceViewModel(
             credentialsRepository:
                 context.read<AttendanceCredentialsRepository>(),
+            repository: context.read<AttendanceRepository>(),
           ),
         ),
       ],
@@ -298,6 +306,13 @@ final _router = GoRouter(
                       appPreferences: ctx.read<AppPreferencesRepository>(),
                       remoteConfig: ctx.read<RemoteConfigService>(),
                       notifications: ctx.read<NotificationService>(),
+                    ),
+                  ),
+                  ChangeNotifierProvider<TodayViewModel>(
+                    create: (ctx) => TodayViewModel(
+                      schedule: ctx.read<ScheduleViewModel>(),
+                      filter: ctx.read<FilterViewModel>(),
+                      electives: ctx.read<ElectivesViewModel>(),
                     ),
                   ),
                 ],

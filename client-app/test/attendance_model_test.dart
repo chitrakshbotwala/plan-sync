@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/core/services/kiit_attendance_scraper.dart';
 import 'package:plan_sync/core/util/attendance_status.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 
 void main() {
@@ -183,7 +183,7 @@ void main() {
         () async {
       final vm = AttendanceViewModel(
         credentialsRepository: _FakeCredsRepo('22051234'),
-        scraperFactory: () => _FakeScraper(),
+        repository: _FakeAttendanceRepo(),
       );
 
       // First fetch establishes the applied year/session baseline.
@@ -207,15 +207,26 @@ void main() {
   });
 }
 
-/// Returns a canned result without touching the network.
-class _FakeScraper extends KiitAttendanceScraper {
+/// Returns a canned result without touching the network or cache.
+class _FakeAttendanceRepo implements AttendanceRepository {
   @override
-  Future<AttendanceResult> scrape({
-    required String username,
+  Future<AttendanceResult?> cached({
+    required String registrationNumber,
+    required String academicYear,
+    required String session,
+  }) async =>
+      null;
+
+  @override
+  bool isStale(AttendanceResult result) => true;
+
+  @override
+  Future<AttendanceResult> fetch({
+    required String registrationNumber,
     required String password,
     required String academicYear,
     required String session,
-    void Function(String message)? onLog,
+    required void Function(String step) onLog,
   }) async {
     return AttendanceResult(
       records: const [
