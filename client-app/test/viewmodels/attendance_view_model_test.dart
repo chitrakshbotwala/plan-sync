@@ -2,7 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
-import '../helpers/fake_cache_service.dart';
+import '../helpers/fake_attendance_repository.dart';
 
 class FakeAttendanceCredentialsRepository
     implements AttendanceCredentialsRepository {
@@ -49,14 +49,28 @@ class FakeAttendanceCredentialsRepository
 AttendanceViewModel _makeVm({
   bool hasCredentials = false,
   String? registrationNumber,
-  FakeCacheService? cache,
+  FakeAttendanceRepository? repository,
 }) =>
     AttendanceViewModel(
       credentialsRepository: FakeAttendanceCredentialsRepository(
         hasCredentials: hasCredentials,
         registrationNumber: registrationNumber,
       ),
-      cache: cache ?? FakeCacheService(),
+      repository: repository ?? FakeAttendanceRepository(),
+    );
+
+AttendanceResult _result({
+  required String academicYear,
+  required String session,
+  List<AttendanceRecord> records = const [],
+  Duration age = const Duration(hours: 1),
+}) =>
+    AttendanceResult(
+      records: records,
+      student: null,
+      academicYear: academicYear,
+      session: session,
+      fetchedAt: DateTime.now().subtract(age),
     );
 
 void main() {
@@ -157,14 +171,14 @@ void main() {
   group('initialize', () {
     test('pre-loads result from cache so tab renders without loading screen',
         () async {
-      final cache = FakeCacheService();
+      final repo = FakeAttendanceRepository();
       final vm = _makeVm(
         hasCredentials: true,
         registrationNumber: '22001234',
-        cache: cache,
+        repository: repo,
       );
 
-      // Seed cache before initialize() runs (simulates a prior session).
+      // Seed the repository before initialize() (simulates a prior session).
       final record = AttendanceRecord(
         subject: 'Math',
         absent: 1,
@@ -177,17 +191,8 @@ void main() {
       );
       final year = AttendanceViewModel.currentAcademicYear();
       final sess = AttendanceViewModel.currentSession();
-      await cache.set<AttendanceResult>(
-        'attendance/22001234/$year/$sess',
-        AttendanceResult(
-          records: [record],
-          student: null,
-          academicYear: year,
-          session: sess,
-          fetchedAt: DateTime.now().subtract(const Duration(hours: 1)),
-        ),
-        toJson: (r) => r.toJson(),
-      );
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess, records: [record]));
 
       await vm.initialize();
 
@@ -204,62 +209,50 @@ void main() {
     });
 
     test('is a no-op when fresh data is already on screen', () async {
-      final cache = FakeCacheService();
+      final repo = FakeAttendanceRepository();
       final vm = _makeVm(
         hasCredentials: true,
         registrationNumber: '22001234',
-        cache: cache,
+        repository: repo,
       );
       final year = AttendanceViewModel.currentAcademicYear();
       final sess = AttendanceViewModel.currentSession();
-      await cache.set<AttendanceResult>(
-        'attendance/22001234/$year/$sess',
-        AttendanceResult(
-          records: const [],
-          student: null,
-          academicYear: year,
-          session: sess,
-          fetchedAt: DateTime.now().subtract(const Duration(hours: 1)),
-        ),
-        toJson: (r) => r.toJson(),
-      );
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess)); // 1h old → fresh
       await vm.initialize(); // pre-loads cache → status = success
 
       await vm.ensureLoaded(); // should be a no-op
 
       expect(vm.status, AttendanceStatus.success);
       expect(vm.isRefreshing, isFalse);
+      expect(repo.fetchCount, 0); // no scrape triggered
     });
 
     test('starts background refresh when stale data is on screen', () async {
-      final cache = FakeCacheService();
+      final repo = FakeAttendanceRepository();
       final vm = _makeVm(
         hasCredentials: true,
         registrationNumber: '22001234',
-        cache: cache,
+        repository: repo,
       );
       final year = AttendanceViewModel.currentAcademicYear();
       final sess = AttendanceViewModel.currentSession();
-      await cache.set<AttendanceResult>(
-        'attendance/22001234/$year/$sess',
-        AttendanceResult(
-          records: const [],
-          student: null,
-          academicYear: year,
-          session: sess,
-          fetchedAt: DateTime.now().subtract(const Duration(hours: 7)),
-        ),
-        toJson: (r) => r.toJson(),
+      repo.seed(
+        '22001234',
+        year,
+        sess,
+        _result(academicYear: year, session: sess, age: const Duration(hours: 7)),
       );
-      await vm.initialize(); // pre-loads stale cache → status = success, result != null
+      await vm.initialize(); // pre-loads stale cache → status = success
 
-      // ensureLoaded() detects stale data and calls refresh() which uses
-      // isRefreshing (not loading screen) because result != null.
-      // The default scraperFactory will throw (no WebView in tests), so the
-      // status transitions to error, but the loading SCREEN was never shown.
-      expect(vm.status, AttendanceStatus.success); // still showing before ensureLoaded
+      // ensureLoaded() detects stale data and calls refresh(), which uses
+      // isRefreshing (not the loading screen) because result != null. The fake
+      // fetch throws (unconfigured), so status ends at error — but the
+      // full-screen loading state was never shown.
+      expect(vm.status, AttendanceStatus.success); // before ensureLoaded
       await vm.ensureLoaded();
-      expect(vm.status, isNot(AttendanceStatus.loading)); // never went full-screen loading
+      expect(repo.fetchCount, 1); // a refresh was attempted
+      expect(vm.status, isNot(AttendanceStatus.loading));
     });
   });
 

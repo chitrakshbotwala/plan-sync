@@ -1,9 +1,8 @@
 import 'package:flutter/foundation.dart';
-import 'package:plan_sync/core/cache/cache_service.dart';
-import 'package:plan_sync/core/services/kiit_attendance_scraper.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository.dart';
 
 enum AttendanceStatus {
   /// No portal credentials stored yet.
@@ -25,20 +24,12 @@ enum AttendanceStatus {
 class AttendanceViewModel extends ChangeNotifier {
   AttendanceViewModel({
     required AttendanceCredentialsRepository credentialsRepository,
-    required CacheService cache,
-    KiitAttendanceScraper Function()? scraperFactory,
+    required AttendanceRepository repository,
   })  : _credentials = credentialsRepository,
-        _cache = cache,
-        _scraperFactory = scraperFactory ?? KiitAttendanceScraper.new;
+        _repository = repository;
 
   final AttendanceCredentialsRepository _credentials;
-  final CacheService _cache;
-
-  /// Builds the scraper used by [refresh]. Injectable so tests can supply a
-  /// fake that returns canned results instead of launching a headless WebView.
-  final KiitAttendanceScraper Function() _scraperFactory;
-
-  static const _cacheTtl = Duration(hours: 6);
+  final AttendanceRepository _repository;
 
   AttendanceStatus status = AttendanceStatus.needsCredentials;
   AttendanceResult? result;
@@ -65,9 +56,6 @@ class AttendanceViewModel extends ChangeNotifier {
   bool get selectionDirty =>
       academicYear != _appliedYear || session != _appliedSession;
 
-  String _cacheKey(String regNo, String year, String sess) =>
-      'attendance/$regNo/$year/$sess';
-
   /// Reads credentials from storage and pre-populates [result] from Hive so the
   /// Attendance tab renders cached data immediately without any loading screen.
   /// Call once at app startup (from [AppInitializer]).
@@ -83,10 +71,10 @@ class AttendanceViewModel extends ChangeNotifier {
     // Pre-load from cache so result is non-null before the tab first renders.
     final creds = await _credentials.read();
     if (creds != null) {
-      final key = _cacheKey(creds.$1, academicYear, session);
-      final cached = await _cache.get<AttendanceResult>(
-        key,
-        fromJson: AttendanceResult.fromJson,
+      final cached = await _repository.cached(
+        registrationNumber: creds.$1,
+        academicYear: academicYear,
+        session: session,
       );
       if (cached != null) {
         result = cached;
@@ -153,7 +141,7 @@ class AttendanceViewModel extends ChangeNotifier {
 
     if (result != null) {
       // Data is already on screen. Silently refresh only when stale.
-      if (DateTime.now().difference(result!.fetchedAt) >= _cacheTtl) {
+      if (_repository.isStale(result!)) {
         await refresh(); // refresh() sees result != null → uses isRefreshing
       }
       return;
@@ -186,10 +174,9 @@ class AttendanceViewModel extends ChangeNotifier {
       _set(AttendanceStatus.loading);
     }
 
-    final scraper = _scraperFactory();
     try {
-      final fetched = await scraper.scrape(
-        username: creds.$1,
+      final fetched = await _repository.fetch(
+        registrationNumber: creds.$1,
         password: creds.$2,
         academicYear: academicYear,
         session: session,
@@ -198,12 +185,6 @@ class AttendanceViewModel extends ChangeNotifier {
       result = fetched;
       _appliedYear = academicYear;
       _appliedSession = session;
-
-      await _cache.set<AttendanceResult>(
-        _cacheKey(creds.$1, fetched.academicYear, fetched.session),
-        fetched,
-        toJson: (r) => r.toJson(),
-      );
 
       isRefreshing = false;
       _set(AttendanceStatus.success);
@@ -244,10 +225,10 @@ class AttendanceViewModel extends ChangeNotifier {
 
     final creds = await _credentials.read();
     if (creds != null) {
-      final key = _cacheKey(creds.$1, academicYear, session);
-      final cached = await _cache.get<AttendanceResult>(
-        key,
-        fromJson: AttendanceResult.fromJson,
+      final cached = await _repository.cached(
+        registrationNumber: creds.$1,
+        academicYear: academicYear,
+        session: session,
       );
       if (cached != null) {
         // Show whatever we have from cache immediately.
@@ -256,7 +237,7 @@ class AttendanceViewModel extends ChangeNotifier {
         _appliedSession = session;
         _set(AttendanceStatus.success);
 
-        if (DateTime.now().difference(cached.fetchedAt) < _cacheTtl) {
+        if (!_repository.isStale(cached)) {
           return; // Fresh — no scrape needed.
         }
         // Stale — fall through; refresh() will use isRefreshing (data is visible).

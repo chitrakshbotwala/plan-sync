@@ -4,6 +4,7 @@ import 'package:plan_sync/core/services/kiit_attendance_scraper.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/widgets/bottom-sheets/kiit_credentials_sheet.dart';
 import 'package:provider/provider.dart';
@@ -76,8 +77,10 @@ void main() {
   Future<void> openSheet(WidgetTester tester) async {
     final vm = AttendanceViewModel(
       credentialsRepository: creds,
-      scraperFactory: () => scraper,
-      cache: FakeCacheService(),
+      repository: AttendanceRepositoryImpl(
+        cache: FakeCacheService(),
+        scraperFactory: () => scraper,
+      ),
     );
     await tester.pumpWidget(
       ChangeNotifierProvider<AttendanceViewModel>.value(

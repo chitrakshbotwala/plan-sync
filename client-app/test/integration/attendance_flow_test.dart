@@ -6,6 +6,7 @@ import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
 import 'package:plan_sync/features/attendance/view/attendance_screen.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:provider/provider.dart';
 
@@ -102,8 +103,10 @@ void main() {
   }) async {
     final vm = AttendanceViewModel(
       credentialsRepository: creds,
-      scraperFactory: scraperFactory,
-      cache: FakeCacheService(),
+      repository: AttendanceRepositoryImpl(
+        cache: FakeCacheService(),
+        scraperFactory: scraperFactory,
+      ),
     );
     await tester.pumpWidget(
       MultiProvider(

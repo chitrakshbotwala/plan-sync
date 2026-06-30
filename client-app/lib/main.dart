@@ -14,6 +14,8 @@ import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository_impl.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/view/attendance_screen.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/auth/repository/auth_repository.dart';
@@ -173,11 +175,15 @@ class AppProvider extends StatelessWidget {
         Provider<AttendanceCredentialsRepository>(
           create: (_) => AttendanceCredentialsRepositoryImpl(),
         ),
+        Provider<AttendanceRepository>(
+          create: (context) =>
+              AttendanceRepositoryImpl(cache: context.read<CacheService>()),
+        ),
         ChangeNotifierProvider<AttendanceViewModel>(
           create: (context) => AttendanceViewModel(
             credentialsRepository:
                 context.read<AttendanceCredentialsRepository>(),
-            cache: context.read<CacheService>(),
+            repository: context.read<AttendanceRepository>(),
           ),
         ),
       ],

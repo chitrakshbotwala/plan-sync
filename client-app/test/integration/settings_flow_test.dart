@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository_impl.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/features/settings/view/settings_screen.dart';
 import 'package:provider/provider.dart';
@@ -69,7 +70,7 @@ void main() {
         create: (_) =>
             AttendanceViewModel(
               credentialsRepository: creds,
-              cache: FakeCacheService(),
+              repository: AttendanceRepositoryImpl(cache: FakeCacheService()),
             ),
         child: testApp(child: const SettingsPage()),
       ),
