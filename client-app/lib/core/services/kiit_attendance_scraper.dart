@@ -492,11 +492,44 @@ const String _agentTemplate = r'''
     await sleep(2600); // SAP server round-trip
     return true;
   }
+  // Build a column-name -> index map from the table header. SAP lets a user
+  // reorder columns and persists that view across logins, so reading columns by
+  // a fixed index would break for them. Header and data rows are filtered
+  // identically (drop the blank selection column) so the indices line up.
+  // Returns null if no header is found (caller falls back to the default order).
+  function buildColMap() {
+    var rows = document.querySelectorAll('[role=row]');
+    for (var i = 0; i < rows.length; i++) {
+      var hc = rows[i].querySelectorAll('[role=columnheader]');
+      if (hc.length < 4) continue;
+      var headers = [];
+      for (var h = 0; h < hc.length; h++) {
+        var ht = (hc[h].innerText || hc[h].textContent || '').replace(/\s+/g, ' ').trim();
+        if (ht && !/select a row|spacebar/i.test(ht)) headers.push(ht.toLowerCase());
+      }
+      var map = { subject: null, present: null, total: null, percentage: null, facultyId: null };
+      for (var k = 0; k < headers.length; k++) {
+        var t = headers[k];
+        // Test percentage before days so "Total Percentage" doesn't grab the
+        // "Total No. of Days" slot.
+        if (map.subject == null && /subject/.test(t)) map.subject = k;
+        else if (map.percentage == null && /percent|%/.test(t)) map.percentage = k;
+        else if (map.present == null && /present/.test(t)) map.present = k;
+        else if (map.total == null && /day/.test(t)) map.total = k;
+        else if (map.facultyId == null && /faculty.*id|fac.*id/.test(t)) map.facultyId = k;
+      }
+      if (map.subject != null && map.present != null && map.total != null && map.percentage != null) {
+        return map;
+      }
+    }
+    return null;
+  }
   function scrape() {
     var name = '';
     var bt = document.body ? (document.body.innerText || '').replace(/\s+/g, ' ') : '';
     var m = bt.match(/Student Name\s*:\s*([A-Za-z .]+?)\s+Reg/i);
     if (m) name = m[1].trim();
+    var colMap = buildColMap();
     var records = [];
     var rows = document.querySelectorAll('[role=row]');
     for (var i = 0; i < rows.length; i++) {
@@ -506,15 +539,26 @@ const String _agentTemplate = r'''
         var x = (gc[j].innerText || '').trim();
         if (x && !/select a row|spacebar/i.test(x)) cells.push(x);
       }
-      // Columns: Subject, No.of Absent, No.of Present, Total No. of Days, Total %
-      if (cells.length >= 5) {
-        var subj = cells[0];
-        var present = parseFloat(cells[2]);
-        var total = parseFloat(cells[3]);
-        var pct = parseFloat(cells[4]);
-        if (subj && /[A-Za-z]/.test(subj) && !isNaN(present) && !isNaN(total) && !isNaN(pct)) {
-          records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct });
-        }
+      if (cells.length < 5) continue;
+      var subj, present, total, pct, facId;
+      if (colMap) {
+        // Header-driven: robust to user-reordered columns.
+        subj = cells[colMap.subject];
+        present = parseFloat(cells[colMap.present]);
+        total = parseFloat(cells[colMap.total]);
+        pct = parseFloat(cells[colMap.percentage]);
+        facId = colMap.facultyId != null ? cells[colMap.facultyId] : '';
+      } else {
+        // Fallback default order: Subject, No.of Absent, No.of Present,
+        // Total No. of Days, Total %, Faculty ID, Faculty Name, No. of Excuses.
+        subj = cells[0];
+        present = parseFloat(cells[2]);
+        total = parseFloat(cells[3]);
+        pct = parseFloat(cells[4]);
+        facId = cells.length > 5 ? cells[5] : '';
+      }
+      if (subj && /[A-Za-z]/.test(subj) && !isNaN(present) && !isNaN(total) && !isNaN(pct)) {
+        records.push({ subject: subj, attended: Math.round(present), total: Math.round(total), percentage: pct, facultyId: facId || '' });
       }
     }
     return { name: name, records: records };
@@ -539,6 +583,15 @@ const String _agentTemplate = r'''
   // triggers a server round-trip; programmatic scrollTop alone does not),
   // accumulating UNIQUE rows until nothing new appears — so rows below the fold
   // are captured too.
+  // Tunables. Worst case is roughly MAX_STEPS * SETTLE_MS of scrolling.
+  // SETTLE_MS must be long enough to clear the SAP scroll round-trip (the table
+  // re-renders rows from the server); the loop ends early once STABLE_LIMIT
+  // consecutive steps add nothing, or aria-rowcount is reached. Fixed-delay
+  // polling is used on purpose: the grid updates via cross-origin XHR deltas, so
+  // a MutationObserver would fire mid-delta and settle before all rows arrive.
+  var SCROLL_MAX_STEPS = 80;
+  var SCROLL_SETTLE_MS = 900;
+  var SCROLL_STABLE_LIMIT = 8;
   async function scrapeAll() {
     var seen = {}, out = [], name = '';
     function harvest() {
@@ -546,7 +599,9 @@ const String _agentTemplate = r'''
       if (d.name) name = d.name;
       for (var i = 0; i < d.records.length; i++) {
         var r = d.records[i];
-        var key = (r.subject || '').toLowerCase();
+        // Dedupe on subject + facultyId: a subject split across faculty/sections
+        // can legitimately appear as two rows, so subject alone would drop one.
+        var key = ((r.subject || '') + '|' + (r.facultyId || '')).toLowerCase();
         if (key && !seen[key]) { seen[key] = 1; out.push(r); }
       }
     }
@@ -554,7 +609,7 @@ const String _agentTemplate = r'''
     var expected = grid ? (parseInt(grid.getAttribute('aria-rowcount'), 10) || 0) : 0;
     harvest();
     var last = -1, stable = 0;
-    for (var step = 0; step < 80; step++) {
+    for (var step = 0; step < SCROLL_MAX_STEPS; step++) {
       var rows = document.querySelectorAll('[role=row]');
       var lastRow = rows.length ? rows[rows.length - 1] : null;
       if (lastRow) {
@@ -575,10 +630,10 @@ const String _agentTemplate = r'''
           els[s].dispatchEvent(new Event('scroll', { bubbles: true }));
         } catch (e) {}
       }
-      await sleep(900); // allow the scroll round-trip to re-render rows
+      await sleep(SCROLL_SETTLE_MS); // allow the scroll round-trip to re-render rows
       harvest();
       if (expected > 0 && out.length >= expected - 1) break; // -1: header counted
-      if (out.length === last) { stable++; if (stable >= 8) break; } else { stable = 0; }
+      if (out.length === last) { stable++; if (stable >= SCROLL_STABLE_LIMIT) break; } else { stable = 0; }
       last = out.length;
     }
     return { name: name, records: out };

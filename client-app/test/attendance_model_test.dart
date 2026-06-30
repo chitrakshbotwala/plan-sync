@@ -1,6 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/core/util/attendance_status.dart';
+import 'package:plan_sync/features/attendance/model/attendance_record.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
+import 'package:plan_sync/features/attendance/repository/attendance_repository.dart';
+import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 
 void main() {
   group('AttendanceRecord.fromScrape', () {
@@ -43,6 +46,9 @@ void main() {
   });
 
   group('AttendanceResult derived totals', () {
+    // Deliberately uneven class counts so the mean and the class-weighted
+    // formula give different answers (mean=55, weighted=46.67) — the test then
+    // actually locks in the averaging behaviour instead of passing by luck.
     final result = AttendanceResult.fromScrape(
       {
         'records': [
@@ -55,10 +61,10 @@ void main() {
           },
           {
             'subject': 'B',
-            'absent': '4',
+            'absent': '14',
             'present': '6',
-            'totalDays': '10',
-            'percentage': '60.00',
+            'totalDays': '20',
+            'percentage': '30.00',
           },
         ],
         'student': {'name': 'Test Student', 'rollNo': '111'},
@@ -67,13 +73,11 @@ void main() {
       session: 'Spring',
     );
 
-    test('overall percentage is weighted by total classes, not averaged', () {
-      // (8 + 6) / (10 + 10) = 70%, NOT (80 + 60) / 2 = 70 here, but the
-      // weighting matters for uneven class counts; verify the present/total
-      // formula directly.
+    test('overall percentage is the mean of subject percentages', () {
+      // mean(80, 30) = 55, NOT class-weighted (8 + 6) / (10 + 20) = 46.67.
+      expect(result.overallPercentage, closeTo(55.0, 0.001));
       expect(result.totalPresent, 14);
-      expect(result.totalClasses, 20);
-      expect(result.overallPercentage, closeTo(70.0, 0.001));
+      expect(result.totalClasses, 30);
     });
 
     test('counts subjects below the 75% threshold', () {
@@ -173,4 +177,105 @@ void main() {
       expect(r.isEmpty, isFalse);
     });
   });
+
+  group('AttendanceViewModel selection', () {
+    test('changeSelection marks dirty; applySelection fetches and clears it',
+        () async {
+      final vm = AttendanceViewModel(
+        credentialsRepository: _FakeCredsRepo('22051234'),
+        repository: _FakeAttendanceRepo(),
+      );
+
+      // First fetch establishes the applied year/session baseline.
+      await vm.refresh();
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.selectionDirty, isFalse);
+
+      // Picking a different year marks dirty but must NOT fetch on its own.
+      final picked =
+          vm.academicYear == '2020-2021' ? '2021-2022' : '2020-2021';
+      vm.changeSelection(year: picked);
+      expect(vm.selectionDirty, isTrue);
+      expect(vm.status, AttendanceStatus.success); // unchanged: no fetch yet
+
+      // Applying fetches and clears the dirty flag.
+      await vm.applySelection();
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.academicYear, picked);
+      expect(vm.selectionDirty, isFalse);
+    });
+  });
+}
+
+/// Returns a canned result without touching the network or cache.
+class _FakeAttendanceRepo implements AttendanceRepository {
+  @override
+  Future<AttendanceResult?> cached({
+    required String registrationNumber,
+    required String academicYear,
+    required String session,
+  }) async =>
+      null;
+
+  @override
+  bool isStale(AttendanceResult result) => true;
+
+  @override
+  Future<AttendanceResult> fetch({
+    required String registrationNumber,
+    required String password,
+    required String academicYear,
+    required String session,
+    required void Function(String step) onLog,
+  }) async {
+    return AttendanceResult(
+      records: const [
+        AttendanceRecord(
+          subject: 'A',
+          absent: 0,
+          present: 10,
+          totalDays: 10,
+          percentage: 100,
+          facultyId: '',
+          facultyName: '',
+          excuses: 0,
+        ),
+      ],
+      student: null,
+      academicYear: academicYear,
+      session: session,
+      fetchedAt: DateTime(2026, 1, 1),
+    );
+  }
+}
+
+class _FakeCredsRepo implements AttendanceCredentialsRepository {
+  _FakeCredsRepo(this._reg);
+  String? _reg;
+
+  @override
+  Future<void> initialize() async {}
+
+  @override
+  String? get registrationNumber => _reg;
+
+  @override
+  bool get hasCredentials => _reg != null;
+
+  @override
+  Future<(String, String)?> read() async =>
+      _reg == null ? null : (_reg!, 'pass');
+
+  @override
+  Future<void> save({
+    required String registrationNumber,
+    required String password,
+  }) async {
+    _reg = registrationNumber;
+  }
+
+  @override
+  Future<void> clear() async {
+    _reg = null;
+  }
 }
