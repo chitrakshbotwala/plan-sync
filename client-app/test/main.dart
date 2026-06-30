@@ -7,6 +7,7 @@ import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/theme_service.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
+import 'package:plan_sync/features/home/viewmodel/today_view_model.dart';
 import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 import 'package:plan_sync/features/electives/repository/electives_repository.dart';
@@ -122,6 +123,13 @@ Widget wrapWithProviders({required Widget child}) {
                 filterViewModel: mockFilterViewModel,
                 preferences: mockPreferences,
                 remoteConfig: mockRemoteConfigController,
+              ),
+            ),
+            ChangeNotifierProvider<TodayViewModel>(
+              create: (ctx) => TodayViewModel(
+                schedule: ctx.read<ScheduleViewModel>(),
+                filter: mockFilterViewModel,
+                electives: ctx.read<ElectivesViewModel>(),
               ),
             ),
           ],

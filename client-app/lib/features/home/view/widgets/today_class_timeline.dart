@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plan_sync/features/home/today_schedule.dart';
 import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 
 class TodayClassTimeline extends StatelessWidget {
@@ -39,7 +40,7 @@ class _ClassTimelineRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
-    final times = _splitTime(entry.time);
+    final times = TodaySchedule.splitTime(entry.time);
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -80,13 +81,6 @@ class _ClassTimelineRow extends StatelessWidget {
         ),
       ],
     );
-  }
-
-  static (String, String) _splitTime(String? timeStr) {
-    if (timeStr == null) return ('', '');
-    final parts = timeStr.split(RegExp(r'\s*[-–]\s*'));
-    if (parts.length >= 2) return (parts[0].trim(), parts[1].trim());
-    return (timeStr.trim(), '');
   }
 }
 

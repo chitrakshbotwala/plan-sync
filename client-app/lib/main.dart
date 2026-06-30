@@ -33,6 +33,7 @@ import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository_impl.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
+import 'package:plan_sync/features/home/viewmodel/today_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/core/services/remote_config_service_impl.dart';
@@ -299,6 +300,13 @@ final _router = GoRouter(
                       appPreferences: ctx.read<AppPreferencesRepository>(),
                       remoteConfig: ctx.read<RemoteConfigService>(),
                       notifications: ctx.read<NotificationService>(),
+                    ),
+                  ),
+                  ChangeNotifierProvider<TodayViewModel>(
+                    create: (ctx) => TodayViewModel(
+                      schedule: ctx.read<ScheduleViewModel>(),
+                      filter: ctx.read<FilterViewModel>(),
+                      electives: ctx.read<ElectivesViewModel>(),
                     ),
                   ),
                 ],

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plan_sync/features/home/today_schedule.dart';
 import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 
 class TodayHeroCard extends StatelessWidget {
@@ -134,7 +135,7 @@ class TodayHeroCard extends StatelessWidget {
   }
 
   String _formatUpNext(ScheduleEntry e) {
-    final start = e.time?.split(RegExp(r'\s*[-–]\s*')).first.trim() ?? '';
+    final start = TodaySchedule.splitTime(e.time).$1;
     final subject = e.subject ?? '';
     if (start.isEmpty) return subject;
     return '$start $subject';
