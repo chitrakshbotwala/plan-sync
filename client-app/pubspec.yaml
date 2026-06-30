@@ -54,6 +54,7 @@ dependencies:
   flutter_native_splash: ^2.4.3
   firebase_analytics: ^11.5.2
   collection: ^1.18.0
+  intl: ^0.20.3
   flutter_svg: ^2.0.9
   rename: ^3.0.1
   icons_launcher: ^3.0.0

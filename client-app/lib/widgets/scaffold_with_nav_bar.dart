@@ -1,4 +1,5 @@
 import 'package:plan_sync/core/services/theme_service.dart';
+import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 import 'package:provider/provider.dart';
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 import 'package:flutter/material.dart';
@@ -65,7 +66,14 @@ class ScaffoldWithNavBar extends StatelessWidget {
     );
   }
 
+  /// Index of the "More" item — opens a sheet instead of switching branches.
+  static const int _moreIndex = 3;
+
   void _onTap(BuildContext context, int index) {
+    if (index == _moreIndex) {
+      BottomSheets.moreOptions(context: context);
+      return;
+    }
     navigationShell.goBranch(
       index,
       initialLocation: index == navigationShell.currentIndex,
