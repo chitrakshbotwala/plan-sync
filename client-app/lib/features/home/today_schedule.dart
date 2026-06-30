@@ -46,6 +46,14 @@ class TodaySchedule {
     return (timeStr.trim(), '');
   }
 
+  /// Length of an entry in minutes, or -1 when start/end can't be parsed.
+  static int durationMinutes(ScheduleEntry? entry) {
+    final start = startMinutes(entry?.time);
+    final end = endMinutes(entry?.time);
+    if (start < 0 || end < 0 || end <= start) return -1;
+    return end - start;
+  }
+
   static List<ScheduleEntry> sorted(List<ScheduleEntry> entries) =>
       List<ScheduleEntry>.from(entries)
         ..sort((a, b) => startMinutes(a.time).compareTo(startMinutes(b.time)));

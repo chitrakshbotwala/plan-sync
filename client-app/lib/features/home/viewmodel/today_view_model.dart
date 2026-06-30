@@ -19,12 +19,17 @@ class TodayBoard {
     required this.current,
     required this.next,
     required this.minutesLeft,
+    required this.nowMinutes,
   });
 
   final List<ScheduleEntry> entries;
   final ScheduleEntry? current;
   final ScheduleEntry? next;
   final int minutesLeft;
+
+  /// Minutes since midnight, or -1 when the viewed day isn't today (so rows
+  /// don't mark classes done/upcoming for a day that isn't running).
+  final int nowMinutes;
 }
 
 /// Maps schedule + filter + electives state into display-ready getters for the
@@ -93,6 +98,7 @@ class TodayViewModel extends ChangeNotifier {
       current: current,
       next: next,
       minutesLeft: minutesLeft,
+      nowMinutes: _isToday ? now : -1,
     );
   }
 

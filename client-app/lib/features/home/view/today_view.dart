@@ -93,7 +93,7 @@ class TodayView extends StatelessWidget {
               dayLabel,
               style: TextStyle(
                 color: colorScheme.onSurface,
-                fontSize: 22,
+                fontSize: 20,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -260,11 +260,12 @@ class TodayView extends StatelessWidget {
             minutesLeft: board.minutesLeft,
             nextEntry: board.next,
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
         ],
         TodayClassTimeline(
           entries: board.entries,
           currentEntry: board.current,
+          nowMinutes: board.nowMinutes,
         ),
       ],
     );
