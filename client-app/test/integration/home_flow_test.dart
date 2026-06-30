@@ -148,7 +148,7 @@ void main() {
     await selectScheduleFilters(tester);
     await tapDone(tester);
 
-    // ScheduleViewModel.onError -> TimeTableWidget error branch.
+    // ScheduleViewModel.onError -> TodayView error branch.
     expect(find.byIcon(Icons.error), findsOneWidget);
     expect(
       find.text(
