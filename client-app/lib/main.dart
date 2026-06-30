@@ -34,6 +34,10 @@ import 'package:plan_sync/features/schedule/repository/schedule_repository.dart'
 import 'package:plan_sync/features/schedule/repository/schedule_repository_impl.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository.dart';
 import 'package:plan_sync/features/schedule/repository/sections_repository_impl.dart';
+import 'package:plan_sync/features/holidays/repository/holidays_repository.dart';
+import 'package:plan_sync/features/holidays/repository/holidays_repository_impl.dart';
+import 'package:plan_sync/features/holidays/view/holidays_view.dart';
+import 'package:plan_sync/features/holidays/viewmodel/holidays_view_model.dart';
 import 'package:plan_sync/features/home/viewmodel/home_view_model.dart';
 import 'package:plan_sync/features/home/viewmodel/today_view_model.dart';
 import 'package:plan_sync/features/schedule/viewmodel/schedule_view_model.dart';
@@ -158,6 +162,12 @@ class AppProvider extends StatelessWidget {
         ),
         Provider<ElectivesRepository>(
           create: (context) => ElectivesRepositoryImpl(
+            apiClient: context.read<ApiClient>(),
+            cache: context.read<CacheService>(),
+          ),
+        ),
+        Provider<HolidaysRepository>(
+          create: (context) => HolidaysRepositoryImpl(
             apiClient: context.read<ApiClient>(),
             cache: context.read<CacheService>(),
           ),
@@ -313,6 +323,7 @@ final _router = GoRouter(
                       schedule: ctx.read<ScheduleViewModel>(),
                       filter: ctx.read<FilterViewModel>(),
                       electives: ctx.read<ElectivesViewModel>(),
+                      holidays: ctx.read<HolidaysRepository>(),
                     ),
                   ),
                 ],
@@ -344,23 +355,30 @@ final _router = GoRouter(
             ),
           ],
         ),
-        StatefulShellBranch(
-          routes: <RouteBase>[
-            GoRoute(
-              path: '/settings',
-              name: 'settings_screen',
-              builder: (context, state) => ChangeNotifierProvider(
-                create: (context) => SettingsViewModel(
-                  auth: context.read<AuthRepository>(),
-                  version: context.read<VersionViewModel>(),
-                  analytics: context.read<AnalyticsService>(),
-                ),
-                child: const SettingsPage(),
-              ),
-            ),
-          ],
-        ),
       ],
+    ),
+    GoRoute(
+      path: '/settings',
+      name: 'settings_screen',
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (context) => SettingsViewModel(
+          auth: context.read<AuthRepository>(),
+          version: context.read<VersionViewModel>(),
+          analytics: context.read<AnalyticsService>(),
+        ),
+        child: const SettingsPage(),
+      ),
+    ),
+    GoRoute(
+      path: '/holidays',
+      name: 'holidays_screen',
+      builder: (context, state) => ChangeNotifierProvider(
+        create: (ctx) => HolidaysViewModel(
+          repository: ctx.read<HolidaysRepository>(),
+          filterViewModel: ctx.read<FilterViewModel>(),
+        ),
+        child: const HolidaysView(),
+      ),
     ),
     GoRoute(
       path: '/login',

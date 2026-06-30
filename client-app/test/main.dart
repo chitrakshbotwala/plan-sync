@@ -22,6 +22,7 @@ import 'mock_controllers/app_tour_controller_mock.dart';
 import 'mock_controllers/auth_mock.dart';
 import 'mock_controllers/electives_repository_mock.dart';
 import 'mock_controllers/filter_view_model_mock.dart';
+import 'mock_controllers/holidays_repository_mock.dart';
 import 'mock_controllers/notification_controller_mock.dart';
 import 'mock_controllers/remote_config_controller_mock.dart';
 import 'mock_controllers/schedule_repository_mock.dart';
@@ -32,6 +33,7 @@ late MockAppPreferencesController mockPreferences;
 late MockFilterViewModel mockFilterViewModel;
 late MockScheduleRepository mockScheduleRepository;
 late MockElectivesRepository mockElectivesRepository;
+late MockHolidaysRepository mockHolidaysRepository;
 late MockVersionViewModel mockVersionViewModel;
 late MockAnalyticsService mockAnalyticsService;
 late MockAppTourController mockAppTourService;
@@ -46,6 +48,7 @@ Future<void> injectMockDependencies() async {
   mockFilterViewModel = MockFilterViewModel(mockPreferences);
   mockScheduleRepository = MockScheduleRepository();
   mockElectivesRepository = MockElectivesRepository();
+  mockHolidaysRepository = MockHolidaysRepository();
   mockVersionViewModel = MockVersionViewModel();
   mockAnalyticsService = MockAnalyticsService();
   mockAppTourService = MockAppTourController();
@@ -130,6 +133,7 @@ Widget wrapWithProviders({required Widget child}) {
                 schedule: ctx.read<ScheduleViewModel>(),
                 filter: mockFilterViewModel,
                 electives: ctx.read<ElectivesViewModel>(),
+                holidays: mockHolidaysRepository,
               ),
             ),
           ],

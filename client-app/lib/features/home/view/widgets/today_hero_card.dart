@@ -27,7 +27,7 @@ class TodayHeroCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(color: colorScheme.outlineVariant),
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
@@ -54,7 +54,7 @@ class TodayHeroCard extends StatelessWidget {
               ),
               const Spacer(),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
                 decoration: BoxDecoration(
                   color: colorScheme.primaryContainer,
                   borderRadius: BorderRadius.circular(100),
@@ -70,7 +70,7 @@ class TodayHeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -80,13 +80,13 @@ class TodayHeroCard extends StatelessWidget {
                   style: TextStyle(
                     color: colorScheme.onSurface,
                     fontWeight: FontWeight.bold,
-                    fontSize: 22,
+                    fontSize: 19,
                   ),
                 ),
               ),
               const SizedBox(width: 8),
               Padding(
-                padding: const EdgeInsets.only(top: 4),
+                padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   sectionName,
                   style: TextStyle(
@@ -97,7 +97,7 @@ class TodayHeroCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Row(
             children: [
               Icon(
@@ -118,9 +118,9 @@ class TodayHeroCard extends StatelessWidget {
             ],
           ),
           if (nextEntry != null) ...[
-            const SizedBox(height: 12),
-            Divider(color: colorScheme.outlineVariant, height: 1),
             const SizedBox(height: 10),
+            Divider(color: colorScheme.outlineVariant, height: 1),
+            const SizedBox(height: 8),
             Text(
               'Up next · ${_formatUpNext(nextEntry!)}',
               style: TextStyle(
