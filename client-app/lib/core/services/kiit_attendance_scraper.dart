@@ -676,7 +676,12 @@ const String _agentTemplate = r'''
       }
       await sleep(700);
     }
-    if (isWd) relay('kiitLog', 'WebDynpro frame loaded but the Year/Session form never appeared (' + location.host + ').');
+    // The WebDynpro frame loaded but the Year/Session form never rendered.
+    // Report a failure so the app shows an error + retry instead of hanging
+    // until the 3-minute safety timeout.
+    if (isWd) {
+      relay('kiitError', JSON.stringify({ code: 'nav_failed', message: 'The attendance page did not finish loading. Please try again.' }));
+    }
   })();
 })();
 ''';
