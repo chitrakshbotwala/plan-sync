@@ -408,22 +408,52 @@ const String _agentTemplate = r'''
       })(window);
       return docs;
     }
+    function navNorm(s) { return (s || '').replace(/\s+/g, ' ').trim(); }
+    function navFire(el) {
+      try { el.scrollIntoView({ block: 'center' }); } catch (_) {}
+      var o = { bubbles: true, cancelable: true, view: window };
+      try { el.dispatchEvent(new MouseEvent('mousedown', o)); } catch (_) {}
+      try { el.dispatchEvent(new MouseEvent('mouseup', o)); } catch (_) {}
+      try { el.dispatchEvent(new MouseEvent('click', o)); } catch (_) {}
+      try { el.click(); } catch (_) {}
+    }
     function clickByText(text, exact, skipTop) {
       var ds = allDocs();
+      var want = text.toLowerCase();
       for (var k = skipTop ? 1 : 0; k < ds.length; k++) {
-        var els = ds[k].querySelectorAll('a,span,td,div');
+        var els = ds[k].querySelectorAll('a,span,td,div,li');
         for (var i = 0; i < els.length; i++) {
           var e = els[i];
-          if (e.children.length === 0) {
-            var t = (e.textContent || '').trim();
-            if (exact ? (t === text) : (t.indexOf(text) >= 0)) {
-              try { e.click(); } catch (_) {}
-              return true;
-            }
+          if (e.children.length !== 0) continue;
+          var t = navNorm(e.textContent).toLowerCase();
+          if (!t) continue;
+          if (exact ? (t === want) : (t.indexOf(want) >= 0)) {
+            // Click the nearest clickable ancestor (tree nodes wrap the text in
+            // a span but hang the handler on the <a>/<li>); fall back to the leaf.
+            var target = (e.closest && e.closest('a,[role="link"],[role="treeitem"],[onclick],li,td')) || e;
+            navFire(target);
+            return true;
           }
         }
       }
       return false;
+    }
+    // Diagnostic: visible nav-ish leaf texts across same-origin frames, so a
+    // failure log reveals the portal's actual labels (and whether the tree is
+    // even reachable) to fix the matcher.
+    function dumpNavTexts() {
+      var ds = allDocs();
+      var out = [], seen = {};
+      var re = /student|attendance|self\s*service|exam|fee|grade|semester|result|hall/i;
+      for (var k = 0; k < ds.length; k++) {
+        var els = ds[k].querySelectorAll('a,span,td,div,li');
+        for (var i = 0; i < els.length && out.length < 40; i++) {
+          if (els[i].children.length !== 0) continue;
+          var t = navNorm(els[i].textContent);
+          if (t && t.length < 60 && re.test(t) && !seen[t]) { seen[t] = 1; out.push(t); }
+        }
+      }
+      return out.join(' | ');
     }
     // Expand the left-nav "Student Self Service" folder (the tree node lives in
     // an inner content frame, so skipTop avoids hitting the top-level tab), then
@@ -444,7 +474,9 @@ const String _agentTemplate = r'''
           clickByText('Student Self Service', true, true);
         }
       }
-      cerr('nav_failed', 'Could not reach Student Attendance Details (navigation links never appeared).');
+      cerr('nav_failed', 'Could not reach Student Attendance Details. frames=' +
+          allDocs().length + '; nav texts seen: [' +
+          dumpNavTexts().slice(0, 400) + ']');
       return 'not_found';
     };
     return;
