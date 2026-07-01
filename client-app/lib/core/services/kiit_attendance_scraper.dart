@@ -462,16 +462,21 @@ const String _agentTemplate = r'''
       if (window.__kiitNavStarted) return 'already';
       window.__kiitNavStarted = true;
       clog('Expanding the "Student Self Service" navigation folder.');
-      clickByText('Student Self Service', true, true);
+      // Click the top-level workset tab (loads the detailed-nav tree) AND the
+      // inner tree node; contains-match tolerates the "… for SOT (2025 Batch)"
+      // suffix on the tab.
+      clickByText('student self service', false, false);
+      clickByText('student self service', true, true);
       for (var i = 0; i < 60; i++) {
         await sleep(1000);
-        if (clickByText('Student Attendance Details', true, false)) {
+        if (clickByText('student attendance details', false, false)) {
           clog('Found and clicked "Student Attendance Details". Loading iView…');
           return 'clicked';
         }
         if (i % 5 === 4) {
           clog('Still waiting for the "Student Attendance Details" link (' + (i + 1) + 's)…');
-          clickByText('Student Self Service', true, true);
+          clickByText('student self service', false, false);
+          clickByText('student self service', true, true);
         }
       }
       cerr('nav_failed', 'Could not reach Student Attendance Details. frames=' +
@@ -695,22 +700,70 @@ const String _agentTemplate = r'''
       relay('kiitError', JSON.stringify({ code: 'scrape_error', message: String(e) }));
     }
   }
+  // Local portal navigation, run in EVERY frame. The Detailed Navigation tree
+  // (with "Student Attendance Details") can live in a cross-origin frame the
+  // top frame's DOM walk can't reach — but the agent is injected here too, so
+  // whichever frame holds the tree expands the folder and clicks the service.
+  function navNorm2(s) { return (s || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function navFire2(el) {
+    try { el.scrollIntoView({ block: 'center' }); } catch (e) {}
+    var o = { bubbles: true, cancelable: true, view: window };
+    try { el.dispatchEvent(new MouseEvent('mousedown', o)); } catch (e) {}
+    try { el.dispatchEvent(new MouseEvent('mouseup', o)); } catch (e) {}
+    try { el.dispatchEvent(new MouseEvent('click', o)); } catch (e) {}
+    try { el.click(); } catch (e) {}
+  }
+  function localDocs2() {
+    var docs = [];
+    (function rec(w) {
+      try {
+        var d = w.document; if (!d) return;
+        docs.push(d);
+        for (var i = 0; i < w.frames.length; i++) { try { rec(w.frames[i]); } catch (e) {} }
+      } catch (e) {}
+    })(window);
+    return docs;
+  }
+  function clickLocal2(substr) {
+    var ds = localDocs2();
+    for (var k = 0; k < ds.length; k++) {
+      var els = ds[k].querySelectorAll('a,span,td,div,li');
+      for (var i = 0; i < els.length; i++) {
+        var e = els[i];
+        if (e.children.length !== 0) continue;
+        var t = navNorm2(e.textContent);
+        if (t && t.indexOf(substr) >= 0) {
+          var tgt = (e.closest && e.closest('a,[role="treeitem"],[role="link"],[onclick],li,td')) || e;
+          navFire2(tgt);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
   (async function () {
     if (window.__kiitChildRan) return;
     window.__kiitChildRan = true;
     var isWd = /wdprd|webdynpro|ZWDA/i.test(location.href);
     if (isWd) relay('kiitLog', 'Agent injected into WebDynpro frame: ' + location.host);
+    var attClicked = false;
     for (var i = 0; i < 45; i++) {
       if (isAttendanceApp()) {
         relay('kiitLog', 'Attendance form ready in ' + location.host);
         await run();
         return;
       }
+      // If the nav tree lives in this frame, expand it and open the service.
+      if (!attClicked) {
+        if (clickLocal2('student attendance details')) {
+          attClicked = true;
+          relay('kiitLog', 'Clicked Student Attendance Details (' + location.host + ').');
+        } else {
+          clickLocal2('student self service');
+        }
+      }
       await sleep(700);
     }
-    // The WebDynpro frame loaded but the Year/Session form never rendered.
-    // Report a failure so the app shows an error + retry instead of hanging
-    // until the 3-minute safety timeout.
     if (isWd) {
       relay('kiitError', JSON.stringify({ code: 'nav_failed', message: 'The attendance page did not finish loading. Please try again.' }));
     }
