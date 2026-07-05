@@ -492,7 +492,10 @@ const String _agentTemplate = r'''
   // wdprd frame (same-origin as its own XHRs), so hooking XHR here lets us read
   // the full server response — which lists EVERY row as a TextView, bypassing
   // the DOM row virtualization that otherwise drops rows below the fold.
-  window.__kiitResp = null;
+  // Keep EVERY matching response: the table pages in more rows on scroll, and
+  // each scroll fires a fresh (often smaller) delta response, so we can't just
+  // keep the longest one.
+  window.__kiitResps = [];
   (function () {
     try {
       var send = XMLHttpRequest.prototype.send;
@@ -502,9 +505,8 @@ const String _agentTemplate = r'''
             try {
               var u = this.responseURL || '';
               var t = this.responseText || '';
-              if ((/ZWDA_HRIQ_ST_ATTENDANCE/i.test(u) || /Total Percentage|Faculty Name/i.test(t)) &&
-                  t.length > (window.__kiitResp ? window.__kiitResp.length : 0)) {
-                window.__kiitResp = t;
+              if (t && (/ZWDA_HRIQ_ST_ATTENDANCE/i.test(u) || /Total Percentage|Faculty Name/i.test(t))) {
+                window.__kiitResps.push(t);
               }
             } catch (e) {}
           });
@@ -542,6 +544,22 @@ const String _agentTemplate = r'''
     }
     var name = (start >= 6) ? (vals.slice(start - 6, start)[2] || '') : '';
     return { name: name, records: records };
+  }
+  // Merge rows from every captured response (the scroll deltas), deduped by
+  // subject + faculty id so a subject split across faculty isn't collapsed.
+  function parseAllResps() {
+    var seen = {}, out = [], name = '';
+    var all = window.__kiitResps || [];
+    for (var i = 0; i < all.length; i++) {
+      var p = parseResp(all[i]);
+      if (p.name) name = p.name;
+      for (var j = 0; j < p.records.length; j++) {
+        var r = p.records[j];
+        var k = ((r.subject || '') + '|' + (r.facultyId || '')).toLowerCase();
+        if (k && !seen[k]) { seen[k] = 1; out.push(r); }
+      }
+    }
+    return { name: name, records: out };
   }
   function isAttendanceApp() {
     var ls = document.querySelectorAll('label');
@@ -730,6 +748,34 @@ const String _agentTemplate = r'''
     }
     return { name: name, records: out };
   }
+  // Scroll the table to force the server to page in rows below the fold. Each
+  // scroll fires a fresh response (captured by the XHR hook); stop once neither
+  // the response count nor the merged row count grows for a few steps.
+  async function scrollToLoadAll() {
+    var last = -1, lastResp = -1, stable = 0;
+    for (var step = 0; step < SCROLL_MAX_STEPS; step++) {
+      var rows = document.querySelectorAll('[role=row]');
+      var lastRow = rows.length ? rows[rows.length - 1] : null;
+      if (lastRow) {
+        var cell = lastRow.querySelector('[role=gridcell]') || lastRow;
+        try { cell.focus(); } catch (e) {}
+        sendKey(cell, 'End', 35);
+        sendKey(cell, 'PageDown', 34);
+        sendKey(cell, 'ArrowDown', 40);
+        try { lastRow.scrollIntoView({ block: 'end' }); } catch (e) {}
+        try { lastRow.dispatchEvent(new WheelEvent('wheel', { deltaY: 800, bubbles: true })); } catch (e) {}
+      }
+      var els = scrollEls();
+      for (var s = 0; s < els.length; s++) {
+        try { els[s].scrollTop = els[s].scrollHeight; els[s].dispatchEvent(new Event('scroll', { bubbles: true })); } catch (e) {}
+      }
+      await sleep(SCROLL_SETTLE_MS);
+      var rc = (window.__kiitResps || []).length;
+      var c = parseAllResps().records.length;
+      if (c === last && rc === lastResp) { stable++; if (stable >= SCROLL_STABLE_LIMIT) break; } else { stable = 0; }
+      last = c; lastResp = rc;
+    }
+  }
   async function run() {
     if (window.__kiitRan) return;
     window.__kiitRan = true;
@@ -744,20 +790,17 @@ const String _agentTemplate = r'''
       if (btn) { relay('kiitLog', 'Clicking Submit to load the attendance table.'); btn.click(); await sleep(3000); }
       else { relay('kiitLog', 'Submit button not found; reading whatever is rendered.'); }
 
-      // Prefer the raw server response (has EVERY row) over the DOM, which
-      // virtualizes and drops rows below the fold. Give the response a moment to
-      // land, then fall back to a DOM scroll-scrape if it wasn't captured.
-      var data = null;
-      for (var w = 0; w < 8 && !window.__kiitResp; w++) await sleep(700);
-      if (window.__kiitResp) {
-        var parsed = parseResp(window.__kiitResp);
-        if (parsed.records.length > 0) {
-          data = parsed;
-          relay('kiitLog', 'Parsed ' + parsed.records.length + ' subject row(s) from the server response.');
-        }
-      }
-      if (!data) {
-        relay('kiitLog', 'Reading the attendance table (scrolling for all rows)…');
+      // Rows below the fold page in on scroll, each firing its own server
+      // response — so scroll to force them all, then merge every captured
+      // response. Fall back to a DOM scrape only if nothing was captured.
+      relay('kiitLog', 'Scrolling to load all rows…');
+      await scrollToLoadAll();
+      var data = parseAllResps();
+      if (data.records.length > 0) {
+        relay('kiitLog', 'Parsed ' + data.records.length + ' subject row(s) from ' +
+          (window.__kiitResps || []).length + ' server response(s).');
+      } else {
+        relay('kiitLog', 'No server response captured; reading the DOM…');
         data = await scrapeAll();
       }
       if (!data || data.records.length === 0) {
