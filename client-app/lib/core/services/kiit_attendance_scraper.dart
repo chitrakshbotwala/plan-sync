@@ -488,6 +488,61 @@ const String _agentTemplate = r'''
   }
 
   // ===================== CHILD FRAME (WebDynpro iView) =====================
+  // Capture the WebDynpro attendance response body. The agent runs INSIDE the
+  // wdprd frame (same-origin as its own XHRs), so hooking XHR here lets us read
+  // the full server response — which lists EVERY row as a TextView, bypassing
+  // the DOM row virtualization that otherwise drops rows below the fold.
+  window.__kiitResp = null;
+  (function () {
+    try {
+      var send = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.send = function () {
+        try {
+          this.addEventListener('load', function () {
+            try {
+              var u = this.responseURL || '';
+              var t = this.responseText || '';
+              if ((/ZWDA_HRIQ_ST_ATTENDANCE/i.test(u) || /Total Percentage|Faculty Name/i.test(t)) &&
+                  t.length > (window.__kiitResp ? window.__kiitResp.length : 0)) {
+                window.__kiitResp = t;
+              }
+            } catch (e) {}
+          });
+        } catch (e) {}
+        return send.apply(this, arguments);
+      };
+    } catch (e) {}
+  })();
+  function kiitDecodeEntities(s) {
+    return String(s)
+      .replace(/&#x([0-9a-fA-F]+);/g, function (_, h) { return String.fromCharCode(parseInt(h, 16)); })
+      .replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(parseInt(d, 10)); })
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ').trim();
+  }
+  // Parse the raw response: cells are TextView spans ct="TV" lsdata='{"0":"..."}'.
+  // A data row = subject + 4 decimals + faculty id + faculty name + excuses
+  // decimal (groups of 8), preceded by 6 student-detail values.
+  function parseResp(body) {
+    var vals = [], re = /ct="TV" lsdata='\{"0":"([^"]*)"/g, m;
+    while ((m = re.exec(body))) vals.push(kiitDecodeEntities(m[1]));
+    var isDec = function (x) { return /^\d+(\.\d+)?$/.test(x); };
+    var isFac = function (x) { return /^\d{5,}$/.test(x); };
+    var start = -1;
+    for (var i = 0; i + 7 < vals.length; i++) {
+      if (!isDec(vals[i]) && isDec(vals[i + 1]) && isDec(vals[i + 2]) && isDec(vals[i + 3]) && isDec(vals[i + 4]) && isFac(vals[i + 5]) && !isDec(vals[i + 6]) && isDec(vals[i + 7])) { start = i; break; }
+    }
+    var records = [];
+    if (start >= 0) {
+      for (var j = start; j + 7 < vals.length; j += 8) {
+        var g = vals.slice(j, j + 8);
+        if (!(isDec(g[1]) && isDec(g[2]) && isDec(g[3]) && isDec(g[4]) && isFac(g[5]))) break;
+        records.push({ subject: g[0], attended: Math.round(parseFloat(g[2])), total: Math.round(parseFloat(g[3])), percentage: parseFloat(g[4]), facultyId: g[5] });
+      }
+    }
+    var name = (start >= 6) ? (vals.slice(start - 6, start)[2] || '') : '';
+    return { name: name, records: records };
+  }
   function isAttendanceApp() {
     var ls = document.querySelectorAll('label');
     for (var i = 0; i < ls.length; i++) {
@@ -688,13 +743,28 @@ const String _agentTemplate = r'''
       }
       if (btn) { relay('kiitLog', 'Clicking Submit to load the attendance table.'); btn.click(); await sleep(3000); }
       else { relay('kiitLog', 'Submit button not found; reading whatever is rendered.'); }
-      relay('kiitLog', 'Reading the attendance table (scrolling for all rows)…');
-      var data = await scrapeAll();
+
+      // Prefer the raw server response (has EVERY row) over the DOM, which
+      // virtualizes and drops rows below the fold. Give the response a moment to
+      // land, then fall back to a DOM scroll-scrape if it wasn't captured.
+      var data = null;
+      for (var w = 0; w < 8 && !window.__kiitResp; w++) await sleep(700);
+      if (window.__kiitResp) {
+        var parsed = parseResp(window.__kiitResp);
+        if (parsed.records.length > 0) {
+          data = parsed;
+          relay('kiitLog', 'Parsed ' + parsed.records.length + ' subject row(s) from the server response.');
+        }
+      }
+      if (!data) {
+        relay('kiitLog', 'Reading the attendance table (scrolling for all rows)…');
+        data = await scrapeAll();
+      }
       if (!data || data.records.length === 0) {
         relay('kiitError', JSON.stringify({ code: 'no_data', message: 'The attendance table was empty for the selected year/session.' }));
         return;
       }
-      relay('kiitLog', 'Scraped ' + data.records.length + ' subject row(s)' + (data.name ? ' for ' + data.name : '') + '.');
+      relay('kiitLog', 'Got ' + data.records.length + ' subject row(s)' + (data.name ? ' for ' + data.name : '') + '.');
       relay('kiitResult', JSON.stringify(data));
     } catch (e) {
       relay('kiitError', JSON.stringify({ code: 'scrape_error', message: String(e) }));
