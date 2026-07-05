@@ -790,24 +790,22 @@ const String _agentTemplate = r'''
       if (btn) { relay('kiitLog', 'Clicking Submit to load the attendance table.'); btn.click(); await sleep(3000); }
       else { relay('kiitLog', 'Submit button not found; reading whatever is rendered.'); }
 
-      // Rows below the fold page in on scroll, each firing its own server
-      // response — so scroll to force them all, then merge every captured
-      // response. Fall back to a DOM scrape only if nothing was captured.
-      relay('kiitLog', 'Scrolling to load all rows…');
-      await scrollToLoadAll();
-      var data = parseAllResps();
-      if (data.records.length > 0) {
-        relay('kiitLog', 'Parsed ' + data.records.length + ' subject row(s) from ' +
-          (window.__kiitResps || []).length + ' server response(s).');
-      } else {
-        relay('kiitLog', 'No server response captured; reading the DOM…');
-        data = await scrapeAll();
-      }
+      // scrapeAll scrolls the table (paging in rows below the fold) and harvests
+      // the rendered rows mapped BY HEADER, so a user-reordered column layout
+      // still parses. The scrolling also fires the server responses we capture;
+      // use that raw merge only if it strictly captured more rows (positional,
+      // so not reorder-safe — kept purely as a completeness fallback).
+      relay('kiitLog', 'Reading the attendance table…');
+      var domData = await scrapeAll();
+      var respData = parseAllResps();
+      var data = (respData.records.length > domData.records.length) ? respData : domData;
+      relay('kiitLog', 'Got ' + data.records.length + ' subject row(s)' +
+        (data.name ? ' for ' + data.name : '') +
+        ' (dom ' + domData.records.length + ', resp ' + respData.records.length + ').');
       if (!data || data.records.length === 0) {
         relay('kiitError', JSON.stringify({ code: 'no_data', message: 'The attendance table was empty for the selected year/session.' }));
         return;
       }
-      relay('kiitLog', 'Got ' + data.records.length + ' subject row(s)' + (data.name ? ' for ' + data.name : '') + '.');
       relay('kiitResult', JSON.stringify(data));
     } catch (e) {
       relay('kiitError', JSON.stringify({ code: 'scrape_error', message: String(e) }));
