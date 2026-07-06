@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_error_state.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_loading_state.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_needs_credentials.dart';
+import 'package:plan_sync/features/attendance/view/widgets/attendance_period_picker.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_preference_dialog.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_success_state.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
@@ -143,9 +144,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
       case AttendanceStatus.error:
         return AttendanceErrorState(viewModel: viewModel);
       case AttendanceStatus.idle:
+        // Connected but nothing fetched yet — let the user pick a period.
+        return AttendancePeriodPicker(viewModel: viewModel);
       case AttendanceStatus.success:
         if (viewModel.result == null) {
-          return AttendanceLoadingState(viewModel: viewModel);
+          return AttendancePeriodPicker(viewModel: viewModel);
         }
         return AttendanceSuccessState(viewModel: viewModel);
     }

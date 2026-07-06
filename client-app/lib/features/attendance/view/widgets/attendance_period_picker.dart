@@ -1,0 +1,199 @@
+import 'package:flutter/material.dart';
+import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
+
+/// Shown once the KIIT portal is connected but nothing has been fetched yet
+/// (status == idle, result == null). The user picks the academic year and
+/// session here and taps "Load attendance" to trigger the scrape — nothing is
+/// fetched automatically.
+class AttendancePeriodPicker extends StatefulWidget {
+  const AttendancePeriodPicker({super.key, required this.viewModel});
+
+  final AttendanceViewModel viewModel;
+
+  @override
+  State<AttendancePeriodPicker> createState() => _AttendancePeriodPickerState();
+}
+
+class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
+  late String _year = widget.viewModel.academicYear;
+  late String _session = widget.viewModel.session;
+
+  void _load() {
+    widget.viewModel.changeSelection(year: _year, session: _session);
+    widget.viewModel.applySelection();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final id = widget.viewModel.registrationNumber;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.event_available_outlined,
+              size: 64,
+              color: colorScheme.primary.withValues(alpha: 0.8),
+            ),
+            const SizedBox(height: 18),
+            Text(
+              'Pick a period',
+              style: TextStyle(
+                color: colorScheme.onSurface,
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              id != null && id.isNotEmpty
+                  ? 'Choose the academic year and session, then load your '
+                      'attendance for $id.'
+                  : 'Choose the academic year and session, then load your '
+                      'attendance.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: colorScheme.onSurface.withValues(alpha: 0.7),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 28),
+            _PickerRow(
+              icon: Icons.calendar_today_outlined,
+              label: 'Academic Year',
+              colorScheme: colorScheme,
+              child: _PillDropdown<String>(
+                value: _year,
+                items: widget.viewModel.yearOptions,
+                colorScheme: colorScheme,
+                onChanged: (v) {
+                  if (v != null) setState(() => _year = v);
+                },
+              ),
+            ),
+            const SizedBox(height: 12),
+            _PickerRow(
+              icon: Icons.wb_sunny_outlined,
+              label: 'Session',
+              colorScheme: colorScheme,
+              child: _PillDropdown<String>(
+                value: _session,
+                items: widget.viewModel.sessionOptions,
+                colorScheme: colorScheme,
+                onChanged: (v) {
+                  if (v != null) setState(() => _session = v);
+                },
+              ),
+            ),
+            const SizedBox(height: 28),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _load,
+                icon: const Icon(Icons.download_rounded),
+                label: const Text('Load attendance'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: colorScheme.primary,
+                  foregroundColor: colorScheme.onPrimary,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PickerRow extends StatelessWidget {
+  const _PickerRow({
+    required this.icon,
+    required this.label,
+    required this.child,
+    required this.colorScheme,
+  });
+
+  final IconData icon;
+  final String label;
+  final Widget child;
+  final ColorScheme colorScheme;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: colorScheme.onSurface, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            label,
+            style: TextStyle(color: colorScheme.onSurface),
+            overflow: TextOverflow.ellipsis,
+          ),
+        ),
+        const SizedBox(width: 8),
+        child,
+      ],
+    );
+  }
+}
+
+class _PillDropdown<T> extends StatelessWidget {
+  const _PillDropdown({
+    required this.value,
+    required this.items,
+    required this.colorScheme,
+    required this.onChanged,
+  });
+
+  final T value;
+  final List<T> items;
+  final ColorScheme colorScheme;
+  final ValueChanged<T?> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: ShapeDecoration(
+        shape: const StadiumBorder(),
+        color: colorScheme.onSurface,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: SizedBox(
+        width: 136,
+        height: 44,
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<T>(
+            isExpanded: true,
+            elevation: 0,
+            style: TextStyle(color: colorScheme.surface, fontSize: 13),
+            icon: Icon(Icons.arrow_drop_down, color: colorScheme.surface),
+            value: value,
+            dropdownColor: colorScheme.onSurface,
+            menuMaxHeight: 280,
+            items: items
+                .map((e) => DropdownMenuItem<T>(
+                      value: e,
+                      child: Text(
+                        e.toString(),
+                        style: TextStyle(color: colorScheme.surface),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ))
+                .toList(),
+            onChanged: onChanged,
+          ),
+        ),
+      ),
+    );
+  }
+}

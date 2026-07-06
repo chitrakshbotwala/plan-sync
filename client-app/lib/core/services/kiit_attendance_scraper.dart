@@ -469,7 +469,12 @@ const String _agentTemplate = r'''
       clickByText('student self service', true, true);
       for (var i = 0; i < 60; i++) {
         await sleep(1000);
+        // A same-origin child nav frame may have already opened the service;
+        // its sessionStorage flag is shared with us, so don't re-launch the
+        // iView (a second launch aborts the pending SAP session mid-scrape).
+        if (navDone2()) { clog('Attendance service already opened; not re-launching.'); return 'clicked'; }
         if (clickByText('student attendance details', false, false)) {
+          markNav2();
           clog('Found and clicked "Student Attendance Details". Loading iView…');
           return 'clicked';
         }
@@ -852,22 +857,33 @@ const String _agentTemplate = r'''
     }
     return false;
   }
+  // Persistent nav guard. Clicking "Student Attendance Details" reloads this
+  // nav frame, which spins up a FRESH JS context and wipes the in-memory
+  // __kiitChildRan guard below — so without a guard that survives the reload we
+  // re-click forever. Each re-click re-launches the iView with
+  // sap-sessioncmd=USR_ABORT, aborting the pending SAP session; the churn
+  // eventually kills the renderer (device disconnect). sessionStorage survives
+  // the reload (per-origin, and starts empty in the incognito webview each
+  // scrape), so the service link is clicked at most once.
+  function navDone2() { try { return sessionStorage.getItem('__kiitAttNav') === '1'; } catch (e) { return false; } }
+  function markNav2() { try { sessionStorage.setItem('__kiitAttNav', '1'); } catch (e) {} }
   (async function () {
     if (window.__kiitChildRan) return;
     window.__kiitChildRan = true;
     var isWd = /wdprd|webdynpro|ZWDA/i.test(location.href);
     if (isWd) relay('kiitLog', 'Agent injected into WebDynpro frame: ' + location.host);
-    var attClicked = false;
     for (var i = 0; i < 45; i++) {
       if (isAttendanceApp()) {
         relay('kiitLog', 'Attendance form ready in ' + location.host);
         await run();
         return;
       }
-      // If the nav tree lives in this frame, expand it and open the service.
-      if (!attClicked) {
+      // If the nav tree lives in this frame, expand the folder and open the
+      // service ONCE. The WebDynpro frame holds the form (not the tree), so it
+      // must never click — clicking there is what re-launches the iView.
+      if (!isWd && !navDone2()) {
         if (clickLocal2('student attendance details')) {
-          attClicked = true;
+          markNav2();
           relay('kiitLog', 'Clicked Student Attendance Details (' + location.host + ').');
         } else {
           clickLocal2('student self service');

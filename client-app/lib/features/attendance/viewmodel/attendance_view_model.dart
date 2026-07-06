@@ -147,8 +147,9 @@ class AttendanceViewModel extends ChangeNotifier {
       return;
     }
 
-    // No data yet (first-ever use) — full scrape with loading screen.
-    await refresh();
+    // No data yet (first-ever use) — do NOT auto-scrape. Land on the idle
+    // period picker so the user chooses the year/session, then fetches.
+    _set(AttendanceStatus.idle);
   }
 
   Future<void> refresh() async {
@@ -247,7 +248,8 @@ class AttendanceViewModel extends ChangeNotifier {
     await refresh();
   }
 
-  /// Save new credentials and immediately fetch.
+  /// Save new credentials. Does NOT fetch — the user lands on the idle period
+  /// picker and triggers the scrape after choosing a year/session.
   Future<void> connect({
     required String registrationNumber,
     required String password,
@@ -256,7 +258,7 @@ class AttendanceViewModel extends ChangeNotifier {
       registrationNumber: registrationNumber,
       password: password,
     );
-    await refresh();
+    _set(AttendanceStatus.idle);
   }
 
   Future<void> disconnect() async {
