@@ -408,22 +408,52 @@ const String _agentTemplate = r'''
       })(window);
       return docs;
     }
+    function navNorm(s) { return (s || '').replace(/\s+/g, ' ').trim(); }
+    function navFire(el) {
+      try { el.scrollIntoView({ block: 'center' }); } catch (_) {}
+      var o = { bubbles: true, cancelable: true, view: window };
+      try { el.dispatchEvent(new MouseEvent('mousedown', o)); } catch (_) {}
+      try { el.dispatchEvent(new MouseEvent('mouseup', o)); } catch (_) {}
+      try { el.dispatchEvent(new MouseEvent('click', o)); } catch (_) {}
+      try { el.click(); } catch (_) {}
+    }
     function clickByText(text, exact, skipTop) {
       var ds = allDocs();
+      var want = text.toLowerCase();
       for (var k = skipTop ? 1 : 0; k < ds.length; k++) {
-        var els = ds[k].querySelectorAll('a,span,td,div');
+        var els = ds[k].querySelectorAll('a,span,td,div,li');
         for (var i = 0; i < els.length; i++) {
           var e = els[i];
-          if (e.children.length === 0) {
-            var t = (e.textContent || '').trim();
-            if (exact ? (t === text) : (t.indexOf(text) >= 0)) {
-              try { e.click(); } catch (_) {}
-              return true;
-            }
+          if (e.children.length !== 0) continue;
+          var t = navNorm(e.textContent).toLowerCase();
+          if (!t) continue;
+          if (exact ? (t === want) : (t.indexOf(want) >= 0)) {
+            // Click the nearest clickable ancestor (tree nodes wrap the text in
+            // a span but hang the handler on the <a>/<li>); fall back to the leaf.
+            var target = (e.closest && e.closest('a,[role="link"],[role="treeitem"],[onclick],li,td')) || e;
+            navFire(target);
+            return true;
           }
         }
       }
       return false;
+    }
+    // Diagnostic: visible nav-ish leaf texts across same-origin frames, so a
+    // failure log reveals the portal's actual labels (and whether the tree is
+    // even reachable) to fix the matcher.
+    function dumpNavTexts() {
+      var ds = allDocs();
+      var out = [], seen = {};
+      var re = /student|attendance|self\s*service|exam|fee|grade|semester|result|hall/i;
+      for (var k = 0; k < ds.length; k++) {
+        var els = ds[k].querySelectorAll('a,span,td,div,li');
+        for (var i = 0; i < els.length && out.length < 40; i++) {
+          if (els[i].children.length !== 0) continue;
+          var t = navNorm(els[i].textContent);
+          if (t && t.length < 60 && re.test(t) && !seen[t]) { seen[t] = 1; out.push(t); }
+        }
+      }
+      return out.join(' | ');
     }
     // Expand the left-nav "Student Self Service" folder (the tree node lives in
     // an inner content frame, so skipTop avoids hitting the top-level tab), then
@@ -432,25 +462,110 @@ const String _agentTemplate = r'''
       if (window.__kiitNavStarted) return 'already';
       window.__kiitNavStarted = true;
       clog('Expanding the "Student Self Service" navigation folder.');
-      clickByText('Student Self Service', true, true);
+      // Click the top-level workset tab (loads the detailed-nav tree) AND the
+      // inner tree node; contains-match tolerates the "… for SOT (2025 Batch)"
+      // suffix on the tab.
+      clickByText('student self service', false, false);
+      clickByText('student self service', true, true);
       for (var i = 0; i < 60; i++) {
         await sleep(1000);
-        if (clickByText('Student Attendance Details', true, false)) {
+        // A same-origin child nav frame may have already opened the service;
+        // its sessionStorage flag is shared with us, so don't re-launch the
+        // iView (a second launch aborts the pending SAP session mid-scrape).
+        if (navDone2()) { clog('Attendance service already opened; not re-launching.'); return 'clicked'; }
+        if (clickByText('student attendance details', false, false)) {
+          markNav2();
           clog('Found and clicked "Student Attendance Details". Loading iView…');
           return 'clicked';
         }
         if (i % 5 === 4) {
           clog('Still waiting for the "Student Attendance Details" link (' + (i + 1) + 's)…');
-          clickByText('Student Self Service', true, true);
+          clickByText('student self service', false, false);
+          clickByText('student self service', true, true);
         }
       }
-      cerr('nav_failed', 'Could not reach Student Attendance Details (navigation links never appeared).');
+      cerr('nav_failed', 'Could not reach Student Attendance Details. frames=' +
+          allDocs().length + '; nav texts seen: [' +
+          dumpNavTexts().slice(0, 400) + ']');
       return 'not_found';
     };
     return;
   }
 
   // ===================== CHILD FRAME (WebDynpro iView) =====================
+  // Capture the WebDynpro attendance response body. The agent runs INSIDE the
+  // wdprd frame (same-origin as its own XHRs), so hooking XHR here lets us read
+  // the full server response — which lists EVERY row as a TextView, bypassing
+  // the DOM row virtualization that otherwise drops rows below the fold.
+  // Keep EVERY matching response: the table pages in more rows on scroll, and
+  // each scroll fires a fresh (often smaller) delta response, so we can't just
+  // keep the longest one.
+  window.__kiitResps = [];
+  (function () {
+    try {
+      var send = XMLHttpRequest.prototype.send;
+      XMLHttpRequest.prototype.send = function () {
+        try {
+          this.addEventListener('load', function () {
+            try {
+              var u = this.responseURL || '';
+              var t = this.responseText || '';
+              if (t && (/ZWDA_HRIQ_ST_ATTENDANCE/i.test(u) || /Total Percentage|Faculty Name/i.test(t))) {
+                window.__kiitResps.push(t);
+              }
+            } catch (e) {}
+          });
+        } catch (e) {}
+        return send.apply(this, arguments);
+      };
+    } catch (e) {}
+  })();
+  function kiitDecodeEntities(s) {
+    return String(s)
+      .replace(/&#x([0-9a-fA-F]+);/g, function (_, h) { return String.fromCharCode(parseInt(h, 16)); })
+      .replace(/&#(\d+);/g, function (_, d) { return String.fromCharCode(parseInt(d, 10)); })
+      .replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"')
+      .replace(/\s+/g, ' ').trim();
+  }
+  // Parse the raw response: cells are TextView spans ct="TV" lsdata='{"0":"..."}'.
+  // A data row = subject + 4 decimals + faculty id + faculty name + excuses
+  // decimal (groups of 8), preceded by 6 student-detail values.
+  function parseResp(body) {
+    var vals = [], re = /ct="TV" lsdata='\{"0":"([^"]*)"/g, m;
+    while ((m = re.exec(body))) vals.push(kiitDecodeEntities(m[1]));
+    var isDec = function (x) { return /^\d+(\.\d+)?$/.test(x); };
+    var isFac = function (x) { return /^\d{5,}$/.test(x); };
+    var start = -1;
+    for (var i = 0; i + 7 < vals.length; i++) {
+      if (!isDec(vals[i]) && isDec(vals[i + 1]) && isDec(vals[i + 2]) && isDec(vals[i + 3]) && isDec(vals[i + 4]) && isFac(vals[i + 5]) && !isDec(vals[i + 6]) && isDec(vals[i + 7])) { start = i; break; }
+    }
+    var records = [];
+    if (start >= 0) {
+      for (var j = start; j + 7 < vals.length; j += 8) {
+        var g = vals.slice(j, j + 8);
+        if (!(isDec(g[1]) && isDec(g[2]) && isDec(g[3]) && isDec(g[4]) && isFac(g[5]))) break;
+        records.push({ subject: g[0], attended: Math.round(parseFloat(g[2])), total: Math.round(parseFloat(g[3])), percentage: parseFloat(g[4]), facultyId: g[5] });
+      }
+    }
+    var name = (start >= 6) ? (vals.slice(start - 6, start)[2] || '') : '';
+    return { name: name, records: records };
+  }
+  // Merge rows from every captured response (the scroll deltas), deduped by
+  // subject + faculty id so a subject split across faculty isn't collapsed.
+  function parseAllResps() {
+    var seen = {}, out = [], name = '';
+    var all = window.__kiitResps || [];
+    for (var i = 0; i < all.length; i++) {
+      var p = parseResp(all[i]);
+      if (p.name) name = p.name;
+      for (var j = 0; j < p.records.length; j++) {
+        var r = p.records[j];
+        var k = ((r.subject || '') + '|' + (r.facultyId || '')).toLowerCase();
+        if (k && !seen[k]) { seen[k] = 1; out.push(r); }
+      }
+    }
+    return { name: name, records: out };
+  }
   function isAttendanceApp() {
     var ls = document.querySelectorAll('label');
     for (var i = 0; i < ls.length; i++) {
@@ -638,6 +753,34 @@ const String _agentTemplate = r'''
     }
     return { name: name, records: out };
   }
+  // Scroll the table to force the server to page in rows below the fold. Each
+  // scroll fires a fresh response (captured by the XHR hook); stop once neither
+  // the response count nor the merged row count grows for a few steps.
+  async function scrollToLoadAll() {
+    var last = -1, lastResp = -1, stable = 0;
+    for (var step = 0; step < SCROLL_MAX_STEPS; step++) {
+      var rows = document.querySelectorAll('[role=row]');
+      var lastRow = rows.length ? rows[rows.length - 1] : null;
+      if (lastRow) {
+        var cell = lastRow.querySelector('[role=gridcell]') || lastRow;
+        try { cell.focus(); } catch (e) {}
+        sendKey(cell, 'End', 35);
+        sendKey(cell, 'PageDown', 34);
+        sendKey(cell, 'ArrowDown', 40);
+        try { lastRow.scrollIntoView({ block: 'end' }); } catch (e) {}
+        try { lastRow.dispatchEvent(new WheelEvent('wheel', { deltaY: 800, bubbles: true })); } catch (e) {}
+      }
+      var els = scrollEls();
+      for (var s = 0; s < els.length; s++) {
+        try { els[s].scrollTop = els[s].scrollHeight; els[s].dispatchEvent(new Event('scroll', { bubbles: true })); } catch (e) {}
+      }
+      await sleep(SCROLL_SETTLE_MS);
+      var rc = (window.__kiitResps || []).length;
+      var c = parseAllResps().records.length;
+      if (c === last && rc === lastResp) { stable++; if (stable >= SCROLL_STABLE_LIMIT) break; } else { stable = 0; }
+      last = c; lastResp = rc;
+    }
+  }
   async function run() {
     if (window.__kiitRan) return;
     window.__kiitRan = true;
@@ -651,18 +794,79 @@ const String _agentTemplate = r'''
       }
       if (btn) { relay('kiitLog', 'Clicking Submit to load the attendance table.'); btn.click(); await sleep(3000); }
       else { relay('kiitLog', 'Submit button not found; reading whatever is rendered.'); }
-      relay('kiitLog', 'Reading the attendance table (scrolling for all rows)…');
-      var data = await scrapeAll();
+
+      // scrapeAll scrolls the table (paging in rows below the fold) and harvests
+      // the rendered rows mapped BY HEADER, so a user-reordered column layout
+      // still parses. The scrolling also fires the server responses we capture;
+      // use that raw merge only if it strictly captured more rows (positional,
+      // so not reorder-safe — kept purely as a completeness fallback).
+      relay('kiitLog', 'Reading the attendance table…');
+      var domData = await scrapeAll();
+      var respData = parseAllResps();
+      var data = (respData.records.length > domData.records.length) ? respData : domData;
+      relay('kiitLog', 'Got ' + data.records.length + ' subject row(s)' +
+        (data.name ? ' for ' + data.name : '') +
+        ' (dom ' + domData.records.length + ', resp ' + respData.records.length + ').');
       if (!data || data.records.length === 0) {
         relay('kiitError', JSON.stringify({ code: 'no_data', message: 'The attendance table was empty for the selected year/session.' }));
         return;
       }
-      relay('kiitLog', 'Scraped ' + data.records.length + ' subject row(s)' + (data.name ? ' for ' + data.name : '') + '.');
       relay('kiitResult', JSON.stringify(data));
     } catch (e) {
       relay('kiitError', JSON.stringify({ code: 'scrape_error', message: String(e) }));
     }
   }
+  // Local portal navigation, run in EVERY frame. The Detailed Navigation tree
+  // (with "Student Attendance Details") can live in a cross-origin frame the
+  // top frame's DOM walk can't reach — but the agent is injected here too, so
+  // whichever frame holds the tree expands the folder and clicks the service.
+  function navNorm2(s) { return (s || '').replace(/\s+/g, ' ').trim().toLowerCase(); }
+  function navFire2(el) {
+    try { el.scrollIntoView({ block: 'center' }); } catch (e) {}
+    var o = { bubbles: true, cancelable: true, view: window };
+    try { el.dispatchEvent(new MouseEvent('mousedown', o)); } catch (e) {}
+    try { el.dispatchEvent(new MouseEvent('mouseup', o)); } catch (e) {}
+    try { el.dispatchEvent(new MouseEvent('click', o)); } catch (e) {}
+    try { el.click(); } catch (e) {}
+  }
+  function localDocs2() {
+    var docs = [];
+    (function rec(w) {
+      try {
+        var d = w.document; if (!d) return;
+        docs.push(d);
+        for (var i = 0; i < w.frames.length; i++) { try { rec(w.frames[i]); } catch (e) {} }
+      } catch (e) {}
+    })(window);
+    return docs;
+  }
+  function clickLocal2(substr) {
+    var ds = localDocs2();
+    for (var k = 0; k < ds.length; k++) {
+      var els = ds[k].querySelectorAll('a,span,td,div,li');
+      for (var i = 0; i < els.length; i++) {
+        var e = els[i];
+        if (e.children.length !== 0) continue;
+        var t = navNorm2(e.textContent);
+        if (t && t.indexOf(substr) >= 0) {
+          var tgt = (e.closest && e.closest('a,[role="treeitem"],[role="link"],[onclick],li,td')) || e;
+          navFire2(tgt);
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+  // Persistent nav guard. Clicking "Student Attendance Details" reloads this
+  // nav frame, which spins up a FRESH JS context and wipes the in-memory
+  // __kiitChildRan guard below — so without a guard that survives the reload we
+  // re-click forever. Each re-click re-launches the iView with
+  // sap-sessioncmd=USR_ABORT, aborting the pending SAP session; the churn
+  // eventually kills the renderer (device disconnect). sessionStorage survives
+  // the reload (per-origin, and starts empty in the incognito webview each
+  // scrape), so the service link is clicked at most once.
+  function navDone2() { try { return sessionStorage.getItem('__kiitAttNav') === '1'; } catch (e) { return false; } }
+  function markNav2() { try { sessionStorage.setItem('__kiitAttNav', '1'); } catch (e) {} }
   (async function () {
     if (window.__kiitChildRan) return;
     window.__kiitChildRan = true;
@@ -674,9 +878,22 @@ const String _agentTemplate = r'''
         await run();
         return;
       }
+      // If the nav tree lives in this frame, expand the folder and open the
+      // service ONCE. The WebDynpro frame holds the form (not the tree), so it
+      // must never click — clicking there is what re-launches the iView.
+      if (!isWd && !navDone2()) {
+        if (clickLocal2('student attendance details')) {
+          markNav2();
+          relay('kiitLog', 'Clicked Student Attendance Details (' + location.host + ').');
+        } else {
+          clickLocal2('student self service');
+        }
+      }
       await sleep(700);
     }
-    if (isWd) relay('kiitLog', 'WebDynpro frame loaded but the Year/Session form never appeared (' + location.host + ').');
+    if (isWd) {
+      relay('kiitError', JSON.stringify({ code: 'nav_failed', message: 'The attendance page did not finish loading. Please try again.' }));
+    }
   })();
 })();
 ''';
