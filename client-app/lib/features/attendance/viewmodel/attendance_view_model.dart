@@ -114,6 +114,21 @@ class AttendanceViewModel extends ChangeNotifier {
 
   List<String> get sessionOptions => const ['Autumn', 'Spring'];
 
+  /// Start instant of an academic period. For year "Y-(Y+1)": Autumn begins
+  /// Jul Y, Spring begins Jan (Y+1).
+  static DateTime _periodStart(String academicYear, String session) {
+    final startYear = int.tryParse(academicYear.split('-').first) ?? 0;
+    return session == 'Spring'
+        ? DateTime(startYear + 1, 1)
+        : DateTime(startYear, 7);
+  }
+
+  /// Whether a period has already begun. Past/current → true; a future
+  /// year/session (e.g. picking 2027-2028 today) → false, so the UI can say the
+  /// session hasn't started yet instead of scraping for data that can't exist.
+  static bool periodHasStarted(String academicYear, String session) =>
+      !_periodStart(academicYear, session).isAfter(DateTime.now());
+
   // --- progress -------------------------------------------------------------
 
   void pushLog(String step) {
@@ -258,6 +273,15 @@ class AttendanceViewModel extends ChangeNotifier {
       registrationNumber: registrationNumber,
       password: password,
     );
+    _set(AttendanceStatus.idle);
+  }
+
+  /// Return to the period picker (idle) without logging out, so a user who hit
+  /// "No attendance found" can pick a different year/session instead of
+  /// re-entering their portal credentials.
+  void chooseAnotherPeriod() {
+    errorKind = null;
+    errorMessage = null;
     _set(AttendanceStatus.idle);
   }
 

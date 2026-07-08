@@ -58,6 +58,20 @@ class AttendanceErrorState extends StatelessWidget {
                 ),
               ),
             ),
+            // "No attendance found" is usually the wrong year/session, not a
+            // real failure — let the user re-pick the period without logging
+            // out and back in.
+            if (viewModel.errorKind == ScrapeErrorKind.noData) ...[
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: viewModel.chooseAnotherPeriod,
+                icon: const Icon(Icons.event_repeat_outlined),
+                label: const Text('Change year & session'),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             AttendanceActivityLog(logs: viewModel.logs),
           ],
