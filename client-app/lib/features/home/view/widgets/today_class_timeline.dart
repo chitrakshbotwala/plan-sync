@@ -196,6 +196,26 @@ class _ClassCard extends StatelessWidget {
               ],
             ],
           ),
+          if (entry.teacherLabel != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(Icons.person_outline_rounded, size: 14, color: accent),
+                const SizedBox(width: 3),
+                Expanded(
+                  child: Text(
+                    entry.teacherLabel!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: colorScheme.onSurfaceVariant,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ],
       ),
     );

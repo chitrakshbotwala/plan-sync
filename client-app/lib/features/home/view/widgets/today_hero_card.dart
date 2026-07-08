@@ -117,6 +117,27 @@ class TodayHeroCard extends StatelessWidget {
               ),
             ],
           ),
+          if (entry.teacherLabel != null) ...[
+            const SizedBox(height: 6),
+            Row(
+              children: [
+                Icon(
+                  Icons.person_outline_rounded,
+                  size: 16,
+                  color: colorScheme.onSurfaceVariant,
+                ),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    entry.teacherLabel!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (nextEntry != null) ...[
             const SizedBox(height: 10),
             Divider(color: colorScheme.outlineVariant, height: 1),
