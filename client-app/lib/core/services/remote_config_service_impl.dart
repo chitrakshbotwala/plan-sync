@@ -23,6 +23,9 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       // TODO: Remove this temporary easter egg
       // ( The Sigma Male Loading Indicator )
       'can_show_sigma_status_indicator': false,
+      // Empty by default → the attendance scraper uses the script baked into
+      // the binary. Set this in the Firebase console to hot-patch the scraper.
+      'sap_agent_script': '',
     });
 
     // Probable solution for an internal error by remote_config
@@ -68,4 +71,7 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
   bool canShowSigmaEmoji() {
     return remoteConfig.getBool('can_show_sigma_status_indicator');
   }
+
+  @override
+  String sapAgentScript() => remoteConfig.getString('sap_agent_script');
 }

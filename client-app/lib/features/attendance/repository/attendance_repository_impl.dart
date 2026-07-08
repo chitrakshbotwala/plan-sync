@@ -1,16 +1,23 @@
 import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/kiit_attendance_scraper.dart';
+import 'package:plan_sync/core/services/remote_config_service.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_repository.dart';
 
 class AttendanceRepositoryImpl implements AttendanceRepository {
   AttendanceRepositoryImpl({
     required CacheService cache,
+    RemoteConfigService? remoteConfig,
     KiitAttendanceScraper Function()? scraperFactory,
   })  : _cache = cache,
+        _remoteConfig = remoteConfig,
         _scraperFactory = scraperFactory ?? KiitAttendanceScraper.new;
 
   final CacheService _cache;
+
+  /// Serves the Remote Config scraper script. Optional so tests (which inject a
+  /// fake scraper) can omit it; when null the scraper uses its baked-in script.
+  final RemoteConfigService? _remoteConfig;
 
   /// Builds the scraper used by [fetch]. Injectable so tests can supply a fake
   /// that returns canned results instead of launching a headless WebView.
@@ -46,6 +53,8 @@ class AttendanceRepositoryImpl implements AttendanceRepository {
     required void Function(String step) onLog,
   }) async {
     final scraper = _scraperFactory();
+    // Hot-patchable script from Remote Config; blank/unset → baked-in fallback.
+    scraper.scriptOverride = _remoteConfig?.sapAgentScript();
     final fetched = await scraper.scrape(
       username: registrationNumber,
       password: password,

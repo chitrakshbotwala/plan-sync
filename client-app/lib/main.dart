@@ -186,8 +186,10 @@ class AppProvider extends StatelessWidget {
           create: (_) => AttendanceCredentialsRepositoryImpl(),
         ),
         Provider<AttendanceRepository>(
-          create: (context) =>
-              AttendanceRepositoryImpl(cache: context.read<CacheService>()),
+          create: (context) => AttendanceRepositoryImpl(
+            cache: context.read<CacheService>(),
+            remoteConfig: context.read<RemoteConfigService>(),
+          ),
         ),
         ChangeNotifierProvider<AttendanceViewModel>(
           create: (context) => AttendanceViewModel(
