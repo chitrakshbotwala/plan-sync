@@ -141,9 +141,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    expect(find.text('Attendance'), findsOneWidget);
+    await tester.tap(find.text('Load attendance'));
+    await tester.pumpAndSettle();
+
     expect(find.text('Mathematics'), findsOneWidget);
     expect(find.byIcon(Icons.logout_rounded), findsOneWidget);
+    expect(find.byType(RefreshIndicator), findsOneWidget);
   });
 
   testWidgets('portal error shows the error state with retry', (tester) async {
@@ -157,6 +160,9 @@ void main() {
         ),
       ),
     );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Load attendance'));
     await tester.pumpAndSettle();
 
     expect(find.text('Portal unavailable'), findsOneWidget);
@@ -178,6 +184,9 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Load attendance'));
+    await tester.pumpAndSettle();
+
     // invalidCredentials -> creds cleared -> needsCredentials, not error state.
     expect(find.text('Track your attendance'), findsOneWidget);
     expect(find.text('Try again'), findsNothing);
@@ -195,13 +204,12 @@ void main() {
       ),
     );
     await tester.pump(); // post-frame ensureLoaded -> refresh
+    await tester.tap(find.text('Load attendance'));
     await tester.pump(); // loading frame
 
-    expect(
-      find.text('This can take up to a minute on the KIIT portal.'),
-      findsOneWidget,
-    );
-    expect(find.text('Opening the KIIT portal…'), findsOneWidget);
+    expect(find.text('Signing in'), findsOneWidget);
+    expect(find.text('This can take up to a minute on the KIIT portal.'),
+        findsOneWidget);
 
     await tester.pumpAndSettle(); // resolve the delayed scrape
     expect(find.text('Mathematics'), findsOneWidget);
@@ -215,7 +223,9 @@ void main() {
       scraperFactory: () => _FakeScraper(result: _result()),
     );
     await tester.pumpAndSettle();
-    expect(find.text('Mathematics'), findsOneWidget);
+    await tester.tap(find.text('Load attendance'));
+    await tester.pumpAndSettle();
+    expect(find.byType(RefreshIndicator), findsOneWidget);
 
     // Appbar logout -> confirmation dialog -> Log out -> disconnect.
     await tester.tap(find.byIcon(Icons.logout_rounded));

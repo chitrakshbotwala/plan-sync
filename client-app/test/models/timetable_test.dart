@@ -28,7 +28,12 @@ Map<String, dynamic> _sampleJson({bool isTimetableUpdating = false}) => {
 void main() {
   group('ScheduleEntry', () {
     test('fromJson → toJson round-trip', () {
-      final json = {'time': '08:00 - 09:00', 'subject': 'Math', 'room': '301'};
+      final json = {
+        'time': '08:00 - 09:00',
+        'subject': 'Math',
+        'room': '301',
+        'teacher': ['Dr. ABV'],
+      };
       final entry = ScheduleEntry.fromJson(json);
       expect(entry.time, '08:00 - 09:00');
       expect(entry.subject, 'Math');
@@ -45,7 +50,8 @@ void main() {
   });
 
   group('TimetableMeta', () {
-    test('fromJson → toJson round-trip including effective-date key mapping', () {
+    test('fromJson → toJson round-trip including effective-date key mapping',
+        () {
       final json = {
         'section': 'b16',
         'type': 'norm-class',
@@ -109,7 +115,8 @@ void main() {
     });
 
     test('isTimetableUpdating flag survives round-trip', () {
-      final t = Timetable.fromJson(json: _sampleJson(isTimetableUpdating: true));
+      final t =
+          Timetable.fromJson(json: _sampleJson(isTimetableUpdating: true));
       expect(t.meta.isTimetableUpdating, isTrue);
     });
   });

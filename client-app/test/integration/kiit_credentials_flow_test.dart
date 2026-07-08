@@ -117,8 +117,7 @@ void main() {
   testWidgets('renders the credentials form', (tester) async {
     await openSheet(tester);
 
-    expect(find.text('Connect KIIT Portal'), findsOneWidget);
-    expect(find.text('Connect & fetch attendance'), findsOneWidget);
+    expect(find.text('Connect KIIT Portal'), findsNWidgets(2));
     expect(find.byType(TextFormField), findsNWidgets(2));
   });
 
@@ -126,7 +125,7 @@ void main() {
       (tester) async {
     await openSheet(tester);
 
-    await tester.tap(find.text('Connect & fetch attendance'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Connect KIIT Portal'));
     await tester.pumpAndSettle();
 
     expect(find.text('Enter your roll number'), findsOneWidget);
@@ -150,7 +149,7 @@ void main() {
 
     await tester.enterText(find.byType(TextFormField).first, '2205999');
     await tester.enterText(find.byType(TextFormField).last, 'hunter2');
-    await tester.tap(find.text('Connect & fetch attendance'));
+    await tester.tap(find.widgetWithText(ElevatedButton, 'Connect KIIT Portal'));
     await tester.pumpAndSettle();
 
     // Sheet popped.
