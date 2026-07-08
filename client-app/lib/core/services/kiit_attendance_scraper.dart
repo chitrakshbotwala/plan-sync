@@ -615,8 +615,9 @@ class KiitAttendanceScraper {
 
   // The injected agent. RAW string so JS regex backslashes survive; the two
   // config literals are substituted in (they are constants, not secrets —
-  // credentials are passed separately via __kiitFillLogin at runtime).
-  // Prefers the Remote Config script when present, else the baked-in template.
+  // credentials are entered by the inline login probe, never baked into this
+  // script). Prefers the Remote Config script when present, else the baked-in
+  // template.
   String _agentJs(String year, String session) {
     final override = scriptOverride?.trim();
     final template = (override != null && override.isNotEmpty)
@@ -678,38 +679,8 @@ const String _agentTemplate = r'''
       }
     });
 
-    // Fill + submit the SAP logon form (same origin as the main frame).
-    window.__kiitFillLogin = function (u, p) {
-      try {
-        var uf = document.querySelector('#logonuidfield');
-        var pf = document.querySelector('#logonpassfield');
-        if (!uf || !pf) { clog('Login fields (#logonuidfield/#logonpassfield) not found.'); return 'no_form'; }
-        uf.value = u; pf.value = p;
-        clog('Filled username + password fields; submitting the logon form.');
-        uf.dispatchEvent(new Event('input', { bubbles: true }));
-        pf.dispatchEvent(new Event('input', { bubbles: true }));
-        pf.dispatchEvent(new Event('change', { bubbles: true }));
-        var btn = document.querySelector('input[type=submit]') ||
-                  document.querySelector('#logonSubmit');
-        var form = document.querySelector('#logonForm') ||
-                   document.querySelector('#certLogonForm') ||
-                   document.querySelector('form[name="certLogonForm"]') ||
-                   document.querySelector('form');
-        if (btn) { btn.click(); }
-        else if (form && form.submit) { form.submit(); }
-        else { pf.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', keyCode: 13, which: 13, bubbles: true })); }
-        return 'submitted';
-      } catch (e) { return 'err'; }
-    };
-
-    // Report the login page state back to Dart on every onLoadStop.
-    window.__kiitLoginState = function () {
-      var hasForm = !!document.querySelector('#logonpassfield');
-      var body = document.body ? (document.body.innerText || '') : '';
-      var err = hasForm && /logon failed|authentication failed|invalid|incorrect|not authorized|wrong user|user is locked|failed to/i.test(body);
-      var is500 = !hasForm && /Internal Server Error|WebApplicationException|Application error occurred/i.test(body);
-      return JSON.stringify({ hasForm: hasForm, err: err, is500: is500 });
-    };
+    // (Login is driven from Dart via an inline probe — see _loginProbeJs — so
+    // no login helper is installed here; this frame only handles navigation.)
 
     // Collect every same-origin document (cross-origin frames throw -> skipped).
     function allDocs() {
