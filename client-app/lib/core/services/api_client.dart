@@ -11,7 +11,12 @@ class ApiClient {
   late final String branch;
 
   ApiClient() {
-    branch = kReleaseMode ? 'main' : 'dev';
+    // Timetable/section data (sections.json, per-section schedules) is served
+    // from the GitLab data repo's `main` branch — that's where the live years
+    // live (e.g. 2026-2027). Read `main` in every build so debug runs see the
+    // same data as release instead of a stale `dev` snapshot missing newer
+    // years.
+    branch = 'main';
     dio = Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 15),
