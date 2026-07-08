@@ -1,5 +1,6 @@
 import 'dart:convert';
 
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
 import 'package:plan_sync/features/home/today_schedule.dart';
@@ -27,17 +28,28 @@ class HomeWidgetService {
   static Future<void> _save(String key, Map<String, dynamic> data) async {
     try {
       await HomeWidget.saveWidgetData<String>(key, jsonEncode(data));
-    } catch (e) {
-      if (kDebugMode) debugPrint('[home_widget] save $key failed: $e');
+    } catch (e, st) {
+      _report(e, st, 'home widget save ($key) failed');
     }
   }
 
   static Future<void> _update(String qualifiedName) async {
     try {
       await HomeWidget.updateWidget(qualifiedAndroidName: qualifiedName);
-    } catch (e) {
-      if (kDebugMode) debugPrint('[home_widget] update $qualifiedName failed: $e');
+    } catch (e, st) {
+      _report(e, st, 'home widget update ($qualifiedName) failed');
     }
+  }
+
+  /// Widget updates are best-effort: never let one surface to the user. Log in
+  /// debug and report the real error to Crashlytics in release.
+  static void _report(Object error, StackTrace stack, String reason) {
+    if (kDebugMode) {
+      debugPrint('[home_widget] $reason: $error');
+    }
+    try {
+      FirebaseCrashlytics.instance.recordError(error, stack, reason: reason);
+    } catch (_) {/* telemetry must never throw */}
   }
 
   static String _meta(ScheduleEntry e) =>
