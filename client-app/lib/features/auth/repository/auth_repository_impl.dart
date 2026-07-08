@@ -27,7 +27,8 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final googleUser = await GoogleSignIn(
         scopes: ['profile', 'email'],
-        clientId: dotenv.env['WEB_FIREBASE_OPTIONS_CLIENT_ID'],
+        serverClientId: dotenv.env['GOOGLE_SIGN_IN_SERVER_CLIENT_ID'] ??
+            dotenv.env['WEB_FIREBASE_OPTIONS_CLIENT_ID']
       ).signIn();
 
       final googleAuth = await googleUser?.authentication;
