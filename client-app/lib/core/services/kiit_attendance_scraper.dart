@@ -385,8 +385,11 @@ class KiitAttendanceScraper {
     }).toList();
   }
 
-  /// Maps raw grid rows to records using the header labels to identify columns,
-  /// falling back to value-shape inference for any row the headers don't cover.
+  /// Maps raw grid rows to records. The numeric columns are decoded by the KIIT
+  /// invariant (total classes = present + absent, percentage = present/total),
+  /// which is exact even when every count renders as "xx.00" and does not
+  /// depend on matching the numeric header labels. Header labels are used only
+  /// to pick the subject / faculty-name / excuses text columns.
   static List<AttendanceRecord> _recordsFromGrid(
     List<String> headers,
     List<List<String>> rows,
@@ -400,114 +403,44 @@ class KiitAttendanceScraper {
       return -1;
     }
 
-    final pctNot = RegExp(r'percent|%');
-    final subjectI = col(RegExp(r'subject|course|paper'));
-    final pctI = col(RegExp(r'percent|%'));
-    final presentI = col(RegExp(r'present|attend'), not: pctNot);
-    final absentI = col(RegExp(r'absent'));
-    final daysI =
-        col(RegExp(r'day|classes|conducted|held|total\s*no'), not: pctNot);
-    final facIdI = col(RegExp(r'fac.*id|faculty.*id|teacher.*id'));
+    final subjectI = col(RegExp(r'subject|course|paper'), not: RegExp(r'fac'));
     final facNameI = col(RegExp(r'fac.*name|faculty.*name|teacher.*name'));
     final excI = col(RegExp(r'excuse'));
 
+    String at(List<String> cells, int i) =>
+        (i >= 0 && i < cells.length) ? cells[i] : '';
+
     final out = <AttendanceRecord>[];
     for (final cells in rows) {
-      final rec = _recordFromCells(
-        cells,
-        subjectI: subjectI,
-        pctI: pctI,
-        presentI: presentI,
-        absentI: absentI,
-        daysI: daysI,
-        facIdI: facIdI,
-        facNameI: facNameI,
-        excI: excI,
-      );
-      if (rec != null) out.add(rec);
+      final inf = _inferCells(cells, subjectHint: at(cells, subjectI));
+      if (inf == null) continue;
+      final excStr = at(cells, excI).split('.').first;
+      out.add(AttendanceRecord(
+        subject: inf.subject.trim(),
+        present: inf.present,
+        totalDays: inf.total,
+        absent: inf.absent,
+        percentage: inf.percentage,
+        facultyId: inf.facultyId.trim(),
+        facultyName: at(cells, facNameI).trim(),
+        excuses: int.tryParse(excStr) ?? 0,
+      ));
     }
     return out;
   }
 
-  static double? _numAt(List<String> cells, int i) {
-    if (i < 0 || i >= cells.length) return null;
-    final s = cells[i].trim();
-    return RegExp(r'^\d+(\.\d+)?$').hasMatch(s) ? double.parse(s) : null;
-  }
-
-  static AttendanceRecord? _recordFromCells(
-    List<String> cells, {
-    required int subjectI,
-    required int pctI,
-    required int presentI,
-    required int absentI,
-    required int daysI,
-    required int facIdI,
-    required int facNameI,
-    required int excI,
-  }) {
-    String at(int i) => (i >= 0 && i < cells.length) ? cells[i] : '';
-    final hasAlpha = RegExp(r'[A-Za-z]');
-
-    var subject = at(subjectI);
-    var pct = _numAt(cells, pctI);
-    var present = _numAt(cells, presentI);
-    var days = _numAt(cells, daysI);
-    final absent = _numAt(cells, absentI);
-    var facId = at(facIdI);
-    final facName = at(facNameI);
-    final exc = _numAt(cells, excI) ?? 0;
-
-    // Header mapping missing or produced nonsense for this row → infer by shape.
-    if (subject.isEmpty ||
-        !hasAlpha.hasMatch(subject) ||
-        days == null ||
-        (present == null && pct == null)) {
-      final inf = _inferCells(cells);
-      if (inf == null) return null;
-      if (subject.isEmpty || !hasAlpha.hasMatch(subject)) subject = inf.subject;
-      days ??= inf.total.toDouble();
-      pct ??= inf.percentage;
-      present ??= inf.present.toDouble();
-      if (facId.isEmpty) facId = inf.facultyId;
-    }
-
-    if (present == null && pct != null) present = (pct / 100 * days).round().toDouble();
-    if (present == null) return null;
-    if (pct == null && days > 0) pct = (present / days * 10000).round() / 100;
-    if (!hasAlpha.hasMatch(subject)) return null;
-
-    final total = days.round();
-    final pres = present.round().clamp(0, total);
-    final abs = absent != null ? absent.round().clamp(0, total) : (total - pres);
-    return AttendanceRecord(
-      subject: subject.trim(),
-      present: pres,
-      totalDays: total,
-      absent: abs,
-      percentage: pct ?? 0,
-      facultyId: facId.trim(),
-      facultyName: facName.trim(),
-      excuses: exc.round(),
-    );
-  }
-
-  /// Value-shape inference for one row when header names don't resolve it:
-  /// faculty id = 5+ digit integer, percentage = a value <= 100 with a decimal
-  /// point, total days = the largest plain integer, present = round(pct% *
-  /// days), subject = the first text cell.
-  static _InferredRow? _inferCells(List<String> cells) {
+  /// Decodes one row's cells into a record using the KIIT column invariant:
+  /// total classes = present + absent, and percentage = present / total * 100.
+  /// This is exact regardless of column order and regardless of whether counts
+  /// render as "30" or "30.00" (the percentage may also be a whole "100.00").
+  /// [subjectHint] is the header-mapped subject cell, used when it is textual.
+  static _InferredRow? _inferCells(List<String> cells, {String? subjectHint}) {
     final numRe = RegExp(r'^\d+(\.\d+)?$');
     final facRe = RegExp(r'^\d{5,}$');
     final alpha = RegExp(r'[A-Za-z]');
     var facId = '';
     final texts = <String>[];
-    // Counts (days/present/absent/excuses) — treated as numbers regardless of
-    // whether the portal renders them as "30" or "30.00".
     final nums = <double>[];
-    // Percentage: a value <= 100 with a real fractional part (e.g. 86.66). A
-    // whole-valued "30.00" is a count, not a percentage.
-    double? pct;
     for (final raw in cells) {
       final c = raw.trim();
       if (c.isEmpty) continue;
@@ -516,43 +449,103 @@ class KiitAttendanceScraper {
         continue;
       }
       if (numRe.hasMatch(c)) {
-        final v = double.parse(c);
-        if (pct == null && v <= 100 && v != v.floorToDouble()) {
-          pct = v;
-        } else {
-          nums.add(v);
-        }
+        nums.add(double.parse(c));
       } else if (alpha.hasMatch(c)) {
         texts.add(c);
       }
     }
-    final subject = texts.isNotEmpty ? texts.first : '';
-    double? total;
-    for (final v in nums) {
-      if (total == null || v > total) total = v;
-    }
-    double? present;
-    if (pct != null && total != null) {
-      present = (pct / 100 * total).roundToDouble();
-    } else if (nums.length >= 2) {
-      final s = [...nums]..sort((a, b) => b.compareTo(a));
-      total = s[0];
-      present = s[1];
-      pct = total > 0 ? (present / total * 10000).round() / 100 : 0;
-    }
-    if (subject.isEmpty ||
-        !alpha.hasMatch(subject) ||
-        total == null ||
-        present == null ||
-        !(total > 0) ||
-        pct == null) {
+    var subject = (subjectHint != null &&
+            subjectHint.trim().isNotEmpty &&
+            alpha.hasMatch(subjectHint))
+        ? subjectHint.trim()
+        : (texts.isNotEmpty ? texts.first : '');
+    if (subject.isEmpty || !alpha.hasMatch(subject) || nums.length < 3) {
       return null;
     }
+
+    // total = present + absent. Search every triple and keep the one with the
+    // largest target — the real total exceeds the individual counts, so this
+    // rejects spurious sums involving 0 / excuses / the percentage.
+    double? total, aPart, bPart;
+    for (var i = 0; i < nums.length; i++) {
+      for (var j = 0; j < nums.length; j++) {
+        if (j == i) continue;
+        for (var k = j + 1; k < nums.length; k++) {
+          if (k == i) continue;
+          if (nums[i] > 0 && (nums[j] + nums[k] - nums[i]).abs() < 0.001) {
+            if (total == null || nums[i] > total) {
+              total = nums[i];
+              aPart = nums[j];
+              bPart = nums[k];
+            }
+          }
+        }
+      }
+    }
+    if (total == null || aPart == null || bPart == null) {
+      // No present+absent=total triple (e.g. an unexpected column layout). If a
+      // clear fractional percentage exists, pair it with the largest count.
+      double? fp;
+      for (final v in nums) {
+        if (v <= 100 && v != v.floorToDouble()) {
+          fp = v;
+          break;
+        }
+      }
+      if (fp == null) return null;
+      var mx = 0.0;
+      for (final v in nums) {
+        if (v != fp && v > mx) mx = v;
+      }
+      if (mx <= 0) return null;
+      final pr = (fp / 100 * mx).round();
+      return _InferredRow(
+        subject: subject,
+        present: pr,
+        total: mx.round(),
+        absent: mx.round() - pr,
+        percentage: fp,
+        facultyId: facId,
+      );
+    }
+
+    // Orient present vs absent: the displayed percentage (a leftover value
+    // <= 100) matches present/total; if absent, fall back to the larger part.
+    final leftovers = [...nums]
+      ..remove(total)
+      ..remove(aPart)
+      ..remove(bPart);
+    var present = aPart, absent = bPart;
+    double? disp;
+    final pa = aPart / total * 100;
+    final pb = bPart / total * 100;
+    for (final v in leftovers) {
+      if (v > 100) continue;
+      if ((v - pa).abs() <= 1.0) {
+        disp = v;
+        present = aPart;
+        absent = bPart;
+        break;
+      }
+      if ((v - pb).abs() <= 1.0) {
+        disp = v;
+        present = bPart;
+        absent = aPart;
+        break;
+      }
+    }
+    if (disp == null && absent > present) {
+      final t = present;
+      present = absent;
+      absent = t;
+    }
     if (present > total) present = total;
+    final pct = disp ?? ((present / total * 10000).round() / 100);
     return _InferredRow(
       subject: subject,
       present: present.round(),
       total: total.round(),
+      absent: absent.round(),
       percentage: pct,
       facultyId: facId,
     );
@@ -641,12 +634,14 @@ class _InferredRow {
     required this.subject,
     required this.present,
     required this.total,
+    required this.absent,
     required this.percentage,
     required this.facultyId,
   });
   final String subject;
   final int present;
   final int total;
+  final int absent;
   final double percentage;
   final String facultyId;
 }
