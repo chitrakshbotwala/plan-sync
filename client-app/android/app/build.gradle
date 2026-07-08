@@ -74,7 +74,11 @@ android {
     
     buildTypes {
         release {
-            signingConfig signingConfigs.release
+            // Use the real release keystore only when key.properties is present
+            // (CI / the maintainer's machine). On a fork/dev checkout without it,
+            // fall back to debug signing so `assembleRelease` still builds instead
+            // of failing with: SigningConfig "release" is missing "storeFile".
+            signingConfig keystorePropertiesFile.exists() ? signingConfigs.release : signingConfigs.debug
         }
     }
     lint {
