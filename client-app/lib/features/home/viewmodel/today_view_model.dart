@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/services/home_widget_service.dart';
 import 'package:plan_sync/core/util/enums.dart';
 import 'package:plan_sync/core/util/extensions.dart';
 import 'package:plan_sync/features/electives/viewmodel/electives_view_model.dart';
@@ -52,7 +53,14 @@ class TodayViewModel extends ChangeNotifier {
     _electives.addListener(_onSourceChanged);
     _filter.addListener(_loadHolidays);
     _loadHolidays();
-    _ticker = Timer.periodic(const Duration(minutes: 1), (_) => notifyListeners());
+    _ticker = Timer.periodic(const Duration(minutes: 1), (_) {
+      notifyListeners();
+      _syncWidget();
+    });
+    _schedule.addListener(_syncWidget);
+    _electives.addListener(_syncWidget);
+    _filter.addListener(_syncWidget);
+    _syncWidget();
   }
 
   final ScheduleViewModel _schedule;
@@ -162,6 +170,46 @@ class TodayViewModel extends ChangeNotifier {
     );
   }
 
+  // ── home-screen widget ────────────────────────────────────────────────────
+
+  /// Pushes TODAY's current/next class to the schedule widget (independent of
+  /// the in-app selected day). Fire-and-forget; failures are swallowed inside
+  /// [HomeWidgetService].
+  void _syncWidget() {
+    if (_schedule.isLoading && !_schedule.hasData) {
+      unawaited(HomeWidgetService.pushSchedule(state: 'loading'));
+      return;
+    }
+    if (!_schedule.hasData) {
+      unawaited(HomeWidgetService.pushSchedule(state: 'unconfigured'));
+      return;
+    }
+
+    final todayKey = Weekday.today().key;
+    final raw = _schedule.timetable?.data[todayKey] ?? const <ScheduleEntry>[];
+    final merged = TodaySchedule.mergeElectives(
+      chosen1: _filter.chosenElective1,
+      chosen2: _filter.chosenElective2,
+      electivesHasData: _electives.hasData,
+      electiveEntriesForDay:
+          _electives.timetable?.data[todayKey] ?? const <ScheduleEntry>[],
+      regularEntries: raw,
+    );
+    final entries = TodaySchedule.sorted(merged ?? raw);
+    if (entries.isEmpty) {
+      unawaited(HomeWidgetService.pushSchedule(state: 'empty'));
+      return;
+    }
+
+    final now = TodaySchedule.nowMinutes();
+    final current = TodaySchedule.currentEntry(entries, now);
+    unawaited(HomeWidgetService.pushSchedule(
+      state: 'data',
+      entries: entries,
+      currentIndex: current != null ? entries.indexOf(current) : -1,
+    ));
+  }
+
   @override
   void dispose() {
     _ticker?.cancel();
@@ -170,6 +218,9 @@ class TodayViewModel extends ChangeNotifier {
     _filter.removeListener(_onSourceChanged);
     _electives.removeListener(_onSourceChanged);
     _filter.removeListener(_loadHolidays);
+    _schedule.removeListener(_syncWidget);
+    _electives.removeListener(_syncWidget);
+    _filter.removeListener(_syncWidget);
     super.dispose();
   }
 }

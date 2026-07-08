@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginBottom="12dp">
+
+        <ImageView
+            android:layout_width="22dp"
+            android:layout_height="22dp"
+            android:src="@drawable/ic_launcher"
+            android:contentDescription="@string/app_name" />
+
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/schedule_heading"
+            android:textSize="15sp"
+            android:textColor="@color/widget_text_primary"
+            android:fontFamily="sans-serif-medium"
+            android:layout_marginStart="8dp" />
+
+        <TextView
+            android:id="@+id/refresh_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:gravity="center"
+            android:text="↻"
+            android:textSize="18sp"
+            android:textColor="@color/widget_accent"
+            android:contentDescription="Refresh" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/loading_state_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <ProgressBar
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:indeterminateTint="@color/widget_accent" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/loading_schedule"
+            android:textSize="13sp"
+            android:textColor="@color/widget_text_secondary"
+            android:layout_marginTop="8dp"
+            android:fontFamily="sans-serif" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/empty_state_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="🎉"
+            android:textSize="30sp"
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/no_classes_scheduled"
+            android:textSize="15sp"
+            android:textColor="@color/widget_text_primary"
+            android:fontFamily="sans-serif-medium" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/open_app_to_sync"
+            android:textSize="12sp"
+            android:textColor="@color/widget_text_secondary"
+            android:layout_marginTop="2dp"
+            android:fontFamily="sans-serif" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/configuration_required_layout"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center"
+        android:visibility="gone">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="⚙️"
+            android:textSize="30sp"
+            android:layout_marginBottom="4dp" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/configuration_required_heading"
+            android:textSize="15sp"
+            android:textColor="@color/widget_text_primary"
+            android:fontFamily="sans-serif-medium" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/configuration_required_message"
+            android:textSize="12sp"
+            android:textColor="@color/widget_text_secondary"
+            android:gravity="center"
+            android:layout_marginTop="4dp"
+            android:fontFamily="sans-serif"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/data_display_layout"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:background="@drawable/card_background_next"
+        android:padding="10dp"
+        android:visibility="gone">
+
+        <LinearLayout android:id="@+id/sched_row_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_dot_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
+            <TextView android:id="@+id/sched_name_0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/sched_meta_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/sched_row_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_dot_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
+            <TextView android:id="@+id/sched_name_1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/sched_meta_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/sched_row_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_dot_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
+            <TextView android:id="@+id/sched_name_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/sched_meta_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/sched_row_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_dot_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
+            <TextView android:id="@+id/sched_name_3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/sched_meta_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/sched_row_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_dot_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
+            <TextView android:id="@+id/sched_name_4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/sched_meta_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
+        </LinearLayout>
+        <LinearLayout android:id="@+id/sched_row_5" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
+            <TextView android:id="@+id/sched_dot_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
+            <TextView android:id="@+id/sched_name_5" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+            <TextView android:id="@+id/sched_meta_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/sched_overflow"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="11sp"
+            android:textColor="@color/widget_text_secondary"
+            android:fontFamily="sans-serif"
+            android:layout_marginTop="2dp"
+            android:visibility="gone" />
+    </LinearLayout>
+</LinearLayout>
