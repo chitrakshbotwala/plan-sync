@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
-import 'package:plan_sync/features/attendance/view/widgets/attendance_activity_log.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 
 class AttendanceErrorState extends StatelessWidget {
@@ -72,8 +71,6 @@ class AttendanceErrorState extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 16),
-            AttendanceActivityLog(logs: viewModel.logs),
           ],
         ),
       ),
