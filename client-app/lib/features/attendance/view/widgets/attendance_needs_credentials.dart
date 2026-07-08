@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
 
@@ -9,12 +10,43 @@ class AttendanceNeedsCredentials extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
+    // Shown after a failed login so the user is told why they're back here.
+    final loginFailed =
+        viewModel.errorKind == ScrapeErrorKind.invalidCredentials &&
+            (viewModel.errorMessage?.isNotEmpty ?? false);
     return Center(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            if (loginFailed) ...[
+              Container(
+                padding: const EdgeInsets.all(14),
+                decoration: BoxDecoration(
+                  color: colorScheme.errorContainer.withOpacity(0.5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: colorScheme.error.withOpacity(0.5)),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.error_outline_rounded,
+                        color: colorScheme.error, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        viewModel.errorMessage!,
+                        style: TextStyle(
+                          color: colorScheme.onSurface,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+            ],
             Icon(Icons.fact_check_outlined,
                 size: 72,
                 color: colorScheme.primary.withOpacity(0.8)),

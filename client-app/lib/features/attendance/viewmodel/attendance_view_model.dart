@@ -1,3 +1,4 @@
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
@@ -39,9 +40,26 @@ class AttendanceViewModel extends ChangeNotifier {
   /// True while a background refresh is running (data already exists on screen).
   bool isRefreshing = false;
 
-  /// Live progress lines from the scrape, newest last.
+  /// Live progress lines from the scrape, newest last. Kept for stage
+  /// derivation; not shown in the UI.
   final List<String> logs = [];
   String? currentStep;
+
+  /// Coarse progress stages shown on the loading screen.
+  static const List<String> loadingStages = [
+    'Signing in',
+    'Opening attendance',
+    'Reading your attendance',
+    'Finishing up',
+  ];
+
+  /// Index into [loadingStages] for the current scrape; advances monotonically.
+  int loadingStage = 0;
+
+  /// Generic, user-facing message for an unexpected failure (the real error is
+  /// reported to Crashlytics separately).
+  static const String _genericError =
+      'Something went wrong while fetching your attendance. Please try again.';
 
   // Currently *picked* year/session (what the dropdowns show).
   late String academicYear = currentAcademicYear();
@@ -114,12 +132,58 @@ class AttendanceViewModel extends ChangeNotifier {
 
   List<String> get sessionOptions => const ['Autumn', 'Spring'];
 
+  /// Start instant of an academic period. For year "Y-(Y+1)": Autumn begins
+  /// Jul Y, Spring begins Jan (Y+1).
+  static DateTime _periodStart(String academicYear, String session) {
+    final startYear = int.tryParse(academicYear.split('-').first) ?? 0;
+    return session == 'Spring'
+        ? DateTime(startYear + 1, 1)
+        : DateTime(startYear, 7);
+  }
+
+  /// Whether a period has already begun. Past/current → true; a future
+  /// year/session (e.g. picking 2027-2028 today) → false, so the UI can say the
+  /// session hasn't started yet instead of scraping for data that can't exist.
+  static bool periodHasStarted(String academicYear, String session) =>
+      !_periodStart(academicYear, session).isAfter(DateTime.now());
+
   // --- progress -------------------------------------------------------------
 
   void pushLog(String step) {
     currentStep = step;
     logs.add(step);
+    final s = _stageFor(step);
+    if (s > loadingStage) loadingStage = s;
     notifyListeners();
+  }
+
+  /// Maps a raw scrape log line to a coarse [loadingStages] index.
+  static int _stageFor(String message) {
+    final t = message.toLowerCase();
+    if (t.contains('got ') || t.contains('received attendance')) return 3;
+    if (t.contains('reading the attendance') ||
+        t.contains('setting filters') ||
+        t.contains('iview loaded') ||
+        t.contains('attendance form ready') ||
+        t.contains('submit') ||
+        t.contains('selected ')) {
+      return 2;
+    }
+    if (t.contains('logged in') ||
+        t.contains('navigat') ||
+        t.contains('self service') ||
+        t.contains('attendance details') ||
+        t.contains('agent injected') ||
+        t.contains('webdynpro')) {
+      return 1;
+    }
+    return 0;
+  }
+
+  void _recordError(Object error, StackTrace stack, String reason) {
+    try {
+      FirebaseCrashlytics.instance.recordError(error, stack, reason: reason);
+    } catch (_) {/* never let telemetry failures surface to the user */}
   }
 
   // --- actions --------------------------------------------------------------
@@ -162,6 +226,7 @@ class AttendanceViewModel extends ChangeNotifier {
     }
 
     logs.clear();
+    loadingStage = 0;
     currentStep = 'Starting…';
     errorKind = null;
     errorMessage = null;
@@ -189,21 +254,29 @@ class AttendanceViewModel extends ChangeNotifier {
 
       isRefreshing = false;
       _set(AttendanceStatus.success);
-    } on ScrapeException catch (e) {
+    } on ScrapeException catch (e, st) {
       // Bad credentials are no longer useful — clear them so the user is
-      // prompted to reconnect rather than silently failing forever.
+      // prompted to reconnect (and told why) rather than silently failing.
       if (e.kind == ScrapeErrorKind.invalidCredentials) {
         await _credentials.clear();
       }
       errorKind = e.kind;
-      errorMessage = e.message;
+      // Classified failures carry a friendly message; an unclassified one gets
+      // a generic message for the user and the real error goes to Crashlytics.
+      if (e.kind == ScrapeErrorKind.unknown) {
+        errorMessage = _genericError;
+        _recordError(e, st, 'attendance scrape failed');
+      } else {
+        errorMessage = e.message;
+      }
       isRefreshing = false;
       _set(e.kind == ScrapeErrorKind.invalidCredentials
           ? AttendanceStatus.needsCredentials
           : AttendanceStatus.error);
-    } catch (e) {
+    } catch (e, st) {
       errorKind = ScrapeErrorKind.unknown;
-      errorMessage = e.toString();
+      errorMessage = _genericError;
+      _recordError(e, st, 'attendance fetch failed');
       isRefreshing = false;
       _set(AttendanceStatus.error);
     }
@@ -258,6 +331,18 @@ class AttendanceViewModel extends ChangeNotifier {
       registrationNumber: registrationNumber,
       password: password,
     );
+    // Clear any prior "incorrect password" notice from a failed attempt.
+    errorKind = null;
+    errorMessage = null;
+    _set(AttendanceStatus.idle);
+  }
+
+  /// Return to the period picker (idle) without logging out, so a user who hit
+  /// "No attendance found" can pick a different year/session instead of
+  /// re-entering their portal credentials.
+  void chooseAnotherPeriod() {
+    errorKind = null;
+    errorMessage = null;
     _set(AttendanceStatus.idle);
   }
 

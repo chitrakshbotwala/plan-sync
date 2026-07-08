@@ -17,8 +17,18 @@ class AttendancePeriodPicker extends StatefulWidget {
 class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
   late String _year = widget.viewModel.academicYear;
   late String _session = widget.viewModel.session;
+  String? _error;
 
   void _load() {
+    // Block future periods (e.g. 2027-2028, or Spring of the current year
+    // before January) — there can be no attendance for a session that hasn't
+    // begun. Past/current periods pass through.
+    if (!AttendanceViewModel.periodHasStarted(_year, _session)) {
+      setState(() => _error =
+          "The $_session $_year session hasn't started yet. "
+          'Pick an earlier year or session.');
+      return;
+    }
     widget.viewModel.changeSelection(year: _year, session: _session);
     widget.viewModel.applySelection();
   }
@@ -72,7 +82,12 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
                 items: widget.viewModel.yearOptions,
                 colorScheme: colorScheme,
                 onChanged: (v) {
-                  if (v != null) setState(() => _year = v);
+                  if (v != null) {
+                    setState(() {
+                      _year = v;
+                      _error = null;
+                    });
+                  }
                 },
               ),
             ),
@@ -86,10 +101,32 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
                 items: widget.viewModel.sessionOptions,
                 colorScheme: colorScheme,
                 onChanged: (v) {
-                  if (v != null) setState(() => _session = v);
+                  if (v != null) {
+                    setState(() {
+                      _session = v;
+                      _error = null;
+                    });
+                  }
                 },
               ),
             ),
+            if (_error != null) ...[
+              const SizedBox(height: 20),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.info_outline_rounded,
+                      size: 18, color: colorScheme.error),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: TextStyle(color: colorScheme.error, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: 28),
             SizedBox(
               width: double.infinity,

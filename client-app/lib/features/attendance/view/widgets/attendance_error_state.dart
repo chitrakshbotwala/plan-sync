@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
-import 'package:plan_sync/features/attendance/view/widgets/attendance_activity_log.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 
 class AttendanceErrorState extends StatelessWidget {
@@ -58,8 +57,20 @@ class AttendanceErrorState extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            AttendanceActivityLog(logs: viewModel.logs),
+            // "No attendance found" is usually the wrong year/session, not a
+            // real failure — let the user re-pick the period without logging
+            // out and back in.
+            if (viewModel.errorKind == ScrapeErrorKind.noData) ...[
+              const SizedBox(height: 10),
+              TextButton.icon(
+                onPressed: viewModel.chooseAnotherPeriod,
+                icon: const Icon(Icons.event_repeat_outlined),
+                label: const Text('Change year & session'),
+                style: TextButton.styleFrom(
+                  foregroundColor: colorScheme.primary,
+                ),
+              ),
+            ],
           ],
         ),
       ),

@@ -20,6 +20,9 @@ enum ScrapeErrorKind {
   /// A network stall / overall timeout.
   timeout,
 
+  /// No internet connection (offline at start, or connection dropped mid-fetch).
+  networkUnavailable,
+
   /// The WebView renderer process was killed (OOM / GPU) mid-scrape.
   rendererCrashed,
 
@@ -53,6 +56,8 @@ class ScrapeException implements Exception {
         return 'No attendance found';
       case ScrapeErrorKind.timeout:
         return 'Request timed out';
+      case ScrapeErrorKind.networkUnavailable:
+        return 'No internet connection';
       case ScrapeErrorKind.rendererCrashed:
         return 'In-app browser crashed';
       case ScrapeErrorKind.unknown:

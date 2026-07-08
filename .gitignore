@@ -3,6 +3,8 @@
 /client-app/android/app/google-services.json
 /client-app/ios/firebase_app_id_file.json
 /client-app/ios/Runner/GoogleService-Info.plist
+# KIIT scraper agent script — kept local, served via Firebase Remote Config
+/client-app/sap_agent_script.js
 
 # Flutter Specific
 /client-app/build
