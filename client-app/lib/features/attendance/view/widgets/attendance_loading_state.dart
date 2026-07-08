@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:loading_animation_widget/loading_animation_widget.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 
 class AttendanceLoadingState extends StatelessWidget {
@@ -18,16 +17,9 @@ class AttendanceLoadingState extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 40),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: LoadingAnimationWidget.progressiveDots(
-                color: colorScheme.primary,
-                size: 44,
-              ),
-            ),
-            const SizedBox(height: 28),
             for (var i = 0; i < stages.length; i++)
               _StageRow(
                 label: stages[i],
@@ -37,7 +29,7 @@ class AttendanceLoadingState extends StatelessWidget {
                 isLast: i == stages.length - 1,
                 colorScheme: colorScheme,
               ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             Center(
               child: Text(
                 'This can take up to a minute on the KIIT portal.',
@@ -76,9 +68,8 @@ class _StageRow extends StatelessWidget {
     final done = state == _StageState.done;
     final active = state == _StageState.active;
 
-    final Color markColor = done || active
-        ? primary
-        : colorScheme.onSurface.withOpacity(0.25);
+    final Color markColor =
+        done || active ? primary : colorScheme.onSurface.withOpacity(0.25);
     final Color textColor = active
         ? colorScheme.onSurface
         : done

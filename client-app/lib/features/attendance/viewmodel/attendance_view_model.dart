@@ -61,6 +61,32 @@ class AttendanceViewModel extends ChangeNotifier {
   static const String _genericError =
       'Something went wrong while fetching your attendance. Please try again.';
 
+  List<String> reportDiagnosticsLines() {
+    final lines = <String>[
+      'Status          : ${status.name}',
+      'Is Refreshing   : $isRefreshing',
+      'Loading Stage   : $loadingStage',
+      'Current Step    : ${currentStep ?? '[none]'}',
+      'Error Kind      : ${errorKind?.name ?? '[none]'}',
+      'Error Message   : ${errorMessage ?? '[none]'}',
+      'Selection Dirty : $selectionDirty',
+      'Picked Year     : $academicYear',
+      'Picked Session  : $session',
+      'Applied Year    : ${_appliedYear ?? '[not loaded]'}',
+      'Applied Session : ${_appliedSession ?? '[not loaded]'}',
+    ];
+
+    if (logs.isNotEmpty) {
+      lines.add('Recent Logs:');
+      final startIndex = logs.length > 8 ? logs.length - 8 : 0;
+      for (final log in logs.sublist(startIndex)) {
+        lines.add('- $log');
+      }
+    }
+
+    return lines;
+  }
+
   // Currently *picked* year/session (what the dropdowns show).
   late String academicYear = currentAcademicYear();
   late String session = currentSession();
@@ -101,8 +127,7 @@ class AttendanceViewModel extends ChangeNotifier {
       }
     }
 
-    status =
-        result != null ? AttendanceStatus.success : AttendanceStatus.idle;
+    status = result != null ? AttendanceStatus.success : AttendanceStatus.idle;
     notifyListeners();
   }
 
