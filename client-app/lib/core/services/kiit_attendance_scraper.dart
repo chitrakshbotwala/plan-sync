@@ -336,6 +336,12 @@ class KiitAttendanceScraper {
           .map((r) => r.map((c) => (c ?? '').toString().trim()).toList())
           .toList();
       records = _recordsFromGrid(headers, rows);
+      if (kDebugMode && records.isEmpty && rows.isNotEmpty) {
+        // The agent captured rows but none mapped to a record — dump the actual
+        // headers + first row so the column layout can be matched exactly.
+        debugPrint('[scrape] EMPTY PARSE — headers=$headers');
+        debugPrint('[scrape] EMPTY PARSE — row0=${rows.first}');
+      }
     } else {
       records = _recordsFromLegacy((map['records'] as List?) ?? const []);
     }
@@ -491,46 +497,45 @@ class KiitAttendanceScraper {
   /// point, total days = the largest plain integer, present = round(pct% *
   /// days), subject = the first text cell.
   static _InferredRow? _inferCells(List<String> cells) {
-    final decRe = RegExp(r'^\d+\.\d+$');
-    final intRe = RegExp(r'^\d+$');
+    final numRe = RegExp(r'^\d+(\.\d+)?$');
     final facRe = RegExp(r'^\d{5,}$');
     final alpha = RegExp(r'[A-Za-z]');
     var facId = '';
     final texts = <String>[];
-    final ints = <double>[];
-    final decs = <double>[];
+    // Counts (days/present/absent/excuses) — treated as numbers regardless of
+    // whether the portal renders them as "30" or "30.00".
+    final nums = <double>[];
+    // Percentage: a value <= 100 with a real fractional part (e.g. 86.66). A
+    // whole-valued "30.00" is a count, not a percentage.
+    double? pct;
     for (final raw in cells) {
       final c = raw.trim();
       if (c.isEmpty) continue;
-      if (facRe.hasMatch(c)) {
+      if (facRe.hasMatch(c) && !c.contains('.')) {
         if (facId.isEmpty) facId = c;
         continue;
       }
-      if (decRe.hasMatch(c)) {
-        decs.add(double.parse(c));
-      } else if (intRe.hasMatch(c)) {
-        ints.add(double.parse(c));
+      if (numRe.hasMatch(c)) {
+        final v = double.parse(c);
+        if (pct == null && v <= 100 && v != v.floorToDouble()) {
+          pct = v;
+        } else {
+          nums.add(v);
+        }
       } else if (alpha.hasMatch(c)) {
         texts.add(c);
       }
     }
     final subject = texts.isNotEmpty ? texts.first : '';
-    double? pct;
-    for (final d in decs) {
-      if (d <= 100) {
-        pct = d;
-        break;
-      }
-    }
     double? total;
-    for (final v in ints) {
+    for (final v in nums) {
       if (total == null || v > total) total = v;
     }
     double? present;
     if (pct != null && total != null) {
       present = (pct / 100 * total).roundToDouble();
-    } else if (ints.length >= 2) {
-      final s = [...ints]..sort((a, b) => b.compareTo(a));
+    } else if (nums.length >= 2) {
+      final s = [...nums]..sort((a, b) => b.compareTo(a));
       total = s[0];
       present = s[1];
       pct = total > 0 ? (present / total * 10000).round() / 100 : 0;
