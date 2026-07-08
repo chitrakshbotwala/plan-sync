@@ -95,6 +95,7 @@ class TodaySchedule {
           subject: scheme.subject,
           room: scheme.room ?? entry.room,
           time: entry.time ?? scheme.time,
+          teacher: scheme.teacher ?? entry.teacher,
         ));
       } else {
         result.add(entry);

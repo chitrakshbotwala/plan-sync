@@ -3,10 +3,15 @@ class ScheduleEntry {
   final String? room;
   final String? time;
 
+  /// Faculty for the class. The timetable JSON carries this as `teacher` — a
+  /// list of names (occasionally a single string, or absent on older data).
+  final List<String>? teacher;
+
   ScheduleEntry({
     this.subject,
     this.room,
     this.time,
+    this.teacher,
   });
 
   factory ScheduleEntry.fromJson(Map<String, dynamic> json) {
@@ -14,14 +19,32 @@ class ScheduleEntry {
       subject: json['subject'],
       room: json['room'],
       time: json['time'],
+      teacher: _parseTeacher(json['teacher']),
     );
   }
+
+  static List<String>? _parseTeacher(dynamic raw) {
+    if (raw is List) {
+      final names = raw
+          .map((e) => e.toString().trim())
+          .where((e) => e.isNotEmpty)
+          .toList();
+      return names.isEmpty ? null : names;
+    }
+    if (raw is String && raw.trim().isNotEmpty) return [raw.trim()];
+    return null;
+  }
+
+  /// Faculty names joined for display, or null when none are listed.
+  String? get teacherLabel =>
+      (teacher == null || teacher!.isEmpty) ? null : teacher!.join(', ');
 
   Map<String, dynamic> toJson() {
     return {
       'subject': subject,
       'room': room,
       'time': time,
+      'teacher': teacher,
     };
   }
 }
