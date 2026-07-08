@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 
 class AttendanceErrorState extends StatelessWidget {
   const AttendanceErrorState({super.key, required this.viewModel});
@@ -50,8 +51,8 @@ class AttendanceErrorState extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.primary,
                 foregroundColor: colorScheme.onPrimary,
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -71,6 +72,16 @@ class AttendanceErrorState extends StatelessWidget {
                 ),
               ),
             ],
+            const SizedBox(height: 10),
+            TextButton.icon(
+              onPressed: () =>
+                  PopupsWrapper.reportAttendanceIssue(context: context),
+              icon: const Icon(Icons.mail_outline_rounded),
+              label: const Text('Report issue'),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.error,
+              ),
+            ),
           ],
         ),
       ),

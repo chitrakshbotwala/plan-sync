@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 import 'package:share_plus/share_plus.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'enums.dart';
 
 class ExternalLinks {
@@ -75,6 +77,98 @@ Best regards,
 
     final subject = Uri.encodeComponent("[Schedule Error Report] - Plan Sync");
     final email = Uri.encodeComponent("connect@plansync.in");
+    await _launchUrl(
+      'mailto:$email?subject=$subject&body=${Uri.encodeComponent(body)}',
+    );
+  }
+
+  static Future<void> reportAttendanceIssueViaMail({
+    String? academicYear,
+    String? semester,
+    String? section,
+    List<String> debugInfoLines = const [],
+  }) async {
+    final packageInfo = await PackageInfo.fromPlatform();
+    final deviceInfo = DeviceInfoPlugin();
+
+    String platformLabel = Platform.operatingSystem;
+    String platformVersionLabel = Platform.operatingSystemVersion;
+    String deviceLabel = 'Unknown device';
+
+    if (Platform.isAndroid) {
+      final androidInfo = await deviceInfo.androidInfo;
+      platformLabel = 'Android';
+      final androidVersion = androidInfo.version.release.trim();
+      platformVersionLabel = androidVersion.isEmpty || androidVersion == 'null'
+          ? 'Unknown'
+          : androidVersion;
+      final manufacturer = androidInfo.manufacturer.trim();
+      final model = androidInfo.model.trim();
+      deviceLabel =
+          [manufacturer, model].where((part) => part.isNotEmpty).join(' ');
+      if (deviceLabel.isEmpty) {
+        deviceLabel = 'Unknown device';
+      }
+    } else if (Platform.isIOS) {
+      final iosInfo = await deviceInfo.iosInfo;
+      platformLabel = 'iOS';
+      platformVersionLabel = iosInfo.systemVersion.trim().isEmpty
+          ? 'Unknown'
+          : iosInfo.systemVersion.trim();
+      final name = iosInfo.name.trim();
+      final model = iosInfo.model.trim();
+      deviceLabel = [name, model].where((part) => part.isNotEmpty).join(' ');
+      if (deviceLabel.isEmpty) {
+        deviceLabel = 'Unknown device';
+      }
+    }
+
+    final sanitizedDebugInfo = _sanitizeDebugLines(debugInfoLines);
+    final timestamp = DateTime.now().toLocal().toString().split('.').first;
+    final body = '''Please describe the issue below.
+
+What were you trying to do?
+
+
+What happened instead?
+
+
+Does this happen every time?
+(Always / Sometimes / Once)
+
+
+Steps to reproduce:
+
+
+----------------------------------------
+Automatically collected information
+----------------------------------------
+
+Academic Year : ${academicYear ?? '[Not provided]'}
+Semester      : ${semester ?? '[Not provided]'}
+Section       : ${section ?? '[Not provided]'}
+
+Attendance Source : KIIT SAP Portal
+
+App Version   : ${packageInfo.version}
+Build Number  : ${packageInfo.buildNumber}
+
+Platform      : $platformLabel
+${Platform.isAndroid ? 'Android       : $platformVersionLabel' : Platform.isIOS ? 'iOS           : $platformVersionLabel' : '$platformLabel Version : $platformVersionLabel'}
+Device        : $deviceLabel
+
+Timestamp      : $timestamp
+
+Additional Debug Info:
+${sanitizedDebugInfo.isEmpty ? '<optional>' : sanitizedDebugInfo}
+
+----------------------------------------
+
+Note:
+This report does NOT include your SAP username or password.''';
+
+    final subject = Uri.encodeComponent('Attendance Tracker Bug Report');
+    final email = Uri.encodeComponent('connect@plansync.in');
     await _launchUrl(
       'mailto:$email?subject=$subject&body=${Uri.encodeComponent(body)}',
     );
@@ -166,5 +260,31 @@ Best regards,
     if (!await launchUrl(Uri.parse(url))) {
       throw Exception('Could not launch $url');
     }
+  }
+
+  static String _sanitizeDebugLines(List<String> debugInfoLines) {
+    final sanitized = debugInfoLines
+        .map((line) => _sanitizeDebugLine(line))
+        .where((line) => line.trim().isNotEmpty)
+        .toList();
+    return sanitized.join('\n');
+  }
+
+  static String _sanitizeDebugLine(String line) {
+    final sensitivePattern = RegExp(
+      r'(password|passwd|token|cookie|auth|bearer|sessionid|session-id|jwt|authorization)',
+      caseSensitive: false,
+    );
+    if (!sensitivePattern.hasMatch(line)) return line;
+
+    final separators = ['=', ':'];
+    for (final separator in separators) {
+      final index = line.indexOf(separator);
+      if (index != -1) {
+        return '${line.substring(0, index + 1)} [REDACTED]';
+      }
+    }
+
+    return '[REDACTED]';
   }
 }

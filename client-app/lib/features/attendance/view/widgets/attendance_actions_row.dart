@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 
 class AttendanceActionsRow extends StatelessWidget {
   const AttendanceActionsRow({super.key, required this.viewModel});
@@ -35,10 +36,10 @@ class AttendanceActionsRow extends StatelessWidget {
         const SizedBox(width: 8),
         _PillButton(
           icon: FontAwesomeIcons.flag,
-          label: 'Report',
+          label: 'Report issue',
           color: colorScheme.error,
           iconSize: 13,
-          onTap: () => BottomSheets.reportError(context: context),
+          onTap: () => PopupsWrapper.reportAttendanceIssue(context: context),
         ),
       ],
     );

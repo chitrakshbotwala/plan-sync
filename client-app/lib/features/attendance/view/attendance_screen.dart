@@ -77,8 +77,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
                   IconButton(
                     tooltip: 'Log out of KIIT portal',
                     onPressed: () => _logoutSap(context, viewModel),
-                    icon:
-                        Icon(Icons.logout_rounded, color: colorScheme.error),
+                    icon: Icon(Icons.logout_rounded, color: colorScheme.error),
                   ),
                 ],
               );
@@ -109,8 +108,7 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         content: Text(
           'Your saved registration number and password will be removed '
           'from this device.',
-          style: TextStyle(
-              color: colorScheme.onSurface.withValues(alpha: 0.7)),
+          style: TextStyle(color: colorScheme.onSurface.withValues(alpha: 0.7)),
         ),
         actions: [
           TextButton(

@@ -3,6 +3,7 @@ import 'package:plan_sync/core/util/enums.dart';
 import 'package:plan_sync/features/schedule/view/widgets/schedule_preference.dart';
 import 'package:plan_sync/features/settings/view/widgets/delete_account_popup.dart';
 import 'package:plan_sync/widgets/popups/inapp_upate_failed_popup.dart';
+import 'package:plan_sync/widgets/popups/report_attendance_issue_popup.dart';
 import 'package:plan_sync/widgets/popups/report_error_mail_popup.dart';
 import 'package:plan_sync/features/settings/view/widgets/request_features_popup.dart';
 
@@ -19,6 +20,18 @@ class PopupsWrapper {
         autoFill: autoFill,
         scheduleType: scheduleType,
       ),
+      barrierDismissible: true,
+      barrierColor: colorScheme.onSurface.withOpacity(0.32),
+    );
+  }
+
+  static void reportAttendanceIssue({
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showAdaptiveDialog(
+      context: context,
+      builder: (context) => const ReportAttendanceIssuePopup(),
       barrierDismissible: true,
       barrierColor: colorScheme.onSurface.withOpacity(0.32),
     );
