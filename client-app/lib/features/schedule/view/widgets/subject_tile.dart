@@ -120,9 +120,10 @@ class SubjectTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (entry.teacherLabel != null) ...[
+                  if (entry.teacherLines.isNotEmpty) ...[
                     const SizedBox(height: 6),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Icon(
                           Icons.person_outline_rounded,
@@ -130,11 +131,17 @@ class SubjectTile extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Expanded(
-                          child: Text(
-                            entry.teacherLabel!,
-                            style: TextStyle(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final name in entry.teacherLines)
+                                Text(
+                                  name,
+                                  style: TextStyle(
+                                    color: colorScheme.onSurfaceVariant,
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                       ],

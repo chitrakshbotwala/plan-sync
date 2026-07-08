@@ -35,9 +35,15 @@ class ScheduleEntry {
     return null;
   }
 
-  /// Faculty names joined for display, or null when none are listed.
-  String? get teacherLabel =>
-      (teacher == null || teacher!.isEmpty) ? null : teacher!.join(', ');
+  /// Faculty lines for display, one per row: up to two names, each on its own
+  /// line, plus an "& others" line when there are more than two. Empty when no
+  /// faculty is listed.
+  List<String> get teacherLines {
+    if (teacher == null || teacher!.isEmpty) return const [];
+    final names = teacher!;
+    if (names.length <= 2) return names;
+    return [names[0], names[1], '& others'];
+  }
 
   Map<String, dynamic> toJson() {
     return {

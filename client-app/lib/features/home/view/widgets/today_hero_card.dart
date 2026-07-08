@@ -117,9 +117,10 @@ class TodayHeroCard extends StatelessWidget {
               ),
             ],
           ),
-          if (entry.teacherLabel != null) ...[
+          if (entry.teacherLines.isNotEmpty) ...[
             const SizedBox(height: 6),
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.person_outline_rounded,
@@ -128,11 +129,17 @@ class TodayHeroCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Expanded(
-                  child: Text(
-                    entry.teacherLabel!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: TextStyle(color: colorScheme.onSurfaceVariant),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      for (final name in entry.teacherLines)
+                        Text(
+                          name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: colorScheme.onSurfaceVariant),
+                        ),
+                    ],
                   ),
                 ),
               ],
