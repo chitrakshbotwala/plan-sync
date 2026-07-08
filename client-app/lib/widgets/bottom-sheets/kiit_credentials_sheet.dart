@@ -90,8 +90,13 @@ class _KiitCredentialsSheetState extends State<KiitCredentialsSheet> {
         );
 
     return Padding(
-      padding: EdgeInsets.fromLTRB(20, 8, 20, 24 + bottomInset),
-      child: Form(
+      // Keyboard inset goes on the OUTER padding so the scroll view's viewport
+      // shrinks with the keyboard; the content then scrolls instead of
+      // overflowing on short screens.
+      padding: EdgeInsets.only(bottom: bottomInset),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 8, 20, 24),
+        child: Form(
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -172,7 +177,7 @@ class _KiitCredentialsSheetState extends State<KiitCredentialsSheet> {
                 ),
                 onPressed: _connect,
                 child: Text(
-                  'Connect & fetch attendance',
+                  'Connect KIIT Portal',
                   style: TextStyle(
                     color: colorScheme.onPrimary,
                     fontSize: 16,
@@ -204,6 +209,7 @@ class _KiitCredentialsSheetState extends State<KiitCredentialsSheet> {
               ],
             ),
           ],
+        ),
         ),
       ),
     );
