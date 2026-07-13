@@ -35,7 +35,7 @@ class AttendanceActionsRow extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         _PillButton(
-          icon: FontAwesomeIcons.flag,
+          icon: FontAwesomeIcons.flag.data,
           label: 'Report issue',
           color: colorScheme.error,
           iconSize: 13,

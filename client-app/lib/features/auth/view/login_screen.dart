@@ -76,7 +76,7 @@ class LoginScreen extends StatelessWidget {
                                 'Authentication Error', vm.errorMessage!, context);
                           }
                         },
-                        icon: Icon(
+                        icon: FaIcon(
                           FontAwesomeIcons.google,
                           color: colorScheme.onPrimary,
                         ),
@@ -129,7 +129,7 @@ class LoginScreen extends StatelessWidget {
                                 'Authentication Error', vm.errorMessage!, context);
                           }
                         },
-                        icon: Icon(
+                        icon: FaIcon(
                           FontAwesomeIcons.apple,
                           color: colorScheme.onSurface,
                         ),
