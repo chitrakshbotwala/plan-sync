@@ -16,7 +16,7 @@ jobs:
         name: Set up Flutter
         with:
           channel: stable
-          flutter-version: 3.32.5
+          flutter-version: 3.44.6
           cache: true
 
       - name: Verify Flutter Version
