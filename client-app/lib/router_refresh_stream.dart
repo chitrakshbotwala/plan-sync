@@ -4,6 +4,8 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/services/notification_service.dart';
 
+final routerRefreshStream = GoRouterRefreshStream();
+
 class GoRouterRefreshStream extends ChangeNotifier {
   GoRouterRefreshStream() {
     notifyListeners();
@@ -31,4 +33,6 @@ class GoRouterRefreshStream extends ChangeNotifier {
       notifyListeners();
     });
   }
+
+  void refresh() => notifyListeners();
 }

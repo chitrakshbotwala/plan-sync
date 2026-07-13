@@ -290,7 +290,7 @@ class _MainAppState extends State<MainApp> {
 
 // GoRouter configuration
 final _router = GoRouter(
-  refreshListenable: GoRouterRefreshStream(),
+  refreshListenable: routerRefreshStream,
   redirect: (context, state) => redirectHandler(context, state),
   routes: [
     StatefulShellRoute.indexedStack(
