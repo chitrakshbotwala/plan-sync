@@ -130,8 +130,8 @@ void main() {
 
     expect(find.text('Enter your roll number'), findsOneWidget);
     expect(find.text('Enter your password'), findsOneWidget);
-    // Still open, nothing saved/scraped.
-    expect(find.text('Connect KIIT Portal'), findsOneWidget);
+    // Still open (header + button both present), nothing saved/scraped.
+    expect(find.text('Connect KIIT Portal'), findsNWidgets(2));
     expect(scraper.scrapeCalls, 0);
     expect(creds.hasCredentials, isFalse);
   });
@@ -143,7 +143,7 @@ void main() {
     expect(find.widgetWithText(TextFormField, '2205'), findsOneWidget);
   });
 
-  testWidgets('valid submit saves credentials, scrapes, and closes the sheet',
+  testWidgets('valid submit saves credentials and closes the sheet',
       (tester) async {
     await openSheet(tester);
 
@@ -154,10 +154,11 @@ void main() {
 
     // Sheet popped.
     expect(find.text('Connect KIIT Portal'), findsNothing);
-    // Credentials saved and a scrape was kicked off via connect().
+    // Credentials saved via connect(); the scrape is deferred until the user
+    // picks a year/session, so nothing is scraped here.
     expect(creds.savedReg, '2205999');
     expect(creds.savedPass, 'hunter2');
-    expect(scraper.scrapeCalls, 1);
+    expect(scraper.scrapeCalls, 0);
   });
 
   testWidgets('password visibility toggle flips the obscure icon',

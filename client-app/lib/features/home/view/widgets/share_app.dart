@@ -64,7 +64,7 @@ class ShareAppSheet extends StatelessWidget {
           ),
           // const SizedBox(height: 8),
           ListTile(
-            leading: const Icon(FontAwesomeIcons.share),
+            leading: const FaIcon(FontAwesomeIcons.share),
             title: const Text("Share via other apps"),
             trailing: const Icon(Icons.keyboard_arrow_right_rounded),
             onTap: () async {

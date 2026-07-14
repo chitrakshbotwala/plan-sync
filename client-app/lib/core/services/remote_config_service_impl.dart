@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -28,16 +29,21 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
       'sap_agent_script': '',
     });
 
-    // Probable solution for an internal error by remote_config
-    // see https://github.com/firebase/flutterfire/issues/6196#issuecomment-927751667
     try {
       await remoteConfig.activate();
-      await Future.delayed(const Duration(seconds: 1));
-      await remoteConfig.fetchAndActivate();
     } catch (exception, stack) {
       FirebaseCrashlytics.instance.recordError(exception, stack);
       Logger.w("Error activating remoteConfig.");
     }
+    unawaited(
+      remoteConfig
+          .fetchAndActivate()
+          .catchError((Object exception, StackTrace stack) {
+        FirebaseCrashlytics.instance.recordError(exception, stack);
+        Logger.w("Error fetching remoteConfig.");
+        return false;
+      }),
+    );
   }
 
   @override

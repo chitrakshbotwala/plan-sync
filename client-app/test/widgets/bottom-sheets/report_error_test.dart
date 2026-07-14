@@ -36,7 +36,7 @@ void main() {
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(FontAwesomeIcons.github), findsOneWidget);
+    expect(find.byIcon(FontAwesomeIcons.github.data), findsOneWidget);
     expect(find.text('Report via GitHub'), findsOneWidget);
   });
 }

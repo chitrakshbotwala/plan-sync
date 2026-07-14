@@ -101,7 +101,7 @@ class ReportErrorBottomSheet extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      Icon(
+                      FaIcon(
                         FontAwesomeIcons.github,
                         color: colorScheme.surface,
                       )

@@ -10,6 +10,16 @@ import 'package:plan_sync/core/util/logger.dart';
 class AuthRepositoryImpl implements AuthRepository {
   final _auth = FirebaseAuth.instance;
 
+  // google_sign_in v7 exposes a singleton that must be initialized once
+  // before any authenticate/signOut call.
+  static Future<void>? _googleInit;
+  Future<void> _ensureGoogleInitialized() {
+    return _googleInit ??= GoogleSignIn.instance.initialize(
+      serverClientId: dotenv.env['GOOGLE_SIGN_IN_SERVER_CLIENT_ID'] ??
+          dotenv.env['WEB_FIREBASE_OPTIONS_CLIENT_ID'],
+    );
+  }
+
   @override
   User? get currentUser => _auth.currentUser;
 
@@ -25,26 +35,25 @@ class AuthRepositoryImpl implements AuthRepository {
     }
 
     try {
-      final googleUser = await GoogleSignIn(
-        scopes: ['profile', 'email'],
-        serverClientId: dotenv.env['GOOGLE_SIGN_IN_SERVER_CLIENT_ID'] ??
-            dotenv.env['WEB_FIREBASE_OPTIONS_CLIENT_ID']
-      ).signIn();
-
-      final googleAuth = await googleUser?.authentication;
-      if (googleAuth == null) {
-        Logger.e('googleAuth was null, login potentially cancelled by the user');
-        throw const AuthCancelledByUser();
-      }
+      await _ensureGoogleInitialized();
+      final googleUser = await GoogleSignIn.instance.authenticate(
+        scopeHint: ['profile', 'email'],
+      );
 
       final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+        idToken: googleUser.authentication.idToken,
       );
       await FirebaseAuth.instance.signInWithCredential(credential);
       if (currentUser != null) {
         await FirebaseCrashlytics.instance.setUserIdentifier(currentUser!.uid);
       }
+    } on GoogleSignInException catch (e) {
+      if (e.code == GoogleSignInExceptionCode.canceled) {
+        Logger.e('google sign-in cancelled by the user');
+        throw const AuthCancelledByUser();
+      }
+      FirebaseCrashlytics.instance.recordError(e, StackTrace.current);
+      throw const AuthException('Team has been notified, try again later');
     } on AuthCancelledByUser {
       rethrow;
     } on FirebaseAuthException catch (e) {
@@ -82,7 +91,8 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> logout() async {
     Logger.i('logout sequence');
     await _auth.signOut();
-    await GoogleSignIn().signOut();
+    await _ensureGoogleInitialized();
+    await GoogleSignIn.instance.signOut();
     await FirebaseCrashlytics.instance.setUserIdentifier('');
   }
 

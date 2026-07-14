@@ -273,7 +273,7 @@ class SettingsPage extends StatelessWidget {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   enableFeedback: true,
-                  leading: Icon(
+                  leading: FaIcon(
                     FontAwesomeIcons.fileLines,
                     color: colorScheme.onSurface,
                   ),

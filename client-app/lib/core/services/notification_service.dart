@@ -38,7 +38,7 @@ class NotificationService {
     }
 
     await _localNotifications.initialize(
-      InitializationSettings(
+      settings: InitializationSettings(
         android: _initSettingsAndroid,
         iOS: _initSettingsDarwin,
       ),
@@ -55,10 +55,10 @@ class NotificationService {
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       Logger.i('Foreground message received: ${message.messageId}');
       _localNotifications.show(
-        message.hashCode,
-        message.notification?.title,
-        message.notification?.body,
-        const NotificationDetails(
+        id: message.hashCode,
+        title: message.notification?.title,
+        body: message.notification?.body,
+        notificationDetails: const NotificationDetails(
           android: AndroidNotificationDetails(
             'default_channel',
             'Default Channel',

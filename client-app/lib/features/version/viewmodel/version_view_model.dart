@@ -72,8 +72,6 @@ class VersionViewModel extends ChangeNotifier {
     if (!kDebugMode) {
       triggerPlayUpdate();
     }
-    // awaited so min-version flag is set before the router first renders
-    await verifyMinimumVersion();
   }
 
   void _logCurrentVersion() {
