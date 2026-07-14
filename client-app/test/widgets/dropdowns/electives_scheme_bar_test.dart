@@ -1,20 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
-import 'package:plan_sync/controllers/git_service.dart';
-import 'package:plan_sync/widgets/dropdowns/electives_scheme_bar.dart';
+import 'package:plan_sync/features/electives/view/widgets/electives_scheme_bar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import '../../mock_controllers/filter_controller_mock.dart';
-import '../../mock_controllers/git_service_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
     WidgetTester tester,
   ) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: Center(
           child: ElectiveSchemeBar(),
         ),
@@ -22,9 +16,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets(
@@ -40,15 +34,13 @@ void main() {
   testWidgets(
     'ElectiveSchemeBar loads when data is availble but not selected',
     (WidgetTester tester) async {
-      final gitController = Get.find<GitService>() as MockGitService;
-      final filterController =
-          Get.find<FilterController>() as MockFilterController;
+      final filterController = mockFilterViewModel;
 
-      filterController.activeElectiveSemester = "SEM1";
-      gitController.electiveSchemes = {
+      filterController.activeSemester = "SEM1";
+      filterController.electiveSchemes = {
         "a": "Scheme A",
         "b": "Scheme B",
-      }.obs;
+      };
 
       // initial state
       await pumpBaseWidget(tester);
@@ -60,15 +52,13 @@ void main() {
   testWidgets(
     'ElectiveSchemeBar updates data when clicked on item',
     (WidgetTester tester) async {
-      final gitController = Get.find<GitService>() as MockGitService;
-      final filterController =
-          Get.find<FilterController>() as MockFilterController;
+      final filterController = mockFilterViewModel;
 
-      filterController.activeElectiveSemester = "SEM1";
-      gitController.electiveSchemes = {
+      filterController.activeSemester = "SEM1";
+      filterController.electiveSchemes = {
         "a": "Scheme A",
         "b": "Scheme B",
-      }.obs;
+      };
 
       // initial state
       await pumpBaseWidget(tester);

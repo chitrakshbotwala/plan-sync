@@ -1,11 +1,20 @@
-import 'package:get/get.dart';
+import 'package:flutter/material.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
+import 'package:plan_sync/features/version/viewmodel/version_view_model.dart';
 
-class MockVersionController extends GetxController
-    with Mock
-    implements VersionController {
+class MockVersionViewModel extends Mock
+    with ChangeNotifier
+    implements VersionViewModel {
   bool updateResult = true;
+
+  @override
+  bool isUpdateAvailable = false;
+
+  @override
+  bool updateFailed = false;
+
+  @override
+  Future<void> onReady() async {}
 
   @override
   Future<bool> checkForUpdate() async {

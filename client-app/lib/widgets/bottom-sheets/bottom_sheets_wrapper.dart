@@ -1,30 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/widgets/bottom-sheets/contribute_schedule.dart';
-import 'package:plan_sync/widgets/bottom-sheets/elective_preference.dart';
-import 'package:plan_sync/widgets/bottom-sheets/report_error.dart';
-import 'package:plan_sync/widgets/bottom-sheets/schedule_preference.dart';
-import 'package:plan_sync/widgets/bottom-sheets/share_app.dart';
-import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
+import 'package:plan_sync/features/home/view/widgets/contribute_schedule.dart';
+import 'package:plan_sync/features/home/view/widgets/report_error.dart';
+import 'package:plan_sync/features/home/view/widgets/share_app.dart';
+import 'package:plan_sync/widgets/bottom-sheets/attendance_info_sheet.dart';
+import 'package:plan_sync/widgets/bottom-sheets/kiit_credentials_sheet.dart';
+import 'package:plan_sync/widgets/bottom-sheets/more_options_sheet.dart';
 
 class BottomSheets {
-  static changeSectionPreference({
+  /// "More" tab sheet: quick links to Settings and the Holiday List.
+  ///
+  /// Background is transparent and the sheet paints its own surface so the
+  /// theme can update live when the in-sheet theme toggle is tapped (the
+  /// modal route otherwise freezes a snapshot of the ancestor theme).
+  static void moreOptions({
     required BuildContext context,
-    bool save = false,
   }) {
-    final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
-      showDragHandle: true,
-      backgroundColor: colorScheme.surfaceContainerHighest,
-      builder: (context) => SchedulePreferenceBottomSheet(
-        save: save,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => MoreOptionsSheet(
+        onSettings: () {
+          Navigator.of(sheetContext).pop();
+          context.pushNamed('settings_screen');
+        },
+        onHolidayList: () {
+          Navigator.of(sheetContext).pop();
+          context.pushNamed('holidays_screen');
+        },
       ),
     );
   }
 
-  static reportError({
+  static void reportError({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -36,7 +45,7 @@ class BottomSheets {
     );
   }
 
-  static contributeTimeTable({
+  static void contributeTimeTable({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -48,30 +57,42 @@ class BottomSheets {
     );
   }
 
-  static changeElectiveSchemePreference({
+  /// Prompt for / update the student's KIIT portal login.
+  static void kiitCredentials({
     required BuildContext context,
-    bool save = false,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       useRootNavigator: true,
+      isScrollControlled: true,
       showDragHandle: true,
       backgroundColor: colorScheme.surfaceContainerHighest,
-      builder: (context) => ElectivePreferenceBottomSheet(
-        save: save,
+      builder: (context) => const KiitCredentialsSheet(),
+    );
+  }
+
+  /// "More info" sheet on the attendance screen.
+  static void attendanceInfo({
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showModalBottomSheet(
+      context: context,
+      useRootNavigator: true,
+      isScrollControlled: true,
+      showDragHandle: true,
+      backgroundColor: colorScheme.surfaceContainerHighest,
+      builder: (_) => AttendanceInfoSheet(
+        onChangeCredentials: () => kiitCredentials(context: context),
       ),
     );
   }
 
-  static shareAppBottomSheet({
+  static void shareAppBottomSheet({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
-    Provider.of<AnalyticsController>(
-      context,
-      listen: false,
-    ).logShareViaExternalApps();
     showModalBottomSheet(
       context: context,
       showDragHandle: true,

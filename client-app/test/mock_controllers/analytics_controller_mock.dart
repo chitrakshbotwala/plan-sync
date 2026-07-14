@@ -1,21 +1,17 @@
-import 'package:get/get.dart';
-import 'package:plan_sync/controllers/analytics_controller.dart';
-import 'package:plan_sync/controllers/auth.dart';
-import 'package:plan_sync/controllers/filter_controller.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/util/logger.dart';
+import 'package:plan_sync/core/services/analytics_service.dart';
+import 'package:plan_sync/core/util/logger.dart';
 
-import 'auth_mock.dart';
-import 'filter_controller_mock.dart';
-
-class MockAnalyticsController extends GetxController
-    with Mock
-    implements AnalyticsController {
+class MockAnalyticsService extends Mock implements AnalyticsService {
   @override
-  Auth auth = MockAuth();
+  Future<void> onReady() async {
+    Logger.i('mocking AnalyticsService.onReady');
+  }
 
   @override
-  FilterController filters = MockFilterController();
+  Future<void> setUserData() async {
+    Logger.i('mocking setUserData');
+  }
 
   @override
   void logOpenApp() {
@@ -23,7 +19,8 @@ class MockAnalyticsController extends GetxController
   }
 
   @override
-  Future<void> setUserData() async {
-    Logger.i('mocking logOpenApp');
-  }
+  void logShareSheetOpen() {}
+
+  @override
+  void logShareViaExternalApps() {}
 }

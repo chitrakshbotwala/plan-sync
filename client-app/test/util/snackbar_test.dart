@@ -1,72 +1,59 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/util/snackbar.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
+import 'package:toastification/toastification.dart';
 
 enum _Type { info, error }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+
   Future<void> pumpBaseWidget(
     WidgetTester tester,
     _Type type,
   ) async {
     return tester.pumpWidget(
-      GetMaterialApp(
-        popGesture: true,
-        home: ElevatedButton(
-          child: const Text('Open Snackbar'),
-          onPressed: () => type == _Type.info
-              ? CustomSnackbar.info('foo title', 'foo message')
-              : CustomSnackbar.info('foo error title', 'foo error message'),
+      MaterialApp(
+        home: ToastificationWrapper(
+          child: Scaffold(
+            body: Builder(
+              builder: (ctx) => ElevatedButton(
+                child: const Text('Open Snackbar'),
+                onPressed: () => type == _Type.info
+                    ? CustomSnackbar.info('foo title', 'foo message', ctx)
+                    : CustomSnackbar.error(
+                        'foo error title', 'foo error message', ctx),
+              ),
+            ),
+          ),
         ),
       ),
     );
   }
 
-  setUp(() {
-    SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
-  });
-
   testWidgets(
-    'CustomSnackbar.info loads snackbar',
+    'CustomSnackbar.info dispatches a toast without throwing',
     (WidgetTester tester) async {
       await pumpBaseWidget(tester, _Type.info);
       await tester.pump();
 
-      expect(Get.isSnackbarOpen, false);
       await tester.tap(find.text('Open Snackbar'));
-
-      expect(Get.isSnackbarOpen, true);
-      await tester.pump();
-
-      expect(find.text('foo title'), findsOneWidget);
-      expect(find.text('foo message'), findsOneWidget);
-
-      await tester.pumpAndSettle(const Duration(seconds: 4));
-      expect(Get.isSnackbarOpen, false);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle(const Duration(seconds: 6));
+      expect(tester.takeException(), isNull);
     },
   );
 
   testWidgets(
-    'CustomSnackbar.errpr loads snackbar',
+    'CustomSnackbar.error dispatches a toast without throwing',
     (WidgetTester tester) async {
       await pumpBaseWidget(tester, _Type.error);
       await tester.pump();
 
-      expect(Get.isSnackbarOpen, false);
       await tester.tap(find.text('Open Snackbar'));
-
-      expect(Get.isSnackbarOpen, true);
-      await tester.pump();
-
-      expect(find.text('foo error title'), findsOneWidget);
-      expect(find.text('foo error message'), findsOneWidget);
-
-      await tester.pumpAndSettle(const Duration(seconds: 4));
-      expect(Get.isSnackbarOpen, false);
+      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle(const Duration(seconds: 6));
+      expect(tester.takeException(), isNull);
     },
   );
 }

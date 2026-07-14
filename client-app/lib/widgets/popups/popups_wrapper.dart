@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:plan_sync/util/enums.dart';
-import 'package:plan_sync/widgets/popups/delete_account_popup.dart';
+import 'package:plan_sync/core/util/enums.dart';
+import 'package:plan_sync/features/schedule/view/widgets/schedule_preference.dart';
+import 'package:plan_sync/features/settings/view/widgets/delete_account_popup.dart';
 import 'package:plan_sync/widgets/popups/inapp_upate_failed_popup.dart';
+import 'package:plan_sync/widgets/popups/report_attendance_issue_popup.dart';
 import 'package:plan_sync/widgets/popups/report_error_mail_popup.dart';
+import 'package:plan_sync/features/settings/view/widgets/request_features_popup.dart';
 
 class PopupsWrapper {
   static void reportError({
@@ -22,7 +25,19 @@ class PopupsWrapper {
     );
   }
 
-  static deleteAccount({
+  static void reportAttendanceIssue({
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showAdaptiveDialog(
+      context: context,
+      builder: (context) => const ReportAttendanceIssuePopup(),
+      barrierDismissible: true,
+      barrierColor: colorScheme.onSurface.withOpacity(0.32),
+    );
+  }
+
+  static void deleteAccount({
     required BuildContext context,
   }) {
     final colorScheme = Theme.of(context).colorScheme;
@@ -34,6 +49,18 @@ class PopupsWrapper {
     );
   }
 
+  static void requestFeature({
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showAdaptiveDialog(
+      context: context,
+      builder: (context) => const RequestFeaturesPopup(),
+      barrierDismissible: true,
+      barrierColor: colorScheme.onSurface.withOpacity(0.32),
+    );
+  }
+
   static void showInAppUpateFailedPopup({
     required BuildContext context,
   }) {
@@ -41,6 +68,19 @@ class PopupsWrapper {
       context: context,
       builder: (context) => const InAppUpateFailedPopup(),
       barrierDismissible: true,
+    );
+  }
+
+  static void changeSectionPreference({
+    required BuildContext context,
+  }) {
+    final colorScheme = Theme.of(context).colorScheme;
+    showDialog(
+      context: context,
+      useRootNavigator: true,
+      barrierDismissible: true,
+      barrierColor: colorScheme.onSurface.withValues(alpha: 0.32),
+      builder: (_) => const SchedulePreferenceDialog(),
     );
   }
 }

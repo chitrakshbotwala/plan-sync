@@ -1,17 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:get/get.dart';
-import 'package:plan_sync/controllers/version_controller.dart';
-import 'package:plan_sync/widgets/version_check.dart';
+import 'package:plan_sync/features/home/view/widgets/version_check.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../main.dart';
-import '../mock_controllers/version_controller_mock.dart';
 
 void main() {
   Future<void> pumpBaseWidget(WidgetTester tester) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: Center(
           child: VersionCheckWidget(),
         ),
@@ -19,15 +15,14 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('VersionCheckWidget renders when update is available',
       (WidgetTester tester) async {
-    final controller = Get.find<VersionController>() as MockVersionController;
-    controller.updateResult = true;
+    mockVersionViewModel.updateResult = true;
 
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
@@ -43,8 +38,7 @@ void main() {
   testWidgets(
       'VersionCheckWidget does not renders when update is not available',
       skip: true, (WidgetTester tester) async {
-    final controller = Get.find<VersionController>() as MockVersionController;
-    controller.updateResult = false;
+    mockVersionViewModel.updateResult = false;
 
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();

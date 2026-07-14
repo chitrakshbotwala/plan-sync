@@ -1,14 +1,16 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_auth_mocks/firebase_auth_mocks.dart';
-import 'package:get/get.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/auth.dart';
+import 'package:plan_sync/features/auth/repository/auth_repository.dart';
 
-class MockAuth extends GetxController with Mock implements Auth {
+class MockAuth extends Mock implements AuthRepository {
   MockFirebaseAuth _auth = MockFirebaseAuth();
 
   @override
-  User? get activeUser => _auth.currentUser;
+  User? get currentUser => _auth.currentUser;
+
+  @override
+  Stream<User?> authStateChanges() => _auth.authStateChanges();
 
   @override
   Future<void> loginWithGoogle() async {
@@ -19,12 +21,16 @@ class MockAuth extends GetxController with Mock implements Auth {
       displayName: 'MockUser',
     );
     _auth = MockFirebaseAuth(mockUser: user, signedIn: true);
-    return;
   }
+
+  @override
+  Future<void> loginWithApple() async {}
 
   @override
   Future<void> logout() async {
     await _auth.signOut();
-    return;
   }
+
+  @override
+  Future<void> deleteCurrentUser() async {}
 }

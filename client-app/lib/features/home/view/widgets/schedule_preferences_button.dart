@@ -1,0 +1,63 @@
+import 'package:flutter/material.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/core/services/theme_service.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
+import 'package:provider/provider.dart';
+
+/// Usually on the home screen used to select
+/// required time table.
+class SchedulePreferenceButton extends StatefulWidget {
+  const SchedulePreferenceButton({super.key});
+
+  @override
+  State<SchedulePreferenceButton> createState() =>
+      _SchedulePreferenceButtonState();
+}
+
+class _SchedulePreferenceButtonState extends State<SchedulePreferenceButton> {
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final appTheme = Provider.of<ThemeService>(context, listen: false);
+
+    return ElevatedButton(
+      onPressed: () => PopupsWrapper.changeSectionPreference(
+        context: context,
+      ),
+      style: ButtonStyle(
+        backgroundColor: appTheme.isDarkMode
+            ? WidgetStatePropertyAll(colorScheme.primary)
+            : WidgetStatePropertyAll(colorScheme.onSurface),
+      ),
+      child: Row(
+        children: [
+          Selector<FilterViewModel, String?>(
+            builder: (ctx, shortCodee, child) {
+              return Text(
+                shortCodee ?? 'Processing',
+                style: TextStyle(
+                  color: appTheme.isDarkMode
+                      ? colorScheme.onPrimary
+                      : colorScheme.surface,
+                ),
+              );
+            },
+            selector: (context, controller) => controller.getShortCode(),
+          ),
+          const SizedBox(width: 8),
+          Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: appTheme.isDarkMode
+                ? colorScheme.onPrimary
+                : colorScheme.surface,
+          ),
+        ],
+      ),
+    );
+  }
+}

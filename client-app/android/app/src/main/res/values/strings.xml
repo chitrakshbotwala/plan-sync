@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Plan Sync</string>
+
+    <!-- Schedule widget -->
+    <string name="schedule_heading">Today\'s Schedule</string>
+    <string name="loading_schedule">Loading schedule…</string>
+    <string name="no_classes_scheduled">No classes today</string>
+    <string name="open_app_to_sync">Open Plan Sync to sync your schedule.</string>
+    <string name="current_label">Now</string>
+    <string name="next_label">Up next</string>
+    <string name="subject_details_placeholder">Subject · Room · Time</string>
+    <string name="configuration_required_heading">Not set up yet</string>
+    <string name="configuration_required_message">Open Plan Sync and pick your section to see your schedule here.</string>
+</resources>

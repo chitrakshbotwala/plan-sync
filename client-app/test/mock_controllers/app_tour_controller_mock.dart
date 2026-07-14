@@ -1,39 +1,32 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:get/get.dart';
 import 'package:mockito/mockito.dart';
-import 'package:plan_sync/controllers/app_preferences_controller.dart';
-import 'package:plan_sync/controllers/app_tour_controller.dart';
-import 'package:plan_sync/util/logger.dart';
-import 'package:plan_sync/widgets/bottom-sheets/bottom_sheets_wrapper.dart';
+import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
+import 'package:plan_sync/core/services/app_tour_service.dart';
+import 'package:plan_sync/core/util/logger.dart';
+import 'package:plan_sync/widgets/popups/popups_wrapper.dart';
 import 'package:plan_sync/widgets/tutorials/app_target_focus.dart';
+import 'package:provider/provider.dart';
 import 'package:tutorial_coach_mark/tutorial_coach_mark.dart';
 
-class MockAppTourController extends GetxController
-    with Mock
-    implements AppTourController {
-  @override
-  late AppPreferencesController appPreferencesController;
-
-  late GlobalKey _schedulePreferencesButtonKey;
-  @override
-  GlobalKey get schedulePreferencesButtonKey => _schedulePreferencesButtonKey;
-
-  late GlobalKey _sectionBarKey;
-  @override
-  GlobalKey get sectionBarKey => _sectionBarKey;
-
-  late GlobalKey _savePreferenceSwitchKey;
-  @override
-  GlobalKey get savePreferenceSwitchKey => _savePreferenceSwitchKey;
+class MockAppTourController extends Mock implements AppTourService {
+  late AppPreferencesRepository _appPreferences;
 
   @override
-  void onInit() {
-    appPreferencesController = Get.find();
-    super.onInit();
-    _schedulePreferencesButtonKey = GlobalKey();
-    _sectionBarKey = GlobalKey();
-    _savePreferenceSwitchKey = GlobalKey();
+  final GlobalKey schedulePreferencesButtonKey = GlobalKey();
+
+  @override
+  final GlobalKey sectionBarKey = GlobalKey();
+
+  @override
+  final GlobalKey doneButtonKey = GlobalKey();
+
+  @override
+  void onInit(BuildContext context) {
+    _appPreferences = Provider.of<AppPreferencesRepository>(
+      context,
+      listen: false,
+    );
   }
 
   @override
@@ -83,7 +76,7 @@ class MockAppTourController extends GetxController
       Logger.i('key match with schedule button');
 
       await Future.delayed(const Duration(milliseconds: 250));
-      BottomSheets.changeSectionPreference(
+      PopupsWrapper.changeSectionPreference(
         context: schedulePreferencesButtonKey.currentContext!,
       );
     }
@@ -92,7 +85,7 @@ class MockAppTourController extends GetxController
 
   @override
   Future<bool> tourAlreadyCompleted() async {
-    return appPreferencesController.getTutorialStatus() ?? false;
+    return _appPreferences.getTutorialStatus() ?? false;
   }
 
   @override
@@ -107,15 +100,15 @@ class MockAppTourController extends GetxController
       ),
     );
     targets.add(
-      AppTargetFocus.savePreferenceSwitch(
-        colorScheme: colorScheme,
-        buttonKey: savePreferenceSwitchKey,
-      ),
-    );
-    targets.add(
       AppTargetFocus.sectionBarButton(
         colorScheme: colorScheme,
         buttonKey: sectionBarKey,
+      ),
+    );
+    targets.add(
+      AppTargetFocus.doneButton(
+        colorScheme: colorScheme,
+        buttonKey: doneButtonKey,
       ),
     );
 
@@ -124,7 +117,7 @@ class MockAppTourController extends GetxController
 
   @override
   Future<void> onTourComplete() async {
-    final res = await appPreferencesController.saveTutorialStatus(true);
+    final res = await _appPreferences.saveTutorialStatus(true);
     if (res != true) {
       final err = {
         'origin': 'AppTourController.onTourComplete',

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Dark variant, mirrors the app's dark surfaces; accent stays green. -->
+    <color name="widget_background">#1E1E1E</color>
+    <color name="widget_card">#262626</color>
+    <color name="widget_card_next">#1F2A20</color>
+    <color name="widget_stroke_current">#34A853</color>
+    <color name="widget_stroke_next">#2E7D32</color>
+    <color name="widget_accent">#4CAF50</color>
+    <color name="widget_text_primary">#FFFFFF</color>
+    <color name="widget_text_secondary">#B0B3B8</color>
+</resources>

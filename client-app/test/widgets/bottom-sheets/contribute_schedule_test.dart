@@ -1,17 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:plan_sync/widgets/bottom-sheets/contribute_schedule.dart';
+import 'package:plan_sync/features/home/view/widgets/contribute_schedule.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../main.dart';
-import 'package:get/get.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 void main() {
   Future<void> pumpBaseWidget(
     WidgetTester tester,
   ) async {
-    return tester.pumpWidget(const GetMaterialApp(
-      home: Scaffold(
+    return tester.pumpWidget(testApp(child: Scaffold(
         body: Center(
           child: ContributeScheduleBottomSheet(),
         ),
@@ -19,9 +17,9 @@ void main() {
     ));
   }
 
-  setUp(() {
+  setUp(() async {
     SharedPreferences.setMockInitialValues({});
-    injectMockDependencies();
+    await injectMockDependencies();
   });
 
   testWidgets('ContributeScheduleBottomSheet mail is available',
@@ -38,7 +36,7 @@ void main() {
     await pumpBaseWidget(tester);
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(FontAwesomeIcons.github), findsOneWidget);
+    expect(find.byIcon(FontAwesomeIcons.github.data), findsOneWidget);
     expect(find.text('Contribute via GitHub'), findsOneWidget);
   });
 }

@@ -1,0 +1,126 @@
+import 'package:flutter/material.dart';
+import 'package:loading_animation_widget/loading_animation_widget.dart';
+import 'package:plan_sync/features/filters/viewmodel/filter_view_model.dart';
+import 'package:plan_sync/core/util/snackbar.dart';
+import 'package:provider/provider.dart';
+
+class ElectiveSchemeBar extends StatefulWidget {
+  const ElectiveSchemeBar({super.key});
+
+  @override
+  State<ElectiveSchemeBar> createState() => _ElectiveSchemeBarState();
+}
+
+class _ElectiveSchemeBarState extends State<ElectiveSchemeBar> {
+  bool _hasShownSnackbar = false;
+
+  void _showNetworkError() {
+    if (!_hasShownSnackbar) {
+      _hasShownSnackbar = true;
+      CustomSnackbar.error(
+        'Poor Internet Connection',
+        'Please restart app with a better connection',
+        context,
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      decoration: ShapeDecoration(
+        shape: const StadiumBorder(),
+        color: colorScheme.onSurface,
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SizedBox(
+        width: 128,
+        height: 48,
+        child: DropdownButtonHideUnderline(
+          child: Consumer<FilterViewModel>(
+            builder: (ctx, filterController, child) {
+              if (filterController.activeSemester != null &&
+                  filterController.electiveSchemes != null &&
+                  filterController.electiveSchemes!.isNotEmpty) {
+                _hasShownSnackbar = false;
+              }
+
+              if (filterController.activeSemester != null &&
+                  (filterController.electiveSchemes == null ||
+                      filterController.electiveSchemes!.isEmpty)) {
+                return GestureDetector(
+                  onTap: _showNetworkError,
+                  child: Container(
+                    alignment: Alignment.center,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        LoadingAnimationWidget.progressiveDots(
+                          color: colorScheme.surface,
+                          size: 24,
+                        ),
+                        Icon(
+                          Icons.arrow_drop_down,
+                          color: colorScheme.surface,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }
+
+              return DropdownButton<String>(
+                isExpanded: true,
+                elevation: 0,
+                enableFeedback: true,
+                style: TextStyle(color: colorScheme.surface),
+                icon: Icon(
+                  Icons.arrow_drop_down,
+                  color: colorScheme.surface,
+                ),
+                value: filterController.activeElectiveScheme,
+                dropdownColor: colorScheme.onSurface,
+                disabledHint: Text(
+                  'Select Semester First',
+                  style: TextStyle(color: colorScheme.surface),
+                ),
+                hint: Text(
+                  'Scheme',
+                  style: TextStyle(color: colorScheme.surface, fontSize: 16),
+                ),
+                menuMaxHeight: 256,
+                items: filterController.electiveSchemes?.keys
+                    .toList()
+                    .map((e) => _buildMenuItem(
+                          filterController.electiveSchemes?[e] ?? e,
+                          colorScheme.surface,
+                        ))
+                    .toList(),
+                onChanged: filterController.activeSemester == null
+                    ? null
+                    : (String? newSelection) {
+                        filterController.electiveSchemes
+                            ?.forEach((key, value) {
+                          if (value == newSelection) {
+                            filterController.activeElectiveScheme = value;
+                            filterController.activeElectiveSchemeCode = key;
+                          }
+                        });
+                      },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+DropdownMenuItem<String> _buildMenuItem(String scheme, Color color) {
+  return DropdownMenuItem(
+    value: scheme,
+    child: Text(scheme, style: TextStyle(color: color)),
+  );
+}
