@@ -11,10 +11,7 @@
     <color name="widget_text_secondary">#5F6368</color>
     <!-- Past (done) class rows are dimmed. -->
     <color name="widget_text_muted">#9AA0A6</color>
-    <!-- Current class: green 3D bar + white text. -->
-    <color name="widget_current_top">#43C463</color>
-    <color name="widget_current_bottom">#2E9E4F</color>
-    <color name="widget_current_shadow">#1E7D3A</color>
+    <!-- Current class: flat green bar + white text. -->
     <color name="widget_on_accent">#FFFFFF</color>
     <color name="widget_on_accent_dim">#E8F5E9</color>
 </resources>
