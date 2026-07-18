@@ -13,10 +13,11 @@ import org.json.JSONObject
 import java.util.Calendar
 
 /**
- * Home-screen widget showing a compact window of today's classes: the previous
- * class, the one running now, and the next one. Rows are styled by the device
- * clock — the running class gets a raised green bar, the past class is dimmed,
- * the upcoming class is normal. Data is pushed from the Flutter app (see
+ * Home-screen widget showing a compact window of today's classes — the previous
+ * class, the one running now, and the next — laid out like the app's timetable:
+ * a start/end time column on the left and a subject card (name + room + duration)
+ * on the right. The running class card is outlined green; the past card is
+ * dimmed; the upcoming card is normal. Data is pushed from the Flutter app (see
  * HomeWidgetService); this provider only renders it. Tapping opens the app.
  */
 class ScheduleWidget : HomeWidgetProvider() {
@@ -24,8 +25,12 @@ class ScheduleWidget : HomeWidgetProvider() {
     private enum class RowState { PAST, CURRENT, UPCOMING }
 
     private val rowIds = intArrayOf(R.id.sched_row_0, R.id.sched_row_1, R.id.sched_row_2)
+    private val cardIds = intArrayOf(R.id.sched_card_0, R.id.sched_card_1, R.id.sched_card_2)
+    private val startIds = intArrayOf(R.id.sched_start_0, R.id.sched_start_1, R.id.sched_start_2)
+    private val endIds = intArrayOf(R.id.sched_end_0, R.id.sched_end_1, R.id.sched_end_2)
     private val nameIds = intArrayOf(R.id.sched_name_0, R.id.sched_name_1, R.id.sched_name_2)
-    private val metaIds = intArrayOf(R.id.sched_meta_0, R.id.sched_meta_1, R.id.sched_meta_2)
+    private val roomIds = intArrayOf(R.id.sched_room_0, R.id.sched_room_1, R.id.sched_room_2)
+    private val durIds = intArrayOf(R.id.sched_dur_0, R.id.sched_dur_1, R.id.sched_dur_2)
 
     override fun onUpdate(
         context: Context,
@@ -33,8 +38,7 @@ class ScheduleWidget : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
-        val onAccent = context.getColor(R.color.widget_on_accent)
-        val onAccentDim = context.getColor(R.color.widget_on_accent_dim)
+        val accent = context.getColor(R.color.widget_accent)
         val primary = context.getColor(R.color.widget_text_primary)
         val secondary = context.getColor(R.color.widget_text_secondary)
         val muted = context.getColor(R.color.widget_text_muted)
@@ -69,25 +73,36 @@ class ScheduleWidget : HomeWidgetProvider() {
                         continue
                     }
                     views.setViewVisibility(rowIds[k], View.VISIBLE)
+                    views.setTextViewText(startIds[k], c.optString("startLabel"))
+                    views.setTextViewText(endIds[k], c.optString("endLabel"))
                     views.setTextViewText(nameIds[k], c.optString("name"))
-                    views.setTextViewText(metaIds[k], c.optString("meta"))
+                    views.setTextViewText(roomIds[k], c.optString("room"))
+                    views.setTextViewText(durIds[k], c.optString("duration"))
+
                     when (rowState(c, now, srcIdx == fallbackCurrent)) {
                         RowState.CURRENT -> {
-                            views.setInt(rowIds[k], "setBackgroundResource", R.drawable.row_current)
-                            views.setTextColor(nameIds[k], onAccent)
-                            views.setTextColor(metaIds[k], onAccentDim)
+                            views.setInt(cardIds[k], "setBackgroundResource", R.drawable.row_current)
+                            views.setTextColor(nameIds[k], accent)
+                            views.setTextColor(startIds[k], primary)
+                            views.setTextColor(roomIds[k], secondary)
+                            views.setTextColor(durIds[k], secondary)
                         }
                         RowState.PAST -> {
-                            views.setInt(rowIds[k], "setBackgroundResource", R.drawable.row_card)
+                            views.setInt(cardIds[k], "setBackgroundResource", R.drawable.row_card)
                             views.setTextColor(nameIds[k], muted)
-                            views.setTextColor(metaIds[k], muted)
+                            views.setTextColor(startIds[k], muted)
+                            views.setTextColor(roomIds[k], muted)
+                            views.setTextColor(durIds[k], muted)
                         }
                         RowState.UPCOMING -> {
-                            views.setInt(rowIds[k], "setBackgroundResource", R.drawable.row_card)
+                            views.setInt(cardIds[k], "setBackgroundResource", R.drawable.row_card)
                             views.setTextColor(nameIds[k], primary)
-                            views.setTextColor(metaIds[k], secondary)
+                            views.setTextColor(startIds[k], primary)
+                            views.setTextColor(roomIds[k], secondary)
+                            views.setTextColor(durIds[k], secondary)
                         }
                     }
+                    views.setTextColor(endIds[k], muted)
                 }
             }
 

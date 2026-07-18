@@ -11,6 +11,5 @@
     <color name="widget_text_secondary">#B0B3B8</color>
     <color name="widget_row_border">#3A3F3A</color>
     <color name="widget_text_muted">#6B6F76</color>
-    <color name="widget_on_accent">#FFFFFF</color>
-    <color name="widget_on_accent_dim">#E8F5E9</color>
+    <color name="widget_current_fill">#16241A</color>
 </resources>

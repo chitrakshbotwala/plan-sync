@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Current class: faint green tint + green border (flat, matches the app). -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
-    <solid android:color="@color/widget_accent" />
-    <corners android:radius="8dp" />
+    <solid android:color="@color/widget_current_fill" />
+    <corners android:radius="10dp" />
+    <stroke android:width="2dp" android:color="@color/widget_accent" />
 </shape>

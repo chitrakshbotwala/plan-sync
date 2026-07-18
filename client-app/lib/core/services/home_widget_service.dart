@@ -54,8 +54,16 @@ class HomeWidgetService {
     } catch (_) {/* telemetry must never throw */}
   }
 
-  static String _meta(ScheduleEntry e) =>
-      [e.time, e.room].where((v) => v != null && v.trim().isNotEmpty).join(' · ');
+  /// Human duration for a class, e.g. "1h", "45m", "1h 30m", or '' if unknown.
+  static String _durationLabel(ScheduleEntry e) {
+    final mins = TodaySchedule.durationMinutes(e);
+    if (mins <= 0) return '';
+    final h = mins ~/ 60;
+    final m = mins % 60;
+    if (h == 0) return '${m}m';
+    if (m == 0) return '${h}h';
+    return '${h}h ${m}m';
+  }
 
   /// Push the schedule widget. [state] is one of loading | unconfigured |
   /// empty | data. For the data state the FULL day's classes are sent (with the
@@ -70,18 +78,21 @@ class HomeWidgetService {
     if (state == 'data') {
       final shown = entries.take(scheduleRowCap).toList();
       data['currentIndex'] = currentIndex < shown.length ? currentIndex : -1;
-      data['overflow'] = entries.length - shown.length; // >0 if truncated
       // start/end in minutes-since-midnight let the native widget recompute the
       // currently-running class by the device clock on each render (e.g. on a
       // manual refresh or the periodic tick), without needing the app.
-      data['classes'] = shown
-          .map((e) => {
-                'name': (e.subject ?? 'Class').trim(),
-                'meta': _meta(e),
-                'start': TodaySchedule.startMinutes(e.time),
-                'end': TodaySchedule.endMinutes(e.time),
-              })
-          .toList();
+      data['classes'] = shown.map((e) {
+        final (startLabel, endLabel) = TodaySchedule.splitTime(e.time);
+        return {
+          'name': (e.subject ?? 'Class').trim(),
+          'room': (e.room ?? '').trim(),
+          'startLabel': startLabel,
+          'endLabel': endLabel,
+          'duration': _durationLabel(e),
+          'start': TodaySchedule.startMinutes(e.time),
+          'end': TodaySchedule.endMinutes(e.time),
+        };
+      }).toList();
     }
     await _save(_scheduleKey, data);
     await _update(_scheduleWidget);
