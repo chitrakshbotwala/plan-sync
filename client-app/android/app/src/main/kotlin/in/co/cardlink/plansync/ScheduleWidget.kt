@@ -78,12 +78,12 @@ class ScheduleWidget : HomeWidgetProvider() {
                             views.setTextColor(metaIds[k], onAccentDim)
                         }
                         RowState.PAST -> {
-                            views.setInt(rowIds[k], "setBackgroundResource", 0)
+                            views.setInt(rowIds[k], "setBackgroundResource", R.drawable.row_card)
                             views.setTextColor(nameIds[k], muted)
                             views.setTextColor(metaIds[k], muted)
                         }
                         RowState.UPCOMING -> {
-                            views.setInt(rowIds[k], "setBackgroundResource", 0)
+                            views.setInt(rowIds[k], "setBackgroundResource", R.drawable.row_card)
                             views.setTextColor(nameIds[k], primary)
                             views.setTextColor(metaIds[k], secondary)
                         }
