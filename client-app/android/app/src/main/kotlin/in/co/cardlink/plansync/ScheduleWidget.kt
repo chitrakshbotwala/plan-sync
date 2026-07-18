@@ -12,20 +12,19 @@ import org.json.JSONObject
 import java.util.Calendar
 
 /**
- * Home-screen widget showing today's class list (the currently-running class is
- * marked). Data is pushed from the Flutter app (see HomeWidgetService) into the
- * "scheduleData" key as JSON; this provider only renders it. Tapping the widget
- * opens the app.
+ * Home-screen widget showing today's class list. Each row is styled by the
+ * device clock: the running class gets a raised green bar, past classes are
+ * dimmed, upcoming classes are shown normally. Data is pushed from the Flutter
+ * app (see HomeWidgetService) into the "scheduleData" key as JSON; this provider
+ * only renders it. Tapping opens the app.
  */
 class ScheduleWidget : HomeWidgetProvider() {
+
+    private enum class RowState { PAST, CURRENT, UPCOMING }
 
     private val rowIds = intArrayOf(
         R.id.sched_row_0, R.id.sched_row_1, R.id.sched_row_2,
         R.id.sched_row_3, R.id.sched_row_4, R.id.sched_row_5,
-    )
-    private val dotIds = intArrayOf(
-        R.id.sched_dot_0, R.id.sched_dot_1, R.id.sched_dot_2,
-        R.id.sched_dot_3, R.id.sched_dot_4, R.id.sched_dot_5,
     )
     private val nameIds = intArrayOf(
         R.id.sched_name_0, R.id.sched_name_1, R.id.sched_name_2,
@@ -42,8 +41,11 @@ class ScheduleWidget : HomeWidgetProvider() {
         appWidgetIds: IntArray,
         widgetData: SharedPreferences,
     ) {
-        val accent = context.getColor(R.color.widget_accent)
+        val onAccent = context.getColor(R.color.widget_on_accent)
+        val onAccentDim = context.getColor(R.color.widget_on_accent_dim)
         val primary = context.getColor(R.color.widget_text_primary)
+        val secondary = context.getColor(R.color.widget_text_secondary)
+        val muted = context.getColor(R.color.widget_text_muted)
 
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.schedule_widget)
@@ -64,18 +66,33 @@ class ScheduleWidget : HomeWidgetProvider() {
 
             if (state == "data" && obj != null) {
                 val classes = obj.optJSONArray("classes")
-                val currentIndex = currentClassIndex(obj, classes)
+                val fallbackCurrent = obj.optInt("currentIndex", -1)
+                val now = nowMinutes()
                 for (i in rowIds.indices) {
                     val c = classes?.optJSONObject(i)
-                    if (c != null) {
-                        views.setViewVisibility(rowIds[i], View.VISIBLE)
-                        views.setTextViewText(nameIds[i], c.optString("name"))
-                        views.setTextViewText(metaIds[i], c.optString("meta"))
-                        val isCurrent = i == currentIndex
-                        views.setViewVisibility(dotIds[i], visIf(isCurrent))
-                        views.setTextColor(nameIds[i], if (isCurrent) accent else primary)
-                    } else {
+                    if (c == null) {
                         views.setViewVisibility(rowIds[i], View.GONE)
+                        continue
+                    }
+                    views.setViewVisibility(rowIds[i], View.VISIBLE)
+                    views.setTextViewText(nameIds[i], c.optString("name"))
+                    views.setTextViewText(metaIds[i], c.optString("meta"))
+                    when (rowState(c, now, i == fallbackCurrent)) {
+                        RowState.CURRENT -> {
+                            views.setInt(rowIds[i], "setBackgroundResource", R.drawable.row_current)
+                            views.setTextColor(nameIds[i], onAccent)
+                            views.setTextColor(metaIds[i], onAccentDim)
+                        }
+                        RowState.PAST -> {
+                            views.setInt(rowIds[i], "setBackgroundResource", 0)
+                            views.setTextColor(nameIds[i], muted)
+                            views.setTextColor(metaIds[i], muted)
+                        }
+                        RowState.UPCOMING -> {
+                            views.setInt(rowIds[i], "setBackgroundResource", 0)
+                            views.setTextColor(nameIds[i], primary)
+                            views.setTextColor(metaIds[i], secondary)
+                        }
                     }
                 }
                 val overflow = obj.optInt("overflow", 0)
@@ -93,28 +110,27 @@ class ScheduleWidget : HomeWidgetProvider() {
 
     private fun visIf(show: Boolean): Int = if (show) View.VISIBLE else View.GONE
 
-    /**
-     * Index of the currently-running class. Recomputed from each class's
-     * start/end (minutes since midnight) against the device clock, so a manual
-     * refresh or the periodic tick keeps the highlight correct even while the
-     * app is closed. Falls back to the index the app pushed when the times
-     * can't be parsed.
-     */
-    private fun currentClassIndex(obj: JSONObject, classes: org.json.JSONArray?): Int {
-        if (classes == null) return -1
+    private fun nowMinutes(): Int {
         val cal = Calendar.getInstance()
-        val now = cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
-        var hasTimes = false
-        for (i in 0 until classes.length()) {
-            val c = classes.optJSONObject(i) ?: continue
-            val start = c.optInt("start", -1)
-            val end = c.optInt("end", -1)
-            if (start >= 0 && end >= 0) {
-                hasTimes = true
-                if (now in start until end) return i
+        return cal.get(Calendar.HOUR_OF_DAY) * 60 + cal.get(Calendar.MINUTE)
+    }
+
+    /**
+     * Classifies a class row against the device clock from its start/end
+     * (minutes since midnight). When the times can't be parsed, falls back to
+     * the index the app flagged as current.
+     */
+    private fun rowState(c: JSONObject, now: Int, pushedCurrent: Boolean): RowState {
+        val start = c.optInt("start", -1)
+        val end = c.optInt("end", -1)
+        if (start >= 0 && end >= 0 && end > start) {
+            return when {
+                now >= end -> RowState.PAST
+                now in start until end -> RowState.CURRENT
+                else -> RowState.UPCOMING
             }
         }
-        return if (hasTimes) -1 else obj.optInt("currentIndex", -1)
+        return if (pushedCurrent) RowState.CURRENT else RowState.UPCOMING
     }
 
     // A broadcast back to this provider so the "refresh" button re-renders the

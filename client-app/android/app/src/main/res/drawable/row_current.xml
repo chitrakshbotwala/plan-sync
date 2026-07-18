@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Darker base sits 1dp lower to fake a raised, 3D edge. -->
+    <item android:top="1dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/widget_current_shadow" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+    <!-- Green face with a top-to-bottom sheen. -->
+    <item android:bottom="2dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="270"
+                android:startColor="@color/widget_current_top"
+                android:endColor="@color/widget_current_bottom" />
+            <corners android:radius="12dp" />
+        </shape>
+    </item>
+</layer-list>

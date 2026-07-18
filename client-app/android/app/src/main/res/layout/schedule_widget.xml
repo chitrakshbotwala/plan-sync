@@ -133,38 +133,30 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:background="@drawable/card_background_next"
-        android:padding="10dp"
         android:visibility="gone">
 
-        <LinearLayout android:id="@+id/sched_row_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
-            <TextView android:id="@+id/sched_dot_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
-            <TextView android:id="@+id/sched_name_0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/sched_row_0" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:layout_marginBottom="5dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_name_0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="14sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/sched_meta_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/sched_row_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
-            <TextView android:id="@+id/sched_dot_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
-            <TextView android:id="@+id/sched_name_1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/sched_row_1" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:layout_marginBottom="5dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_name_1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="14sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/sched_meta_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/sched_row_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
-            <TextView android:id="@+id/sched_dot_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
-            <TextView android:id="@+id/sched_name_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/sched_row_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:layout_marginBottom="5dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_name_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="14sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/sched_meta_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/sched_row_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
-            <TextView android:id="@+id/sched_dot_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
-            <TextView android:id="@+id/sched_name_3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/sched_row_3" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:layout_marginBottom="5dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_name_3" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="14sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/sched_meta_3" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/sched_row_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginBottom="7dp" android:visibility="gone">
-            <TextView android:id="@+id/sched_dot_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
-            <TextView android:id="@+id/sched_name_4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/sched_row_4" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:layout_marginBottom="5dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_name_4" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="14sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/sched_meta_4" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
         </LinearLayout>
-        <LinearLayout android:id="@+id/sched_row_5" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:visibility="gone">
-            <TextView android:id="@+id/sched_dot_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="●" android:textSize="9sp" android:textColor="@color/widget_accent" android:layout_marginEnd="6dp" android:visibility="gone" />
-            <TextView android:id="@+id/sched_name_5" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="13sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
+        <LinearLayout android:id="@+id/sched_row_5" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:paddingStart="10dp" android:paddingEnd="10dp" android:paddingTop="7dp" android:paddingBottom="7dp" android:visibility="gone">
+            <TextView android:id="@+id/sched_name_5" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="14sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
             <TextView android:id="@+id/sched_meta_5" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="8dp" />
         </LinearLayout>
 
@@ -175,7 +167,8 @@
             android:textSize="11sp"
             android:textColor="@color/widget_text_secondary"
             android:fontFamily="sans-serif"
-            android:layout_marginTop="2dp"
+            android:layout_marginTop="4dp"
+            android:layout_marginStart="10dp"
             android:visibility="gone" />
     </LinearLayout>
 </LinearLayout>
