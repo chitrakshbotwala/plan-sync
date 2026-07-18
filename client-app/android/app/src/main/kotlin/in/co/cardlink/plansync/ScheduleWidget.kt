@@ -24,13 +24,13 @@ class ScheduleWidget : HomeWidgetProvider() {
 
     private enum class RowState { PAST, CURRENT, UPCOMING }
 
-    private val rowIds = intArrayOf(R.id.sched_row_0, R.id.sched_row_1, R.id.sched_row_2)
-    private val cardIds = intArrayOf(R.id.sched_card_0, R.id.sched_card_1, R.id.sched_card_2)
-    private val startIds = intArrayOf(R.id.sched_start_0, R.id.sched_start_1, R.id.sched_start_2)
-    private val endIds = intArrayOf(R.id.sched_end_0, R.id.sched_end_1, R.id.sched_end_2)
-    private val nameIds = intArrayOf(R.id.sched_name_0, R.id.sched_name_1, R.id.sched_name_2)
-    private val roomIds = intArrayOf(R.id.sched_room_0, R.id.sched_room_1, R.id.sched_room_2)
-    private val durIds = intArrayOf(R.id.sched_dur_0, R.id.sched_dur_1, R.id.sched_dur_2)
+    private val rowIds = intArrayOf(R.id.sched_row_0, R.id.sched_row_1)
+    private val cardIds = intArrayOf(R.id.sched_card_0, R.id.sched_card_1)
+    private val startIds = intArrayOf(R.id.sched_start_0, R.id.sched_start_1)
+    private val endIds = intArrayOf(R.id.sched_end_0, R.id.sched_end_1)
+    private val nameIds = intArrayOf(R.id.sched_name_0, R.id.sched_name_1)
+    private val roomIds = intArrayOf(R.id.sched_room_0, R.id.sched_room_1)
+    private val durIds = intArrayOf(R.id.sched_dur_0, R.id.sched_dur_1)
 
     override fun onUpdate(
         context: Context,
@@ -118,41 +118,36 @@ class ScheduleWidget : HomeWidgetProvider() {
     }
 
     /**
-     * Source indices to show (max 3): the previous class, the running class and
-     * the next one. During a break, shows the just-finished and the upcoming
-     * class; before the first class, only the next; after the last, only it.
+     * Source indices to show (max 2): the running class and the next one. During
+     * a break or before the first class, shows the next two upcoming; after the
+     * last class, only the most recent.
      */
     private fun windowIndices(classes: JSONArray?, now: Int, fallbackCurrent: Int): List<Int> {
         if (classes == null || classes.length() == 0) return emptyList()
         val n = classes.length()
 
-        var cur = -1
+        var start = -1
         for (i in 0 until n) {
             val c = classes.optJSONObject(i) ?: continue
             val s = c.optInt("start", -1)
             val e = c.optInt("end", -1)
             if (s >= 0 && e > s && now >= s && now < e) {
-                cur = i
+                start = i
                 break
             }
         }
-        if (cur < 0 && fallbackCurrent in 0 until n) cur = fallbackCurrent
-        if (cur >= 0) {
-            return listOf(cur - 1, cur, cur + 1).filter { it in 0 until n }
-        }
-
-        var nextIdx = -1
-        for (i in 0 until n) {
-            val c = classes.optJSONObject(i) ?: continue
-            if (c.optInt("start", -1).let { it >= 0 && it > now }) {
-                nextIdx = i
-                break
+        if (start < 0 && fallbackCurrent in 0 until n) start = fallbackCurrent
+        if (start < 0) {
+            for (i in 0 until n) {
+                val c = classes.optJSONObject(i) ?: continue
+                if (c.optInt("start", -1).let { it >= 0 && it > now }) {
+                    start = i
+                    break
+                }
             }
         }
-        if (nextIdx >= 0) {
-            return listOf(nextIdx - 1, nextIdx).filter { it in 0 until n }
-        }
-        return listOf(n - 1) // all done → the most recent class
+        if (start < 0) start = n - 1 // all done → the most recent class
+        return listOf(start, start + 1).filter { it in 0 until n }
     }
 
     /**

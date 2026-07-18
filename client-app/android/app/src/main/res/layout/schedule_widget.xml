@@ -145,8 +145,7 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="6dp">
                     <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_pin" android:contentDescription="@string/schedule_heading" />
                     <TextView android:id="@+id/sched_room_0" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="12sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="4dp" android:maxLines="1" android:ellipsize="end" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" · " android:textSize="12sp" android:textColor="@color/widget_text_secondary" />
-                    <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_clock" android:contentDescription="@string/schedule_heading" />
+                    <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_clock" android:layout_marginStart="12dp" android:contentDescription="@string/schedule_heading" />
                     <TextView android:id="@+id/sched_dur_0" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="4dp" />
                 </LinearLayout>
             </LinearLayout>
@@ -162,26 +161,8 @@
                 <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="6dp">
                     <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_pin" android:contentDescription="@string/schedule_heading" />
                     <TextView android:id="@+id/sched_room_1" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="12sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="4dp" android:maxLines="1" android:ellipsize="end" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" · " android:textSize="12sp" android:textColor="@color/widget_text_secondary" />
-                    <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_clock" android:contentDescription="@string/schedule_heading" />
+                    <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_clock" android:layout_marginStart="12dp" android:contentDescription="@string/schedule_heading" />
                     <TextView android:id="@+id/sched_dur_1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="4dp" />
-                </LinearLayout>
-            </LinearLayout>
-        </LinearLayout>
-
-        <LinearLayout android:id="@+id/sched_row_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:visibility="gone">
-            <LinearLayout android:layout_width="52dp" android:layout_height="wrap_content" android:orientation="vertical" android:paddingTop="4dp">
-                <TextView android:id="@+id/sched_start_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="15sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" />
-                <TextView android:id="@+id/sched_end_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="@color/widget_text_muted" android:fontFamily="sans-serif" android:layout_marginTop="1dp" />
-            </LinearLayout>
-            <LinearLayout android:id="@+id/sched_card_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical" android:background="@drawable/row_card" android:paddingStart="12dp" android:paddingEnd="12dp" android:paddingTop="10dp" android:paddingBottom="10dp">
-                <TextView android:id="@+id/sched_name_2" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="16sp" android:textColor="@color/widget_text_primary" android:fontFamily="sans-serif-medium" android:maxLines="1" android:ellipsize="end" />
-                <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:orientation="horizontal" android:gravity="center_vertical" android:layout_marginTop="6dp">
-                    <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_pin" android:contentDescription="@string/schedule_heading" />
-                    <TextView android:id="@+id/sched_room_2" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:textSize="12sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="4dp" android:maxLines="1" android:ellipsize="end" />
-                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text=" · " android:textSize="12sp" android:textColor="@color/widget_text_secondary" />
-                    <ImageView android:layout_width="14dp" android:layout_height="14dp" android:src="@drawable/ic_widget_clock" android:contentDescription="@string/schedule_heading" />
-                    <TextView android:id="@+id/sched_dur_2" android:layout_width="wrap_content" android:layout_height="wrap_content" android:textSize="12sp" android:textColor="@color/widget_text_secondary" android:fontFamily="sans-serif" android:layout_marginStart="4dp" />
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

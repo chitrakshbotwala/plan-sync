@@ -13,6 +13,7 @@
     <color name="widget_row_border">#D8DCD8</color>
     <!-- Past (done) class rows are dimmed. -->
     <color name="widget_text_muted">#9AA0A6</color>
-    <!-- Current class: faint green tint card with a green border + green title. -->
-    <color name="widget_current_fill">#EAF7EE</color>
+    <!-- Current class: app's soft green tint + green border + green title
+         (matches the timetable's highlight). -->
+    <color name="widget_current_fill">#E8F5E9</color>
 </resources>
