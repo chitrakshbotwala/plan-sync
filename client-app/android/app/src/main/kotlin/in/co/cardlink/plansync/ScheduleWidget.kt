@@ -8,32 +8,24 @@ import android.content.SharedPreferences
 import android.view.View
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetProvider
+import org.json.JSONArray
 import org.json.JSONObject
 import java.util.Calendar
 
 /**
- * Home-screen widget showing today's class list. Each row is styled by the
- * device clock: the running class gets a raised green bar, past classes are
- * dimmed, upcoming classes are shown normally. Data is pushed from the Flutter
- * app (see HomeWidgetService) into the "scheduleData" key as JSON; this provider
- * only renders it. Tapping opens the app.
+ * Home-screen widget showing a compact window of today's classes: the previous
+ * class, the one running now, and the next one. Rows are styled by the device
+ * clock — the running class gets a raised green bar, the past class is dimmed,
+ * the upcoming class is normal. Data is pushed from the Flutter app (see
+ * HomeWidgetService); this provider only renders it. Tapping opens the app.
  */
 class ScheduleWidget : HomeWidgetProvider() {
 
     private enum class RowState { PAST, CURRENT, UPCOMING }
 
-    private val rowIds = intArrayOf(
-        R.id.sched_row_0, R.id.sched_row_1, R.id.sched_row_2,
-        R.id.sched_row_3, R.id.sched_row_4, R.id.sched_row_5,
-    )
-    private val nameIds = intArrayOf(
-        R.id.sched_name_0, R.id.sched_name_1, R.id.sched_name_2,
-        R.id.sched_name_3, R.id.sched_name_4, R.id.sched_name_5,
-    )
-    private val metaIds = intArrayOf(
-        R.id.sched_meta_0, R.id.sched_meta_1, R.id.sched_meta_2,
-        R.id.sched_meta_3, R.id.sched_meta_4, R.id.sched_meta_5,
-    )
+    private val rowIds = intArrayOf(R.id.sched_row_0, R.id.sched_row_1, R.id.sched_row_2)
+    private val nameIds = intArrayOf(R.id.sched_name_0, R.id.sched_name_1, R.id.sched_name_2)
+    private val metaIds = intArrayOf(R.id.sched_meta_0, R.id.sched_meta_1, R.id.sched_meta_2)
 
     override fun onUpdate(
         context: Context,
@@ -66,41 +58,36 @@ class ScheduleWidget : HomeWidgetProvider() {
 
             if (state == "data" && obj != null) {
                 val classes = obj.optJSONArray("classes")
-                val fallbackCurrent = obj.optInt("currentIndex", -1)
                 val now = nowMinutes()
-                for (i in rowIds.indices) {
-                    val c = classes?.optJSONObject(i)
+                val fallbackCurrent = obj.optInt("currentIndex", -1)
+                val window = windowIndices(classes, now, fallbackCurrent)
+                for (k in rowIds.indices) {
+                    val srcIdx = window.getOrNull(k) ?: -1
+                    val c = if (srcIdx >= 0) classes?.optJSONObject(srcIdx) else null
                     if (c == null) {
-                        views.setViewVisibility(rowIds[i], View.GONE)
+                        views.setViewVisibility(rowIds[k], View.GONE)
                         continue
                     }
-                    views.setViewVisibility(rowIds[i], View.VISIBLE)
-                    views.setTextViewText(nameIds[i], c.optString("name"))
-                    views.setTextViewText(metaIds[i], c.optString("meta"))
-                    when (rowState(c, now, i == fallbackCurrent)) {
+                    views.setViewVisibility(rowIds[k], View.VISIBLE)
+                    views.setTextViewText(nameIds[k], c.optString("name"))
+                    views.setTextViewText(metaIds[k], c.optString("meta"))
+                    when (rowState(c, now, srcIdx == fallbackCurrent)) {
                         RowState.CURRENT -> {
-                            views.setInt(rowIds[i], "setBackgroundResource", R.drawable.row_current)
-                            views.setTextColor(nameIds[i], onAccent)
-                            views.setTextColor(metaIds[i], onAccentDim)
+                            views.setInt(rowIds[k], "setBackgroundResource", R.drawable.row_current)
+                            views.setTextColor(nameIds[k], onAccent)
+                            views.setTextColor(metaIds[k], onAccentDim)
                         }
                         RowState.PAST -> {
-                            views.setInt(rowIds[i], "setBackgroundResource", 0)
-                            views.setTextColor(nameIds[i], muted)
-                            views.setTextColor(metaIds[i], muted)
+                            views.setInt(rowIds[k], "setBackgroundResource", 0)
+                            views.setTextColor(nameIds[k], muted)
+                            views.setTextColor(metaIds[k], muted)
                         }
                         RowState.UPCOMING -> {
-                            views.setInt(rowIds[i], "setBackgroundResource", 0)
-                            views.setTextColor(nameIds[i], primary)
-                            views.setTextColor(metaIds[i], secondary)
+                            views.setInt(rowIds[k], "setBackgroundResource", 0)
+                            views.setTextColor(nameIds[k], primary)
+                            views.setTextColor(metaIds[k], secondary)
                         }
                     }
-                }
-                val overflow = obj.optInt("overflow", 0)
-                if (overflow > 0) {
-                    views.setViewVisibility(R.id.sched_overflow, View.VISIBLE)
-                    views.setTextViewText(R.id.sched_overflow, "+$overflow more")
-                } else {
-                    views.setViewVisibility(R.id.sched_overflow, View.GONE)
                 }
             }
 
@@ -116,14 +103,52 @@ class ScheduleWidget : HomeWidgetProvider() {
     }
 
     /**
+     * Source indices to show (max 3): the previous class, the running class and
+     * the next one. During a break, shows the just-finished and the upcoming
+     * class; before the first class, only the next; after the last, only it.
+     */
+    private fun windowIndices(classes: JSONArray?, now: Int, fallbackCurrent: Int): List<Int> {
+        if (classes == null || classes.length() == 0) return emptyList()
+        val n = classes.length()
+
+        var cur = -1
+        for (i in 0 until n) {
+            val c = classes.optJSONObject(i) ?: continue
+            val s = c.optInt("start", -1)
+            val e = c.optInt("end", -1)
+            if (s >= 0 && e > s && now >= s && now < e) {
+                cur = i
+                break
+            }
+        }
+        if (cur < 0 && fallbackCurrent in 0 until n) cur = fallbackCurrent
+        if (cur >= 0) {
+            return listOf(cur - 1, cur, cur + 1).filter { it in 0 until n }
+        }
+
+        var nextIdx = -1
+        for (i in 0 until n) {
+            val c = classes.optJSONObject(i) ?: continue
+            if (c.optInt("start", -1).let { it >= 0 && it > now }) {
+                nextIdx = i
+                break
+            }
+        }
+        if (nextIdx >= 0) {
+            return listOf(nextIdx - 1, nextIdx).filter { it in 0 until n }
+        }
+        return listOf(n - 1) // all done → the most recent class
+    }
+
+    /**
      * Classifies a class row against the device clock from its start/end
-     * (minutes since midnight). When the times can't be parsed, falls back to
-     * the index the app flagged as current.
+     * (minutes since midnight). When times can't be parsed, falls back to the
+     * index the app flagged as current.
      */
     private fun rowState(c: JSONObject, now: Int, pushedCurrent: Boolean): RowState {
         val start = c.optInt("start", -1)
         val end = c.optInt("end", -1)
-        if (start >= 0 && end >= 0 && end > start) {
+        if (start >= 0 && end > start) {
             return when {
                 now >= end -> RowState.PAST
                 now in start until end -> RowState.CURRENT

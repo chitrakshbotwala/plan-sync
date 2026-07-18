@@ -23,7 +23,9 @@ class HomeWidgetService {
   static const _scheduleWidget = 'in.co.cardlink.plansync.ScheduleWidget';
 
   /// Number of class rows the schedule widget layout can render.
-  static const scheduleRowCap = 6;
+  // Push the whole day (bounded) — the native widget windows it down to the
+  // previous/current/next class, so it needs the full list to pick from.
+  static const scheduleRowCap = 12;
 
   static Future<void> _save(String key, Map<String, dynamic> data) async {
     try {
