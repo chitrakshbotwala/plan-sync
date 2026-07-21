@@ -12,7 +12,7 @@ class ApiClient {
   // Base URL of the relay API that fronts the plan-sync data repo. Override
   // with --dart-define=RELAY_BASE_URL=... for staging/prod builds.
   static const String baseUrl =
-      String.fromEnvironment('RELAY_BASE_URL', defaultValue: 'http://localhost:8080');
+      String.fromEnvironment('RELAY_BASE_URL', defaultValue: 'https://api.plansync.in');
 
   ApiClient() {
     dio = Dio(
