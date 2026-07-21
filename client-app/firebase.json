@@ -28,6 +28,7 @@
     }
   },
   "hosting": {
+    "site": "plansync-webapp",
     "public": "build/web",
     "ignore": [
       "firebase.json",
