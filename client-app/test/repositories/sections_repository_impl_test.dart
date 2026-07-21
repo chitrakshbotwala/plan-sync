@@ -6,8 +6,8 @@ void main() {
   SectionsRepositoryImpl buildRepo() {
     return SectionsRepositoryImpl(
       apiClient: fakeApiClientByUrl({
-        'sections.json': encodeSectionsJson(),
-        'electives.json': encodeElectivesJson(),
+        '/api/v1/sections': encodeSectionsJson(),
+        '/api/v1/electives-index': encodeElectivesJson(),
       }),
     );
   }
