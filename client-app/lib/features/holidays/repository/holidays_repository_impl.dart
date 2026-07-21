@@ -18,8 +18,7 @@ class HolidaysRepositoryImpl implements HolidaysRepository {
 
   @override
   Stream<List<Holiday>> getHolidays({required String year}) async* {
-    final url =
-        'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/res/$year/holiday.json';
+    final url = '${ApiClient.baseUrl}/api/v1/holidays/$year';
     final cacheKey = 'holidays/$year';
 
     bool emittedFromCache = false;

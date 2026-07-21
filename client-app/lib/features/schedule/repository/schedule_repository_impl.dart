@@ -22,8 +22,7 @@ class ScheduleRepositoryImpl implements ScheduleRepository {
     required String semester,
     required String section,
   }) async* {
-    final url =
-        'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/res/$year/$semester/$section.json';
+    final url = '${ApiClient.baseUrl}/api/v1/schedule/$year/$semester/$section';
     final cacheKey = 'schedule/$year/$semester/$section';
 
     bool emittedFromCache = false;

@@ -12,8 +12,7 @@ class VersionService {
 
   Future<String?> fetchMinVersion() async {
     try {
-      final url =
-          'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/min.version';
+      final url = '${ApiClient.baseUrl}/api/v1/min-version';
       final response = await _apiClient.dio.get(url);
       if ((response.statusCode ?? 0) >= 400 || response.data == '') {
         Logger.w('min.version from remote returned empty');

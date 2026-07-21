@@ -43,12 +43,14 @@ class HomeWidgetService {
 
   /// Widget updates are best-effort: never let one surface to the user. Log in
   /// debug and report the real error to Crashlytics in release.
-  static void _report(Object error, StackTrace stack, String reason) {
+  static Future<void> _report(
+      Object error, StackTrace stack, String reason) async {
     if (kDebugMode) {
       debugPrint('[home_widget] $reason: $error');
     }
     try {
-      FirebaseCrashlytics.instance.recordError(error, stack, reason: reason);
+      await FirebaseCrashlytics.instance
+          .recordError(error, stack, reason: reason);
     } catch (_) {/* telemetry must never throw */}
   }
 
