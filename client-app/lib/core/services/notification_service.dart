@@ -1,8 +1,12 @@
 import 'dart:io';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:plan_sync/core/util/logger.dart';
 
+/// Push notifications are mobile-only: web would need a
+/// firebase-messaging-sw.js service worker, and flutter_local_notifications
+/// has no web implementation. Every entry point no-ops on web.
 class NotificationService {
   static String? initialNotificationRoute;
 
@@ -20,11 +24,13 @@ class NotificationService {
   );
 
   Future<bool> needsPermission() async {
+    if (kIsWeb) return false;
     final settings = await _messaging.getNotificationSettings();
     return settings.authorizationStatus != AuthorizationStatus.authorized;
   }
 
   Future<void> requestPermission() async {
+    if (kIsWeb) return;
     if (Platform.isAndroid) {
       _localNotifications
           .resolvePlatformSpecificImplementation<
@@ -47,6 +53,7 @@ class NotificationService {
   }
 
   Future<void> initialize() async {
+    if (kIsWeb) return;
     if (_initialized) return;
     _initialized = true;
 

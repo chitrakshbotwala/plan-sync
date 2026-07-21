@@ -1,6 +1,6 @@
 import 'dart:io';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/util/crash_reporter.dart';
 import 'package:flutter/services.dart';
 import 'package:in_app_update/in_app_update.dart';
 import 'package:package_info_plus/package_info_plus.dart';
@@ -136,7 +136,7 @@ class VersionViewModel extends ChangeNotifier {
 
       if (result == AppUpdateResult.success) {
         await InAppUpdate.completeFlexibleUpdate().onError((err, trace) {
-          FirebaseCrashlytics.instance.recordError(err, trace);
+          CrashReporter.recordError(err, trace);
           _updateFailed = true;
           notifyListeners();
           return;

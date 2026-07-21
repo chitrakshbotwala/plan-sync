@@ -1,8 +1,8 @@
 import 'dart:convert';
 
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:home_widget/home_widget.dart';
+import 'package:plan_sync/core/util/crash_reporter.dart';
 import 'package:plan_sync/features/home/today_schedule.dart';
 import 'package:plan_sync/features/schedule/model/timetable_schedule_entry.dart';
 
@@ -48,10 +48,7 @@ class HomeWidgetService {
     if (kDebugMode) {
       debugPrint('[home_widget] $reason: $error');
     }
-    try {
-      await FirebaseCrashlytics.instance
-          .recordError(error, stack, reason: reason);
-    } catch (_) {/* telemetry must never throw */}
+    await CrashReporter.recordError(error, stack, reason: reason);
   }
 
   static String _meta(ScheduleEntry e) =>
@@ -66,6 +63,7 @@ class HomeWidgetService {
     List<ScheduleEntry> entries = const [],
     int currentIndex = -1,
   }) async {
+    if (kIsWeb || defaultTargetPlatform != TargetPlatform.android) return;
     final data = <String, dynamic>{'widgetState': state};
     if (state == 'data') {
       final shown = entries.take(scheduleRowCap).toList();

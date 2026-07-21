@@ -10,6 +10,7 @@ import 'package:plan_sync/core/cache/hive_cache_service.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
 import 'package:plan_sync/core/services/app_review_service.dart';
 import 'package:plan_sync/core/services/app_tour_service.dart';
+import 'package:plan_sync/core/util/logger.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository.dart';
 import 'package:plan_sync/core/repositories/app_preferences_repository_impl.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
@@ -75,13 +76,22 @@ Future<void> main() async {
   );
 
   if (kReleaseMode) {
-    FlutterError.onError = FirebaseCrashlytics.instance.recordFlutterFatalError;
-    FirebaseCrashlytics.instance
-        .setCustomKey("env", kReleaseMode ? "release" : "debug");
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
+    if (kIsWeb) {
+      FlutterError.onError =
+          (details) => Logger.e(details.exceptionAsString());
+      PlatformDispatcher.instance.onError = (error, stack) {
+        Logger.e('$error');
+        return true;
+      };
+    } else {
+      FlutterError.onError =
+          FirebaseCrashlytics.instance.recordFlutterFatalError;
+      FirebaseCrashlytics.instance.setCustomKey("env", "release");
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+    }
   }
 
   runApp(const AppProvider());
