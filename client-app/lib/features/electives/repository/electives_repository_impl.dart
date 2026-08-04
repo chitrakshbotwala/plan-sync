@@ -23,7 +23,7 @@ class ElectivesRepositoryImpl implements ElectivesRepository {
     required String schemeCode,
   }) async* {
     final url =
-        'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/res/$year/$semester/electives-scheme-$schemeCode.json';
+        '${ApiClient.baseUrl}/api/v1/electives-scheme/$year/$semester/$schemeCode';
     final cacheKey = 'electives/$year/$semester/$schemeCode';
 
     bool emittedFromCache = false;

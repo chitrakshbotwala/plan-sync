@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/util/crash_reporter.dart';
 import 'package:flutter/material.dart';
 import 'package:plan_sync/core/cache/cache_service.dart';
 import 'package:plan_sync/core/services/analytics_service.dart';
@@ -36,7 +36,9 @@ class AppInitializer {
       if (context.mounted) _initializeInBackground(context);
     } catch (e, stackTrace) {
       if (kReleaseMode) {
-        FirebaseCrashlytics.instance.recordError(e, stackTrace);
+        CrashReporter.recordError(e, stackTrace);
+      } else {
+        Logger.e('app initialization failed: $e');
       }
       rethrow;
     }
@@ -69,7 +71,7 @@ class AppInitializer {
   static void _reportInBackground(Future<void> future) {
     future.catchError((Object e, StackTrace stackTrace) {
       if (kReleaseMode) {
-        FirebaseCrashlytics.instance.recordError(e, stackTrace);
+        CrashReporter.recordError(e, stackTrace);
       } else {
         Logger.e('background init failed: $e');
       }

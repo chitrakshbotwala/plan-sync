@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/util/crash_reporter.dart';
 import 'package:firebase_remote_config/firebase_remote_config.dart';
 import 'package:plan_sync/core/models/hud_notices_model.dart';
 import 'package:plan_sync/core/services/remote_config_service.dart';
@@ -32,14 +32,14 @@ class RemoteConfigServiceImpl implements RemoteConfigService {
     try {
       await remoteConfig.activate();
     } catch (exception, stack) {
-      FirebaseCrashlytics.instance.recordError(exception, stack);
+      CrashReporter.recordError(exception, stack);
       Logger.w("Error activating remoteConfig.");
     }
     unawaited(
       remoteConfig
           .fetchAndActivate()
           .catchError((Object exception, StackTrace stack) {
-        FirebaseCrashlytics.instance.recordError(exception, stack);
+        CrashReporter.recordError(exception, stack);
         Logger.w("Error fetching remoteConfig.");
         return false;
       }),

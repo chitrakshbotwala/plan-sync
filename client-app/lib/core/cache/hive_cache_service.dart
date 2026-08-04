@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:hive/hive.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:plan_sync/core/cache/cache_service.dart';
@@ -10,6 +11,10 @@ class HiveCacheService implements CacheService {
 
   @override
   Future<void> initialize() async {
+    if (kIsWeb) {
+      _box = await Hive.openBox<String>(_boxName);
+      return;
+    }
     final dir = await getApplicationDocumentsDirectory();
     _box = await Hive.openBox<String>(_boxName, path: dir.path);
   }

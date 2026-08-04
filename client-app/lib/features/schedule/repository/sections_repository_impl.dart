@@ -10,11 +10,9 @@ class SectionsRepositoryImpl implements SectionsRepository {
 
   final ApiClient _apiClient;
 
-  String get _sectionsUrl =>
-      'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/res/sections.json';
+  String get _sectionsUrl => '${ApiClient.baseUrl}/api/v1/sections';
 
-  String get _electivesUrl =>
-      'https://gitlab.com/delwinn/plan-sync/-/raw/${_apiClient.branch}/res/electives.json';
+  String get _electivesUrl => '${ApiClient.baseUrl}/api/v1/electives-index';
 
   Future<Map<String, dynamic>> _fetchJsonData(String url) async {
     try {
