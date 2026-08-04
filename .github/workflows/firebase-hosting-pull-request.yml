@@ -24,9 +24,9 @@ jobs:
       - name: Verify Flutter Version
         run: flutter --version
 
-      - name: Create .prod.env file
+      - name: Create prod.env file
         run: |
-          echo "${{ secrets.PROD_ENV_FILE }}" > ./client-app/env/.prod.env
+          echo "${{ secrets.PROD_ENV_FILE }}" > ./client-app/env/prod.env
 
       - name: Build Flutter Web App
         run: |

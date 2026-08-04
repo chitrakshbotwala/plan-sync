@@ -20,7 +20,7 @@ jobs:
     - run: flutter --version
 
     - name: add .env file
-      run: touch ./client-app/env/.prod.env
+      run: touch ./client-app/env/prod.env
 
     - name: Code Analysis
       working-directory: client-app
