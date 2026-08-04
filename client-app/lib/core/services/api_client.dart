@@ -8,20 +8,24 @@ import 'package:plan_sync/core/util/logger.dart';
 class ApiClient {
   late final Dio dio;
   CacheOptions? cacheOptions;
-  late final String branch;
+
+  // Base URL of the relay API that fronts the plan-sync data repo. Override
+  // with --dart-define=RELAY_BASE_URL=... for staging/prod builds.
+  static const String baseUrl =
+      String.fromEnvironment('RELAY_BASE_URL', defaultValue: 'https://api.plansync.in');
 
   ApiClient() {
-    // Timetable/section data (sections.json, per-section schedules) is served
-    // from the GitLab data repo's `main` branch — that's where the live years
-    // live (e.g. 2026-2027). Read `main` in every build so debug runs see the
-    // same data as release instead of a stale `dev` snapshot missing newer
-    // years.
-    branch = 'main';
     dio = Dio(
       BaseOptions(
         connectTimeout: const Duration(seconds: 15),
         headers: {'Cache-Control': 'no-cache'},
         contentType: 'application/json',
+        // The relay returns real `application/json` Content-Type headers
+        // (unlike GitLab's raw files, served as text/plain), which would
+        // make Dio auto-decode the body. Force plain-string responses so
+        // the existing manual `jsonDecode(response.data)` call sites keep
+        // working unchanged.
+        responseType: ResponseType.plain,
       ),
     );
   }

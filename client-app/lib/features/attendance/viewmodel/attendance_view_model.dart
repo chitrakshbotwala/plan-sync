@@ -1,5 +1,5 @@
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
+import 'package:plan_sync/core/util/crash_reporter.dart';
 import 'package:plan_sync/features/attendance/model/attendance_record.dart';
 import 'package:plan_sync/features/attendance/model/scrape_exception.dart';
 import 'package:plan_sync/features/attendance/repository/attendance_credentials_repository.dart';
@@ -206,9 +206,7 @@ class AttendanceViewModel extends ChangeNotifier {
   }
 
   void _recordError(Object error, StackTrace stack, String reason) {
-    try {
-      FirebaseCrashlytics.instance.recordError(error, stack, reason: reason);
-    } catch (_) {/* never let telemetry failures surface to the user */}
+    CrashReporter.recordError(error, stack, reason: reason);
   }
 
   // --- actions --------------------------------------------------------------
