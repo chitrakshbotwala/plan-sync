@@ -363,6 +363,16 @@ class KiitAttendanceScraper {
     );
   }
 
+  /// Test seam: run the raw-grid mapping (`{headers, rows}` → records) exactly
+  /// as it runs on a live scrape, so the column-disambiguation logic can be
+  /// verified without a device.
+  @visibleForTesting
+  static List<AttendanceRecord> recordsFromGridForTest(
+    List<String> headers,
+    List<List<String>> rows,
+  ) =>
+      _recordsFromGrid(headers, rows);
+
   static List<AttendanceRecord> _recordsFromLegacy(List raw) {
     int toInt(dynamic v) =>
         v is num ? v.round() : (double.tryParse('$v')?.round() ?? 0);
@@ -388,8 +398,11 @@ class KiitAttendanceScraper {
   /// Maps raw grid rows to records. The numeric columns are decoded by the KIIT
   /// invariant (total classes = present + absent, percentage = present/total),
   /// which is exact even when every count renders as "xx.00" and does not
-  /// depend on matching the numeric header labels. Header labels are used only
-  /// to pick the subject / faculty-name / excuses text columns.
+  /// depend on matching the numeric header labels. Header labels only *hint* at
+  /// the subject / faculty-name / excuses text columns — the hints are verified
+  /// (and corrected) per row in [_inferCells], so a header/cell misalignment or
+  /// a user-reordered column layout can never leak the faculty name into the
+  /// subject field.
   static List<AttendanceRecord> _recordsFromGrid(
     List<String> headers,
     List<List<String>> rows,
@@ -412,7 +425,11 @@ class KiitAttendanceScraper {
 
     final out = <AttendanceRecord>[];
     for (final cells in rows) {
-      final inf = _inferCells(cells, subjectHint: at(cells, subjectI));
+      final inf = _inferCells(
+        cells,
+        subjectHint: at(cells, subjectI),
+        facultyHint: at(cells, facNameI),
+      );
       if (inf == null) continue;
       final excStr = at(cells, excI).split('.').first;
       out.add(AttendanceRecord(
@@ -422,7 +439,7 @@ class KiitAttendanceScraper {
         absent: inf.absent,
         percentage: inf.percentage,
         facultyId: inf.facultyId.trim(),
-        facultyName: at(cells, facNameI).trim(),
+        facultyName: inf.facultyName.trim(),
         excuses: int.tryParse(excStr) ?? 0,
       ));
     }
@@ -433,32 +450,85 @@ class KiitAttendanceScraper {
   /// total classes = present + absent, and percentage = present / total * 100.
   /// This is exact regardless of column order and regardless of whether counts
   /// render as "30" or "30.00" (the percentage may also be a whole "100.00").
-  /// [subjectHint] is the header-mapped subject cell, used when it is textual.
-  static _InferredRow? _inferCells(List<String> cells, {String? subjectHint}) {
+  ///
+  /// [subjectHint] / [facultyHint] are the header-mapped cells. They are only
+  /// *trusted when they hold real text and disagree with each other* — otherwise
+  /// the subject and faculty name are recovered positionally: in the KIIT row
+  /// (`Subject … | Faculty ID | Faculty Name | …`) the faculty-id token splits
+  /// the text cells into subject (left of it) and faculty name (right of it).
+  /// This keeps the faculty name out of the subject field even when the header
+  /// row and the data row don't line up column-for-column.
+  static _InferredRow? _inferCells(
+    List<String> cells, {
+    String? subjectHint,
+    String? facultyHint,
+  }) {
     final numRe = RegExp(r'^\d+(\.\d+)?$');
     final facRe = RegExp(r'^\d{5,}$');
     final alpha = RegExp(r'[A-Za-z]');
     var facId = '';
-    final texts = <String>[];
+    var facIdx = -1;
+    final texts = <String>[]; // alpha cells, in display order
+    final textIdx = <int>[]; // their positions within the row
     final nums = <double>[];
-    for (final raw in cells) {
-      final c = raw.trim();
+    for (var i = 0; i < cells.length; i++) {
+      final c = cells[i].trim();
       if (c.isEmpty) continue;
       if (facRe.hasMatch(c) && !c.contains('.')) {
-        if (facId.isEmpty) facId = c;
+        if (facId.isEmpty) {
+          facId = c;
+          facIdx = i;
+        }
         continue;
       }
       if (numRe.hasMatch(c)) {
         nums.add(double.parse(c));
       } else if (alpha.hasMatch(c)) {
         texts.add(c);
+        textIdx.add(i);
       }
     }
-    var subject = (subjectHint != null &&
-            subjectHint.trim().isNotEmpty &&
-            alpha.hasMatch(subjectHint))
+
+    bool usableHint(String? h) =>
+        h != null && h.trim().isNotEmpty && alpha.hasMatch(h);
+
+    // Faculty name: trust the hint when it is real text, else take the first
+    // alpha cell to the RIGHT of the faculty id.
+    var facultyName = usableHint(facultyHint) ? facultyHint!.trim() : '';
+    if (facultyName.isEmpty && facIdx >= 0) {
+      for (var k = 0; k < texts.length; k++) {
+        if (textIdx[k] > facIdx) {
+          facultyName = texts[k];
+          break;
+        }
+      }
+    }
+
+    // Subject: trust the hint only when it is real text AND isn't the faculty
+    // name (a misaligned hint pointing at the faculty column is the bug we're
+    // guarding against). Else take the first alpha cell to the LEFT of the
+    // faculty id; else the first alpha cell that isn't the faculty name.
+    var subject = (usableHint(subjectHint) && subjectHint!.trim() != facultyName)
         ? subjectHint.trim()
-        : (texts.isNotEmpty ? texts.first : '');
+        : '';
+    if (subject.isEmpty) {
+      if (facIdx >= 0) {
+        for (var k = 0; k < texts.length; k++) {
+          if (textIdx[k] < facIdx && texts[k] != facultyName) {
+            subject = texts[k];
+            break;
+          }
+        }
+      }
+      if (subject.isEmpty) {
+        for (final t in texts) {
+          if (t != facultyName) {
+            subject = t;
+            break;
+          }
+        }
+      }
+    }
     if (subject.isEmpty || !alpha.hasMatch(subject) || nums.length < 3) {
       return null;
     }
@@ -506,6 +576,7 @@ class KiitAttendanceScraper {
         absent: mx.round() - pr,
         percentage: fp,
         facultyId: facId,
+        facultyName: facultyName,
       );
     }
 
@@ -548,6 +619,7 @@ class KiitAttendanceScraper {
       absent: absent.round(),
       percentage: pct,
       facultyId: facId,
+      facultyName: facultyName,
     );
   }
 
@@ -638,6 +710,7 @@ class _InferredRow {
     required this.absent,
     required this.percentage,
     required this.facultyId,
+    required this.facultyName,
   });
   final String subject;
   final int present;
@@ -645,6 +718,7 @@ class _InferredRow {
   final int absent;
   final double percentage;
   final String facultyId;
+  final String facultyName;
 }
 
 const String _agentTemplate = r'''
