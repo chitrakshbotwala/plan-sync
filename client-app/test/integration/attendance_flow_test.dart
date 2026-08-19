@@ -165,12 +165,18 @@ void main() {
     await tester.tap(find.text('Load attendance'));
     await tester.pumpAndSettle();
 
-    // The failure screen explains the specific kind of failure and offers a
-    // retry, rather than surfacing one generic line.
+    // The failure screen explains the specific kind of failure, suggests what
+    // to try (ending in a restart), and offers a retry — rather than surfacing
+    // one generic line.
     expect(find.text('Portal is down'), findsOneWidget);
-    expect(find.textContaining('isn\'t responding'), findsOneWidget);
+    expect(find.textContaining('isn\'t serving pages'), findsOneWidget);
+    expect(find.textContaining('Close Plan Sync completely'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
     expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
+
+    // Reporting is not one tap away on a first failure.
+    expect(find.text('Report issue'), findsNothing);
+    expect(find.text('Tried everything?'), findsNothing);
   });
 
   testWidgets('invalid credentials clears creds and returns to connect prompt',

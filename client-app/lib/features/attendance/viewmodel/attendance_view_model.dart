@@ -55,6 +55,14 @@ class AttendanceViewModel extends ChangeNotifier {
   bool get resultIsStale =>
       result != null && _repository.isStale(result!);
 
+  /// Failed attempts since the last success. Drives the failure screen's advice
+  /// and keeps "Report issue" out of reach until a retry has actually failed —
+  /// most first failures clear on their own.
+  int consecutiveFailures = 0;
+
+  /// Reporting is offered once the problem has survived a retry.
+  bool get canReportIssue => consecutiveFailures >= 2;
+
   /// Live progress lines from the scrape, newest last. Kept for stage
   /// derivation; not shown in the UI.
   final List<String> logs = [];
@@ -270,8 +278,11 @@ class AttendanceViewModel extends ChangeNotifier {
     errorKind = null;
     errorMessage = null;
 
-    // If data is already on screen, refresh silently (no loading screen).
-    final hasData = result != null;
+    // Refresh silently only when the data is genuinely on screen. Retrying from
+    // the error screen must show progress instead — a silent refresh there left
+    // the failure screen up untouched for the whole scrape, so "Try again" read
+    // as a dead button.
+    final hasData = result != null && status == AttendanceStatus.success;
     if (hasData) {
       isRefreshing = true;
       notifyListeners();
@@ -291,6 +302,7 @@ class AttendanceViewModel extends ChangeNotifier {
       loadedFromCache = false; // live data now
       _appliedYear = academicYear;
       _appliedSession = session;
+      consecutiveFailures = 0;
 
       isRefreshing = false;
       _set(AttendanceStatus.success);
@@ -310,6 +322,8 @@ class AttendanceViewModel extends ChangeNotifier {
         errorMessage = e.message;
       }
       isRefreshing = false;
+      // Bad credentials aren't a failure the user can retry their way out of.
+      if (e.kind != ScrapeErrorKind.invalidCredentials) consecutiveFailures++;
       _set(e.kind == ScrapeErrorKind.invalidCredentials
           ? AttendanceStatus.needsCredentials
           : AttendanceStatus.error);
@@ -318,6 +332,7 @@ class AttendanceViewModel extends ChangeNotifier {
       errorMessage = _genericError;
       _recordError(e, st, 'attendance fetch failed');
       isRefreshing = false;
+      consecutiveFailures++;
       _set(AttendanceStatus.error);
     }
   }

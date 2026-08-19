@@ -333,6 +333,84 @@ void main() {
     });
   });
 
+  group('retrying after a failure', () {
+    test('retry from the error screen shows the loading screen', () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      // Stale saved copy on screen, then a failed background refresh.
+      repo.seed(
+        '22001234',
+        year,
+        sess,
+        _result(academicYear: year, session: sess, age: const Duration(hours: 5)),
+      );
+      await vm.initialize();
+      repo.fetchError = StateError('offline');
+      await vm.ensureLoaded();
+      expect(vm.status, AttendanceStatus.error);
+      expect(vm.result, isNotNull); // the saved copy is still held
+
+      // Retrying must show progress: with a result present the old code flipped
+      // isRefreshing and left the failure screen untouched for the whole scrape.
+      final statuses = <AttendanceStatus>[];
+      vm.addListener(() => statuses.add(vm.status));
+      await vm.refresh();
+
+      expect(statuses, contains(AttendanceStatus.loading));
+      expect(vm.isRefreshing, isFalse);
+    });
+
+    test('report is offered only once a retry has also failed', () async {
+      final repo = FakeAttendanceRepository()..fetchError = StateError('down');
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      await vm.initialize();
+
+      await vm.refresh();
+      expect(vm.status, AttendanceStatus.error);
+      expect(vm.consecutiveFailures, 1);
+      expect(vm.canReportIssue, isFalse);
+
+      await vm.refresh();
+      expect(vm.consecutiveFailures, 2);
+      expect(vm.canReportIssue, isTrue);
+    });
+
+    test('a success resets the failure count', () async {
+      final repo = FakeAttendanceRepository()..fetchError = StateError('down');
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      await vm.initialize();
+      await vm.refresh();
+      await vm.refresh();
+      expect(vm.canReportIssue, isTrue);
+
+      repo.fetchError = null;
+      repo.fetchResult = _result(
+        academicYear: vm.academicYear,
+        session: vm.session,
+        age: Duration.zero,
+      );
+      await vm.refresh();
+
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.consecutiveFailures, 0);
+      expect(vm.canReportIssue, isFalse);
+    });
+  });
+
   group('cache provenance', () {
     test('a cached load is flagged as a saved copy', () async {
       final repo = FakeAttendanceRepository();
