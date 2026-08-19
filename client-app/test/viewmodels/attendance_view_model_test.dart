@@ -284,6 +284,90 @@ void main() {
     });
   });
 
+  group('cache provenance', () {
+    test('a cached load is flagged as a saved copy', () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess)); // 1h old → fresh
+
+      await vm.initialize();
+
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.loadedFromCache, isTrue);
+      expect(vm.resultIsStale, isFalse);
+      expect(repo.fetchCount, 0);
+    });
+
+    test('a completed scrape clears the saved-copy flag', () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess));
+      await vm.initialize();
+      expect(vm.loadedFromCache, isTrue);
+
+      repo.fetchResult = _result(
+        academicYear: year,
+        session: sess,
+        age: Duration.zero,
+      );
+      await vm.refresh();
+
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.loadedFromCache, isFalse);
+      expect(vm.isRefreshing, isFalse);
+    });
+
+    test('stale cache is shown, flagged stale, and refreshed', () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      // Older than the 4h window.
+      repo.seed(
+        '22001234',
+        year,
+        sess,
+        _result(academicYear: year, session: sess, age: const Duration(hours: 5)),
+      );
+
+      await vm.initialize();
+      expect(vm.loadedFromCache, isTrue);
+      expect(vm.resultIsStale, isTrue);
+
+      repo.fetchResult =
+          _result(academicYear: year, session: sess, age: Duration.zero);
+      await vm.ensureLoaded(); // stale → background refresh
+
+      expect(repo.fetchCount, 1);
+      expect(vm.loadedFromCache, isFalse);
+      expect(vm.resultIsStale, isFalse);
+    });
+
+    test('freshnessWindow comes from the repository', () {
+      final repo = FakeAttendanceRepository()..ttl = const Duration(hours: 4);
+      final vm = _makeVm(repository: repo);
+      expect(vm.freshnessWindow, const Duration(hours: 4));
+    });
+  });
+
   group('AttendanceResult derived', () {
     test('toJson → fromJson round-trip preserves all fields', () {
       final record = AttendanceRecord(

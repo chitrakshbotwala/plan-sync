@@ -19,7 +19,13 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
   late String _session = widget.viewModel.session;
   String? _error;
 
-  void _load() {
+  /// Set the moment the button is tapped, so the button acknowledges the tap
+  /// immediately — the view model's own state change lands a frame later, after
+  /// the cache read starts.
+  bool _busy = false;
+
+  Future<void> _load() async {
+    if (_busy) return;
     // Block future periods (e.g. 2027-2028, or Spring of the current year
     // before January) — there can be no attendance for a session that hasn't
     // begun. Past/current periods pass through.
@@ -29,8 +35,13 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
           'Pick an earlier year or session.');
       return;
     }
+    setState(() => _busy = true);
     widget.viewModel.changeSelection(year: _year, session: _session);
-    widget.viewModel.applySelection();
+    try {
+      await widget.viewModel.applySelection();
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
   }
 
   @override
@@ -131,9 +142,18 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: _load,
-                icon: const Icon(Icons.download_rounded),
-                label: const Text('Load attendance'),
+                onPressed: _busy ? null : _load,
+                icon: _busy
+                    ? SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: colorScheme.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.download_rounded),
+                label: Text(_busy ? 'Loading…' : 'Load attendance'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,

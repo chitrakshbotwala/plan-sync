@@ -12,6 +12,9 @@ enum AttendanceStatus {
   /// Idle with no result yet (credentials present, not fetched).
   idle,
 
+  /// Reading the saved copy from the cache before deciding whether to scrape.
+  restoring,
+
   /// A scrape is in progress.
   loading,
 
@@ -39,6 +42,18 @@ class AttendanceViewModel extends ChangeNotifier {
 
   /// True while a background refresh is running (data already exists on screen).
   bool isRefreshing = false;
+
+  /// True when the visible [result] came out of the cache and hasn't been
+  /// re-scraped since — the UI says so rather than passing a saved copy off as
+  /// live data.
+  bool loadedFromCache = false;
+
+  /// How long a cached result stays fresh before it is refreshed.
+  Duration get freshnessWindow => _repository.freshnessWindow;
+
+  /// True when the visible [result] has aged past [freshnessWindow].
+  bool get resultIsStale =>
+      result != null && _repository.isStale(result!);
 
   /// Live progress lines from the scrape, newest last. Kept for stage
   /// derivation; not shown in the UI.
@@ -122,6 +137,7 @@ class AttendanceViewModel extends ChangeNotifier {
       );
       if (cached != null) {
         result = cached;
+        loadedFromCache = true;
         _appliedYear = cached.academicYear;
         _appliedSession = cached.session;
       }
@@ -272,6 +288,7 @@ class AttendanceViewModel extends ChangeNotifier {
         onLog: pushLog,
       );
       result = fetched;
+      loadedFromCache = false; // live data now
       _appliedYear = academicYear;
       _appliedSession = session;
 
@@ -323,6 +340,10 @@ class AttendanceViewModel extends ChangeNotifier {
     // a log out / log back in (the applied period outlives the result).
     if (!selectionDirty && result != null) return;
 
+    // Reading Hive is quick, but the user tapped a button — show that their
+    // saved copy is being checked instead of leaving the tap unacknowledged.
+    if (result == null) _set(AttendanceStatus.restoring);
+
     final creds = await _credentials.read();
     if (creds != null) {
       final cached = await _repository.cached(
@@ -333,6 +354,7 @@ class AttendanceViewModel extends ChangeNotifier {
       if (cached != null) {
         // Show whatever we have from cache immediately.
         result = cached;
+        loadedFromCache = true;
         _appliedYear = academicYear;
         _appliedSession = session;
         _set(AttendanceStatus.success);
@@ -375,6 +397,7 @@ class AttendanceViewModel extends ChangeNotifier {
   Future<void> disconnect() async {
     await _credentials.clear();
     result = null;
+    loadedFromCache = false;
     errorKind = null;
     errorMessage = null;
     // The applied period must go with the result, or the next log-in sees a

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_actions_row.dart';
+import 'package:plan_sync/features/attendance/view/widgets/attendance_cache_banner.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_inline_notice.dart';
 import 'package:plan_sync/features/attendance/view/widgets/overall_attendance_card.dart';
 import 'package:plan_sync/features/attendance/view/widgets/subject_attendance_tile.dart';
@@ -44,6 +45,7 @@ class AttendanceSuccessState extends StatelessWidget {
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 120),
         children: [
+          AttendanceCacheBanner(viewModel: viewModel),
           FadeSlideIn(child: OverallAttendanceCard(result: result)),
           const SizedBox(height: 20),
           FadeSlideIn(

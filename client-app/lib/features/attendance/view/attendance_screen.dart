@@ -3,6 +3,7 @@ import 'package:plan_sync/features/attendance/view/widgets/attendance_error_stat
 import 'package:plan_sync/features/attendance/view/widgets/attendance_loading_state.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_needs_credentials.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_period_picker.dart';
+import 'package:plan_sync/features/attendance/view/widgets/attendance_restoring_state.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_preference_dialog.dart';
 import 'package:plan_sync/features/attendance/view/widgets/attendance_success_state.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
@@ -149,6 +150,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     switch (viewModel.status) {
       case AttendanceStatus.needsCredentials:
         return AttendanceNeedsCredentials(viewModel: viewModel);
+      case AttendanceStatus.restoring:
+        return AttendanceRestoringState(viewModel: viewModel);
       case AttendanceStatus.loading:
         return AttendanceLoadingState(viewModel: viewModel);
       case AttendanceStatus.error:

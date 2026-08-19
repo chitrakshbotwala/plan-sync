@@ -165,9 +165,12 @@ void main() {
     await tester.tap(find.text('Load attendance'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Portal unavailable'), findsOneWidget);
-    expect(find.text('The KIIT portal is down.'), findsOneWidget);
+    // The failure screen explains the specific kind of failure and offers a
+    // retry, rather than surfacing one generic line.
+    expect(find.text('Portal is down'), findsOneWidget);
+    expect(find.textContaining('isn\'t responding'), findsOneWidget);
     expect(find.text('Try again'), findsOneWidget);
+    expect(find.byIcon(Icons.cloud_off_rounded), findsOneWidget);
   });
 
   testWidgets('invalid credentials clears creds and returns to connect prompt',

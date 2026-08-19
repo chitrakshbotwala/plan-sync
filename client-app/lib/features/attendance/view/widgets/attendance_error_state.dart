@@ -17,16 +17,16 @@ class AttendanceErrorState extends StatefulWidget {
 
 class _AttendanceErrorStateState extends State<AttendanceErrorState>
     with SingleTickerProviderStateMixin {
-  // A slow breathing pulse on the icon badge, so the screen doesn't read as a
-  // dead end.
-  late final AnimationController _pulse = AnimationController(
+  // A single settling pop on the icon badge. Deliberately one-shot: a looping
+  // pulse would nag the user and would never let the frame settle.
+  late final AnimationController _pop = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 1800),
-  )..repeat(reverse: true);
+    duration: const Duration(milliseconds: 620),
+  )..forward();
 
   @override
   void dispose() {
-    _pulse.dispose();
+    _pop.dispose();
     super.dispose();
   }
 
@@ -46,8 +46,8 @@ class _AttendanceErrorStateState extends State<AttendanceErrorState>
           children: [
             FadeSlideIn(
               child: ScaleTransition(
-                scale: Tween<double>(begin: 0.94, end: 1.06).animate(
-                  CurvedAnimation(parent: _pulse, curve: Curves.easeInOut),
+                scale: Tween<double>(begin: 0.78, end: 1.0).animate(
+                  CurvedAnimation(parent: _pop, curve: Curves.elasticOut),
                 ),
                 child: Container(
                   width: 108,
