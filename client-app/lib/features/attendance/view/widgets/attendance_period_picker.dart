@@ -153,7 +153,7 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
                         ),
                       )
                     : const Icon(Icons.download_rounded),
-                label: Text(_busy ? 'Loading…' : 'Load attendance'),
+                label: Text(_busy ? 'Checking saved copy…' : 'Load attendance'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: colorScheme.primary,
                   foregroundColor: colorScheme.onPrimary,
@@ -163,6 +163,31 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
                   ),
                 ),
               ),
+            ),
+            const SizedBox(height: 12),
+            // Say what the button will do, so a fast cache-backed load doesn't
+            // look like nothing happened and a slow scrape isn't a surprise.
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(
+                  Icons.info_outline_rounded,
+                  size: 15,
+                  color: colorScheme.onSurface.withValues(alpha: 0.45),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    'A copy saved on this device loads instantly. Otherwise we '
+                    'sign in to the KIIT portal, which can take up to a minute.',
+                    style: TextStyle(
+                      color: colorScheme.onSurface.withValues(alpha: 0.45),
+                      fontSize: 12,
+                      height: 1.35,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

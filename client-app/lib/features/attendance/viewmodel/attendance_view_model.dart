@@ -334,39 +334,42 @@ class AttendanceViewModel extends ChangeNotifier {
   /// Load the currently-picked year/session, checking cache first before
   /// falling back to a full scrape. Stale cache is shown immediately while a
   /// background refresh runs.
+  ///
+  /// Always loads, even when the picked period matches the last applied one:
+  /// this only runs from an explicit tap ("Load attendance" / the period
+  /// dialog's Apply), and skipping the work there is what made those buttons
+  /// look broken. Passive entry into the tab goes through [ensureLoaded].
   Future<void> applySelection() async {
-    // With nothing on screen the pick must always load, even when it matches
-    // the last applied period — otherwise "Load attendance" does nothing after
-    // a log out / log back in (the applied period outlives the result).
-    if (!selectionDirty && result != null) return;
-
     // Reading Hive is quick, but the user tapped a button — show that their
     // saved copy is being checked instead of leaving the tap unacknowledged.
     if (result == null) _set(AttendanceStatus.restoring);
 
     final creds = await _credentials.read();
-    if (creds != null) {
-      final cached = await _repository.cached(
-        registrationNumber: creds.$1,
-        academicYear: academicYear,
-        session: session,
-      );
-      if (cached != null) {
-        // Show whatever we have from cache immediately.
-        result = cached;
-        loadedFromCache = true;
-        _appliedYear = academicYear;
-        _appliedSession = session;
-        _set(AttendanceStatus.success);
-
-        if (!_repository.isStale(cached)) {
-          return; // Fresh — no scrape needed.
-        }
-        // Stale — fall through; refresh() will use isRefreshing (data is visible).
+    if (creds != null && await _restoreFromCache(creds.$1)) {
+      if (!_repository.isStale(result!)) {
+        return; // Fresh — no scrape needed.
       }
+      // Stale — fall through; refresh() will use isRefreshing (data is visible).
     }
 
     await refresh();
+  }
+
+  /// Loads the saved copy for the picked period onto the screen, if there is
+  /// one. Returns whether anything was restored.
+  Future<bool> _restoreFromCache(String registrationNumber) async {
+    final cached = await _repository.cached(
+      registrationNumber: registrationNumber,
+      academicYear: academicYear,
+      session: session,
+    );
+    if (cached == null) return false;
+    result = cached;
+    loadedFromCache = true;
+    _appliedYear = academicYear;
+    _appliedSession = session;
+    _set(AttendanceStatus.success);
+    return true;
   }
 
   /// Save new credentials. Does NOT fetch — the user lands on the idle period
@@ -382,6 +385,10 @@ class AttendanceViewModel extends ChangeNotifier {
     // Clear any prior "incorrect password" notice from a failed attempt.
     errorKind = null;
     errorMessage = null;
+    // A saved copy from before the log-out is still on the device, so land on it
+    // exactly as a cold app start would — otherwise logging back in dumps the
+    // user on an empty picker while their attendance sits in the cache.
+    if (await _restoreFromCache(registrationNumber)) return;
     _set(AttendanceStatus.idle);
   }
 

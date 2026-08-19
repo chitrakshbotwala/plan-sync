@@ -54,9 +54,11 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
               return Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // When data is loaded show the period selector; otherwise
-                  // fall back to the plain ID badge so there's always context.
-                  if (viewModel.result != null)
+                  // The period selector belongs to attendance that's actually
+                  // on screen; while the picker is up it would claim a period
+                  // the body is still asking for. Fall back to the ID badge.
+                  if (viewModel.status == AttendanceStatus.success &&
+                      viewModel.result != null)
                     AttendancePreferenceButton(viewModel: viewModel)
                   else
                     Container(

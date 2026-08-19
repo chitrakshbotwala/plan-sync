@@ -127,12 +127,11 @@ void main() {
       );
       final year = AttendanceViewModel.currentAcademicYear();
       final sess = AttendanceViewModel.currentSession();
-      repo.seed('22001234', year, sess,
-          _result(academicYear: year, session: sess));
+      // Nothing saved on the device, so the picker is what the user lands on.
+      repo.fetchResult =
+          _result(academicYear: year, session: sess, age: Duration.zero);
 
-      await vm.initialize(); // applies the cached period
-      expect(vm.status, AttendanceStatus.success);
-
+      await vm.initialize();
       await vm.disconnect();
       await vm.connect(registrationNumber: '22001234', password: 'password');
       expect(vm.status, AttendanceStatus.idle);
@@ -140,6 +139,56 @@ void main() {
       // Picking the SAME year/session as before must still load — the applied
       // period was cleared with the result, so this isn't a no-op.
       vm.changeSelection(year: year, session: sess);
+      await vm.applySelection();
+
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.result, isNotNull);
+    });
+
+    test('logging back in lands on the saved copy, not an empty picker',
+        () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess));
+
+      await vm.initialize();
+      await vm.disconnect();
+      expect(vm.result, isNull);
+
+      await vm.connect(registrationNumber: '22001234', password: 'password');
+
+      // Same behaviour as a cold start with a cache present.
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.loadedFromCache, isTrue);
+      expect(repo.fetchCount, 0);
+    });
+
+    test('re-applying the period already on screen still reloads', () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess));
+      await vm.initialize();
+
+      // Mirrors the error screen's "Change year & session" → pick the same
+      // period → Apply. This used to early-return and do nothing.
+      vm.chooseAnotherPeriod();
+      expect(vm.status, AttendanceStatus.idle);
+      expect(vm.selectionDirty, isFalse); // period unchanged
+
       await vm.applySelection();
 
       expect(vm.status, AttendanceStatus.success);
