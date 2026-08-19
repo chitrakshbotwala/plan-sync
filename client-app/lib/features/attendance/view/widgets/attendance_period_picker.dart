@@ -51,7 +51,9 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
 
     return Center(
       child: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        // Bottom allowance keeps the button and its note clear of the floating
+        // nav bar.
+        padding: const EdgeInsets.fromLTRB(32, 24, 32, 110),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,

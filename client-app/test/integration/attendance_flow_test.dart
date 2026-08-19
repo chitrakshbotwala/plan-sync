@@ -177,6 +177,24 @@ void main() {
     // Reporting is not one tap away on a first failure.
     expect(find.text('Report issue'), findsNothing);
     expect(find.text('Tried everything?'), findsNothing);
+
+    // A second failure reveals the disclosure — beside the retry button, not in
+    // a block below it where the nav bar covers it.
+    await tester.tap(find.text('Try again'));
+    await tester.pumpAndSettle();
+
+    final disclosure = find.text('Tried everything?');
+    expect(disclosure, findsOneWidget);
+    expect(find.text('Report issue'), findsNothing); // still two taps away
+    expect(
+      tester.getCenter(disclosure).dy,
+      closeTo(tester.getCenter(find.text('Try again')).dy, 24),
+      reason: 'the disclosure shares the retry row',
+    );
+
+    await tester.tap(disclosure);
+    await tester.pumpAndSettle();
+    expect(find.text('Report issue'), findsOneWidget);
   });
 
   testWidgets('invalid credentials clears creds and returns to connect prompt',

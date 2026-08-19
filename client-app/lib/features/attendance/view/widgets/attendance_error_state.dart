@@ -54,7 +54,9 @@ class _AttendanceErrorStateState extends State<AttendanceErrorState>
     return Center(
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
+        // The bottom nav bar floats over the body, so keep the last control
+        // clear of it (same allowance as the success list).
+        padding: const EdgeInsets.fromLTRB(32, 24, 32, 120),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
@@ -108,31 +110,49 @@ class _AttendanceErrorStateState extends State<AttendanceErrorState>
             const SizedBox(height: 22),
             FadeSlideIn(
               delay: const Duration(milliseconds: 220),
-              child: FilledButton.icon(
-                onPressed: _retrying ? null : _retry,
-                icon: _retrying
-                    ? SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: colorScheme.onPrimary,
-                        ),
-                      )
-                    : const Icon(Icons.refresh_rounded),
-                label: Text(_retrying ? 'Trying…' : cfg.retryLabel),
-                style: FilledButton.styleFrom(
-                  backgroundColor: accent,
-                  foregroundColor: colorScheme.onPrimary,
-                  disabledBackgroundColor: accent.withValues(alpha: 0.5),
-                  disabledForegroundColor:
-                      colorScheme.onPrimary.withValues(alpha: 0.8),
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 28, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+              // Retry and the reporting escape hatch share a row (wrapping on
+              // narrow screens) so neither ends up under the nav bar.
+              child: Wrap(
+                alignment: WrapAlignment.center,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                spacing: 8,
+                runSpacing: 4,
+                children: [
+                  FilledButton.icon(
+                    onPressed: _retrying ? null : _retry,
+                    icon: _retrying
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: colorScheme.onPrimary,
+                            ),
+                          )
+                        : const Icon(Icons.refresh_rounded),
+                    label: Text(_retrying ? 'Trying…' : cfg.retryLabel),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: accent,
+                      foregroundColor: colorScheme.onPrimary,
+                      disabledBackgroundColor: accent.withValues(alpha: 0.5),
+                      disabledForegroundColor:
+                          colorScheme.onPrimary.withValues(alpha: 0.8),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 28, vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
                   ),
-                ),
+                  // Reporting stays behind a disclosure and only appears once a
+                  // retry has also failed — a single transient failure
+                  // shouldn't turn into a support ticket.
+                  if (widget.viewModel.canReportIssue)
+                    _ReportDisclosure(
+                      onReport: () =>
+                          PopupsWrapper.reportAttendanceIssue(context: context),
+                    ),
+                ],
               ),
             ),
             if (widget.viewModel.consecutiveFailures > 1)
@@ -166,17 +186,6 @@ class _AttendanceErrorStateState extends State<AttendanceErrorState>
                       foregroundColor: colorScheme.primary,
                     ),
                   ),
-                ),
-              ),
-            // Reporting sits behind a disclosure and only appears once a retry
-            // has already failed — a single transient failure shouldn't turn
-            // into a support ticket.
-            if (widget.viewModel.canReportIssue)
-              FadeSlideIn(
-                delay: const Duration(milliseconds: 320),
-                child: _ReportDisclosure(
-                  onReport: () =>
-                      PopupsWrapper.reportAttendanceIssue(context: context),
                 ),
               ),
           ],
@@ -389,40 +398,31 @@ class _ReportDisclosureState extends State<_ReportDisclosure> {
     final colorScheme = Theme.of(context).colorScheme;
     final muted = colorScheme.onSurface.withValues(alpha: 0.5);
 
+    // Sits inline next to the retry button, so it swaps in place rather than
+    // growing a block below (which is how it ended up under the nav bar).
     return AnimatedSize(
       duration: const Duration(milliseconds: 240),
       curve: Curves.easeOutCubic,
+      alignment: Alignment.centerLeft,
       child: _open
-          ? Padding(
-              padding: const EdgeInsets.only(top: 14),
-              child: Column(
-                children: [
-                  Text(
-                    'Retries and a restart didn\'t help?',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: muted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 6),
-                  TextButton.icon(
-                    onPressed: widget.onReport,
-                    icon: const Icon(Icons.mail_outline_rounded, size: 18),
-                    label: const Text('Report issue'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: colorScheme.error,
-                    ),
-                  ),
-                ],
+          ? TextButton.icon(
+              onPressed: widget.onReport,
+              icon: const Icon(Icons.mail_outline_rounded, size: 17),
+              label: const Text('Report issue', style: TextStyle(fontSize: 13)),
+              style: TextButton.styleFrom(
+                foregroundColor: colorScheme.error,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
               ),
             )
-          : Padding(
-              padding: const EdgeInsets.only(top: 6),
-              child: TextButton(
-                onPressed: () => setState(() => _open = true),
-                style: TextButton.styleFrom(foregroundColor: muted),
-                child: const Text(
-                  'Tried everything?',
-                  style: TextStyle(fontSize: 12),
-                ),
+          : TextButton(
+              onPressed: () => setState(() => _open = true),
+              style: TextButton.styleFrom(
+                foregroundColor: muted,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+              ),
+              child: const Text(
+                'Tried everything?',
+                style: TextStyle(fontSize: 12),
               ),
             ),
     );
