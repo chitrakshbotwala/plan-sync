@@ -117,6 +117,34 @@ void main() {
       expect(vm.errorKind, isNull);
       expect(vm.errorMessage, isNull);
     });
+
+    test('log out then log back in can load the same period again', () async {
+      final repo = FakeAttendanceRepository();
+      final vm = _makeVm(
+        hasCredentials: true,
+        registrationNumber: '22001234',
+        repository: repo,
+      );
+      final year = AttendanceViewModel.currentAcademicYear();
+      final sess = AttendanceViewModel.currentSession();
+      repo.seed('22001234', year, sess,
+          _result(academicYear: year, session: sess));
+
+      await vm.initialize(); // applies the cached period
+      expect(vm.status, AttendanceStatus.success);
+
+      await vm.disconnect();
+      await vm.connect(registrationNumber: '22001234', password: 'password');
+      expect(vm.status, AttendanceStatus.idle);
+
+      // Picking the SAME year/session as before must still load — the applied
+      // period was cleared with the result, so this isn't a no-op.
+      vm.changeSelection(year: year, session: sess);
+      await vm.applySelection();
+
+      expect(vm.status, AttendanceStatus.success);
+      expect(vm.result, isNotNull);
+    });
   });
 
   group('changeSelection', () {

@@ -318,7 +318,10 @@ class AttendanceViewModel extends ChangeNotifier {
   /// falling back to a full scrape. Stale cache is shown immediately while a
   /// background refresh runs.
   Future<void> applySelection() async {
-    if (!selectionDirty) return;
+    // With nothing on screen the pick must always load, even when it matches
+    // the last applied period — otherwise "Load attendance" does nothing after
+    // a log out / log back in (the applied period outlives the result).
+    if (!selectionDirty && result != null) return;
 
     final creds = await _credentials.read();
     if (creds != null) {
@@ -374,6 +377,10 @@ class AttendanceViewModel extends ChangeNotifier {
     result = null;
     errorKind = null;
     errorMessage = null;
+    // The applied period must go with the result, or the next log-in sees a
+    // clean picker whose selection already looks "applied" and refuses to load.
+    _appliedYear = null;
+    _appliedSession = null;
     _set(AttendanceStatus.needsCredentials);
   }
 
