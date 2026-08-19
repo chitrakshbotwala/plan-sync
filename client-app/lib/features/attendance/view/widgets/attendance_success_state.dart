@@ -4,6 +4,7 @@ import 'package:plan_sync/features/attendance/view/widgets/attendance_inline_not
 import 'package:plan_sync/features/attendance/view/widgets/overall_attendance_card.dart';
 import 'package:plan_sync/features/attendance/view/widgets/subject_attendance_tile.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
+import 'package:plan_sync/widgets/animations/fade_slide_in.dart';
 
 class AttendanceSuccessState extends StatelessWidget {
   const AttendanceSuccessState({super.key, required this.viewModel});
@@ -43,9 +44,12 @@ class AttendanceSuccessState extends StatelessWidget {
         ),
         padding: const EdgeInsets.fromLTRB(12, 12, 12, 120),
         children: [
-          OverallAttendanceCard(result: result),
+          FadeSlideIn(child: OverallAttendanceCard(result: result)),
           const SizedBox(height: 20),
-          AttendanceActionsRow(viewModel: viewModel),
+          FadeSlideIn(
+            delay: const Duration(milliseconds: 60),
+            child: AttendanceActionsRow(viewModel: viewModel),
+          ),
           const SizedBox(height: 4),
           Text(
             _formatFetchedAt(result.fetchedAt),
@@ -62,10 +66,17 @@ class AttendanceSuccessState extends StatelessWidget {
                   '· ${result.session}.',
             )
           else
-            ...result.records.map(
-              (r) => Padding(
+            ...result.records.indexed.map(
+              (entry) => Padding(
                 padding: const EdgeInsets.only(bottom: 10),
-                child: SubjectAttendanceTile(record: r),
+                // Cascade the tiles in; cap the stagger so a long list doesn't
+                // leave the last rows waiting.
+                child: FadeSlideIn(
+                  delay: Duration(
+                    milliseconds: 120 + (entry.$1.clamp(0, 8) * 55),
+                  ),
+                  child: SubjectAttendanceTile(record: entry.$2),
+                ),
               ),
             ),
         ],

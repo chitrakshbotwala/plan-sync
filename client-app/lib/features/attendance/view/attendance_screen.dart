@@ -87,7 +87,19 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         ],
       ),
       body: Consumer<AttendanceViewModel>(
-        builder: (context, viewModel, _) => _contentFor(viewModel),
+        builder: (context, viewModel, _) => AnimatedSwitcher(
+          duration: const Duration(milliseconds: 350),
+          switchInCurve: Curves.easeOutCubic,
+          switchOutCurve: Curves.easeIn,
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: child,
+          ),
+          child: KeyedSubtree(
+            key: ValueKey('${viewModel.status.name}:${viewModel.result == null}'),
+            child: _contentFor(viewModel),
+          ),
+        ),
       ),
     );
   }
