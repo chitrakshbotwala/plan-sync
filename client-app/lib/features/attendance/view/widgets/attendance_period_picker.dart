@@ -19,9 +19,8 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
   late String _session = widget.viewModel.session;
   String? _error;
 
-  /// Set the moment the button is tapped, so the button acknowledges the tap
-  /// immediately — the view model's own state change lands a frame later, after
-  /// the cache read starts.
+  /// Acknowledges the tap in the same frame; the view model's state change
+  /// lands a frame later.
   bool _busy = false;
 
   Future<void> _load() async {
@@ -51,9 +50,7 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
 
     return Center(
       child: SingleChildScrollView(
-        // Bottom allowance keeps the button and its note clear of the floating
-        // nav bar.
-        padding: const EdgeInsets.fromLTRB(32, 24, 32, 110),
+        padding: const EdgeInsets.fromLTRB(32, 24, 32, 112),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           mainAxisSize: MainAxisSize.min,
@@ -147,8 +144,8 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
                 onPressed: _busy ? null : _load,
                 icon: _busy
                     ? SizedBox(
-                        width: 18,
-                        height: 18,
+                        width: 16,
+                        height: 16,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: colorScheme.onPrimary,
@@ -167,17 +164,15 @@ class _AttendancePeriodPickerState extends State<AttendancePeriodPicker> {
               ),
             ),
             const SizedBox(height: 12),
-            // Say what the button will do, so a fast cache-backed load doesn't
-            // look like nothing happened and a slow scrape isn't a surprise.
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Icon(
                   Icons.info_outline_rounded,
-                  size: 15,
+                  size: 16,
                   color: colorScheme.onSurface.withValues(alpha: 0.45),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'A copy saved on this device loads instantly. Otherwise we '

@@ -2,10 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 import 'package:plan_sync/widgets/animations/fade_slide_in.dart';
 
-/// Shown for the moment between tapping "Load attendance" and the saved copy
-/// being read out of the cache. Without it the tap looks like it did nothing —
-/// which is exactly how it feels after a fresh log-in, when the cache read is
-/// the only work happening before data appears.
+/// Shown between tapping "Load attendance" and the saved copy being read out
+/// of the cache, so the tap doesn't look like it did nothing.
 class AttendanceRestoringState extends StatefulWidget {
   const AttendanceRestoringState({super.key, required this.viewModel});
   final AttendanceViewModel viewModel;
@@ -17,10 +15,16 @@ class AttendanceRestoringState extends StatefulWidget {
 
 class _AttendanceRestoringStateState extends State<AttendanceRestoringState>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _spin = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1400),
-  )..repeat();
+  late final AnimationController _spin;
+
+  @override
+  void initState() {
+    super.initState();
+    _spin = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..repeat();
+  }
 
   @override
   void dispose() {
@@ -44,21 +48,21 @@ class _AttendanceRestoringStateState extends State<AttendanceRestoringState>
               child: RotationTransition(
                 turns: _spin,
                 child: Container(
-                  width: 84,
-                  height: 84,
+                  width: 88,
+                  height: 88,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: colorScheme.primary.withValues(alpha: 0.12),
                   ),
                   child: Icon(
                     Icons.cached_rounded,
-                    size: 38,
+                    size: 40,
                     color: colorScheme.primary,
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
             FadeSlideIn(
               delay: const Duration(milliseconds: 80),
               child: Text(

@@ -2,8 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:plan_sync/features/attendance/viewmodel/attendance_view_model.dart';
 
 /// Sits above the attendance list whenever what's on screen isn't live data:
-/// a saved copy restored from the cache, or a saved copy being refreshed in the
-/// background. Silence here is what made a cached load look like a fresh one.
+/// a saved copy restored from the cache, or one being refreshed.
 class AttendanceCacheBanner extends StatefulWidget {
   const AttendanceCacheBanner({super.key, required this.viewModel});
   final AttendanceViewModel viewModel;
@@ -14,10 +13,7 @@ class AttendanceCacheBanner extends StatefulWidget {
 
 class _AttendanceCacheBannerState extends State<AttendanceCacheBanner>
     with SingleTickerProviderStateMixin {
-  late final AnimationController _spin = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 1200),
-  );
+  late final AnimationController _spin;
 
   @override
   void didUpdateWidget(AttendanceCacheBanner oldWidget) {
@@ -28,6 +24,10 @@ class _AttendanceCacheBannerState extends State<AttendanceCacheBanner>
   @override
   void initState() {
     super.initState();
+    _spin = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    );
     _syncSpin();
   }
 
@@ -75,7 +75,7 @@ class _AttendanceCacheBannerState extends State<AttendanceCacheBanner>
       curve: Curves.easeOutCubic,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+        padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
         decoration: BoxDecoration(
           color: accent.withValues(alpha: 0.10),
           borderRadius: BorderRadius.circular(14),
@@ -100,11 +100,11 @@ class _AttendanceCacheBannerState extends State<AttendanceCacheBanner>
                     title,
                     style: TextStyle(
                       color: colorScheme.onSurface,
-                      fontSize: 13.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
                     style: TextStyle(
@@ -122,7 +122,7 @@ class _AttendanceCacheBannerState extends State<AttendanceCacheBanner>
                 style: TextButton.styleFrom(
                   foregroundColor: accent,
                   padding: const EdgeInsets.symmetric(horizontal: 10),
-                  minimumSize: const Size(0, 34),
+                  minimumSize: const Size(0, 32),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
                 child: const Text('Refresh'),
