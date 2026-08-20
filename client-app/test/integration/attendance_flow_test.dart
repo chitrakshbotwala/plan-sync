@@ -197,6 +197,29 @@ void main() {
     expect(find.text('Report issue'), findsOneWidget);
   });
 
+  testWidgets('a changed column layout tells the user how to restore it',
+      (tester) async {
+    await pumpAttendance(
+      tester,
+      creds: _FakeCredentials(hasCredentials: true, registrationNumber: '2205'),
+      scraperFactory: () => _FakeScraper(
+        error: const ScrapeException(
+          ScrapeErrorKind.columnsChanged,
+          'Your attendance table on the portal is missing No.of Present.',
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Load attendance'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Attendance table changed'), findsOneWidget);
+    expect(find.textContaining('missing No.of Present'), findsOneWidget);
+    expect(find.textContaining('restore the'), findsOneWidget);
+    expect(find.text('Try again'), findsOneWidget);
+  });
+
   testWidgets('invalid credentials clears creds and returns to connect prompt',
       (tester) async {
     await pumpAttendance(
