@@ -431,14 +431,30 @@ class KiitAttendanceScraper {
       return -1;
     }
 
+    List<int> cols(RegExp re) {
+      final found = <int>[];
+      for (var i = 0; i < headers.length; i++) {
+        if (re.hasMatch(headers[i])) found.add(i);
+      }
+      return found;
+    }
+
     final subjectI = col(RegExp(r'subject|course|paper'), not: RegExp(r'fac'));
     final absentI = col(RegExp(r'absent'));
     final presentI = col(RegExp(r'present'));
     final totalI = col(RegExp(r'total.*day|day.*total'));
     final percentageI = col(RegExp(r'percent'));
-    final facultyIdI = col(RegExp(r'fac.*id|faculty.*code'));
-    final facultyNameI = col(RegExp(r'fac.*name|teacher.*name'));
     final excusesI = col(RegExp(r'excuse'));
+
+    // The portal labels the faculty id column "Faculty Name" too, so the name
+    // regex can match twice. With nothing in the headers to tell them apart,
+    // the first of the pair is the id and the last is the name.
+    final facultyColumns = cols(RegExp(r'fac.*name|teacher.*name'));
+    final explicitIdI = col(RegExp(r'fac.*id|faculty.*code'));
+    final facultyIdI = explicitIdI >= 0
+        ? explicitIdI
+        : (facultyColumns.length > 1 ? facultyColumns.first : -1);
+    final facultyNameI = facultyColumns.isEmpty ? -1 : facultyColumns.last;
 
     if (subjectI < 0) {
       throw const ScrapeException(
@@ -469,10 +485,11 @@ class KiitAttendanceScraper {
 
     final letter = RegExp(r'[A-Za-z]');
     final out = <AttendanceRecord>[];
-    for (final cells in rows) {
+    for (final raw in rows) {
       // Tables are padded with blank rows; those aren't a layout problem.
-      if (cells.every((c) => c.trim().isEmpty)) continue;
+      if (raw.every((c) => c.trim().isEmpty)) continue;
 
+      final cells = _alignToHeaders(headers, raw);
       final subject = at(cells, subjectI).trim();
       // A row that doesn't reach the header row's width, or whose subject
       // column holds no text, is sitting one or more columns out of line.
@@ -502,6 +519,10 @@ class KiitAttendanceScraper {
     }
 
     if (out.isEmpty && misaligned > 0) {
+      if (kDebugMode) {
+        debugPrint('[scrape] UNALIGNED — headers=$headers');
+        debugPrint('[scrape] UNALIGNED — row0=${rows.isEmpty ? '[]' : rows.first}');
+      }
       throw const ScrapeException(
         ScrapeErrorKind.columnsChanged,
         'The columns on your attendance table did not line up with its '
@@ -509,6 +530,61 @@ class KiitAttendanceScraper {
       );
     }
     return out;
+  }
+
+  /// Lines a data row up with the header row.
+  ///
+  /// The portal's header row and its data rows don't always carry the same
+  /// number of cells: the row-selection column has a header but no `gridcell`,
+  /// and some layouts add a trailing filler. Padding is added or dropped at
+  /// whichever end is blank, so the cell at a header's position really is that
+  /// header's value. A row that can't be reconciled is returned untouched and
+  /// gets rejected by the caller's checks.
+  static List<String> _alignToHeaders(
+    List<String> headers,
+    List<String> cells,
+  ) {
+    if (headers.isEmpty || headers.length == cells.length) return cells;
+
+    if (cells.length < headers.length) {
+      final gap = headers.length - cells.length;
+      // Leading headers with no text (the selection column) own no cell.
+      if (headers.take(gap).every((h) => h.trim().isEmpty)) {
+        return [...List.filled(gap, ''), ...cells];
+      }
+      // Otherwise the row is short at the end (hidden trailing columns).
+      if (headers.skip(headers.length - gap).every((h) => h.trim().isEmpty)) {
+        return [...cells, ...List.filled(gap, '')];
+      }
+      // Blank headers at both ends: pad each side by the blanks it owns.
+      var lead = 0;
+      while (lead < headers.length && headers[lead].trim().isEmpty) {
+        lead++;
+      }
+      var trail = 0;
+      while (trail < headers.length - lead &&
+          headers[headers.length - 1 - trail].trim().isEmpty) {
+        trail++;
+      }
+      if (lead + trail == gap) {
+        return [
+          ...List.filled(lead, ''),
+          ...cells,
+          ...List.filled(trail, ''),
+        ];
+      }
+      return cells;
+    }
+
+    final extra = cells.length - headers.length;
+    // Extra leading cells with no text (a selection cell with no header).
+    if (cells.take(extra).every((c) => c.trim().isEmpty)) {
+      return cells.sublist(extra);
+    }
+    if (cells.skip(cells.length - extra).every((c) => c.trim().isEmpty)) {
+      return cells.sublist(0, headers.length);
+    }
+    return cells;
   }
 
   /// Fills in whichever of present/absent/total/percentage the portal isn't

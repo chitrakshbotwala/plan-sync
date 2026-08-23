@@ -204,6 +204,94 @@ void main() {
     });
   });
 
+  // The real KIIT table, verbatim: a leading selection column that has a
+  // header but emits no cell, Present before Absent, and the faculty id column
+  // mislabelled "Faculty Name" so the name regex matches twice.
+  group('the live KIIT layout', () {
+    const liveHeaders = '|subject|no.of present|no.of absent|no. of excuses|'
+        'total no. of days|total percentage|faculty name|faculty name';
+
+    List<List<String>> liveRows() => [
+          [
+            'Scientific and Technical Writing',
+            '1.00',
+            '9.00',
+            '0.00',
+            '10.00',
+            '10.00',
+            '00105704',
+            'Asit Behera',
+          ],
+          [
+            'Data Structures',
+            '2.00',
+            '19.00',
+            '0.00',
+            '21.00',
+            '9.52',
+            '00104432',
+            'Debashis Hati',
+          ],
+          ['', '', '', '', '', '', '', ''],
+        ];
+
+    test('rows shorter than the header row still map correctly', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        liveHeaders.split('|'),
+        liveRows(),
+      );
+
+      expect(recs, hasLength(2));
+      final first = recs.first;
+      expect(first.subject, 'Scientific and Technical Writing');
+      expect(first.present, 1);
+      expect(first.absent, 9);
+      expect(first.totalDays, 10);
+      expect(first.percentage, closeTo(10.0, 0.01));
+      expect(first.excuses, 0);
+      expect(recs[1].subject, 'Data Structures');
+      expect(recs[1].present, 2);
+      expect(recs[1].totalDays, 21);
+      expect(recs[1].percentage, closeTo(9.52, 0.01));
+    });
+
+    test('a duplicated Faculty Name header splits into id and name', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        liveHeaders.split('|'),
+        liveRows(),
+      );
+
+      expect(recs.first.facultyId, '00105704');
+      expect(recs.first.facultyName, 'Asit Behera');
+    });
+
+    test('the same layout with the selection cell emitted also maps', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        liveHeaders.split('|'),
+        [
+          [
+            '',
+            'Digital Systems Design',
+            '7.00',
+            '9.00',
+            '0.00',
+            '16.00',
+            '43.75',
+            '00103185',
+            'Deep Mukherjee',
+          ],
+        ],
+      );
+
+      final rec = recs.first;
+      expect(rec.subject, 'Digital Systems Design');
+      expect(rec.present, 7);
+      expect(rec.absent, 9);
+      expect(rec.totalDays, 16);
+      expect(rec.facultyName, 'Deep Mukherjee');
+    });
+  });
+
   // A user who hid columns on the portal keeps working attendance: identity
   // still comes from the header name, and the missing quantity is worked out
   // from the ones that are left.
