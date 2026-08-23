@@ -208,8 +208,11 @@ void main() {
   // header but emits no cell, Present before Absent, and the faculty id column
   // mislabelled "Faculty Name" so the name regex matches twice.
   group('the live KIIT layout', () {
-    const liveHeaders = '|subject|no.of present|no.of absent|no. of excuses|'
-        'total no. of days|total percentage|faculty name|faculty name';
+    // Verbatim from a device run, including the selection column's own header.
+    const liveHeaders =
+        'column for row selection|subject|no.of present|no.of absent|'
+        'no. of excuses|total no. of days|total percentage|faculty name|'
+        'faculty name';
 
     List<List<String>> liveRows() => [
           [
@@ -253,6 +256,25 @@ void main() {
       expect(recs[1].present, 2);
       expect(recs[1].totalDays, 21);
       expect(recs[1].percentage, closeTo(9.52, 0.01));
+    });
+
+    test('an unrecognised extra header is reconciled by width', () {
+      // Even if the portal renames the selection column to something we don't
+      // know, the data rows still map — the header row is trimmed to the rows.
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        'some new control column|subject|no.of present|no.of absent|'
+                'no. of excuses|total no. of days|total percentage|'
+                'faculty name|faculty name'
+            .split('|'),
+        liveRows(),
+      );
+
+      expect(recs, hasLength(2));
+      expect(recs.first.subject, 'Scientific and Technical Writing');
+      expect(recs.first.present, 1);
+      expect(recs.first.absent, 9);
+      expect(recs.first.totalDays, 10);
+      expect(recs.first.facultyName, 'Asit Behera');
     });
 
     test('a duplicated Faculty Name header splits into id and name', () {

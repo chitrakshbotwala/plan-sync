@@ -417,10 +417,44 @@ class KiitAttendanceScraper {
   /// Only a table with no subject column, or with fewer than two of the four
   /// numeric columns, is unreadable — that alone raises
   /// [ScrapeErrorKind.columnsChanged].
+  /// Headers of columns that hold no attendance value — the row-selection
+  /// column and friends. The portal names it "Column for row selection", and
+  /// it has a header but emits no cell, so it is treated as blank.
+  static final RegExp _controlHeader = RegExp(
+    r'row selection|select a row|selection column|spacebar|checkbox',
+  );
+
   static List<AttendanceRecord> _recordsFromGrid(
-    List<String> headers,
+    List<String> allHeaders,
     List<List<String>> rows,
   ) {
+    final headers = allHeaders
+        .map((h) => _controlHeader.hasMatch(h) ? '' : h)
+        .toList();
+
+    // The header row can carry columns the data rows don't emit at all. When
+    // that leaves the two out of step, retry with those leading headers
+    // dropped — a pure width reconciliation, no reading of the values.
+    final widths = rows
+        .where((r) => r.any((c) => c.trim().isNotEmpty))
+        .map((r) => r.length)
+        .toSet();
+    for (final width in [headers.length, ...widths]) {
+      final drop = headers.length - width;
+      final candidate =
+          drop > 0 ? headers.sublist(drop) : headers;
+      final records = _mapRows(candidate, rows);
+      if (records.isNotEmpty) return records;
+    }
+
+    return _mapRows(headers, rows, reportFailure: true);
+  }
+
+  static List<AttendanceRecord> _mapRows(
+    List<String> headers,
+    List<List<String>> rows, {
+    bool reportFailure = false,
+  }) {
     int col(RegExp re, {RegExp? not}) {
       for (var i = 0; i < headers.length; i++) {
         if (re.hasMatch(headers[i]) &&
@@ -457,6 +491,7 @@ class KiitAttendanceScraper {
     final facultyNameI = facultyColumns.isEmpty ? -1 : facultyColumns.last;
 
     if (subjectI < 0) {
+      if (!reportFailure) return const [];
       throw const ScrapeException(
         ScrapeErrorKind.columnsChanged,
         'Your attendance table on the portal has no subject column, so there '
@@ -466,6 +501,7 @@ class KiitAttendanceScraper {
     final numericColumns =
         [absentI, presentI, totalI, percentageI].where((i) => i >= 0).length;
     if (numericColumns < 2) {
+      if (!reportFailure) return const [];
       throw const ScrapeException(
         ScrapeErrorKind.columnsChanged,
         'Your attendance table on the portal is showing too few columns to '
@@ -518,10 +554,11 @@ class KiitAttendanceScraper {
       ));
     }
 
-    if (out.isEmpty && misaligned > 0) {
+    if (out.isEmpty && misaligned > 0 && reportFailure) {
       if (kDebugMode) {
         debugPrint('[scrape] UNALIGNED — headers=$headers');
-        debugPrint('[scrape] UNALIGNED — row0=${rows.isEmpty ? '[]' : rows.first}');
+        debugPrint(
+            '[scrape] UNALIGNED — row0=${rows.isEmpty ? '[]' : rows.first}');
       }
       throw const ScrapeException(
         ScrapeErrorKind.columnsChanged,
@@ -1019,7 +1056,7 @@ const String _agentTemplate = r'''
   // exposes aria-colindex, that index places the value exactly.
   function cellText(el) {
     var t = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
-    return /select a row|spacebar/i.test(t) ? '' : t;
+    return /select a row|row selection|selection column|spacebar/i.test(t) ? '' : t;
   }
   function placeCells(nodes) {
     var ordered = [], byIndex = [], useIndex = nodes.length > 0;
