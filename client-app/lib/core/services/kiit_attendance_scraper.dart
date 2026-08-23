@@ -403,9 +403,20 @@ class KiitAttendanceScraper {
 
   /// Maps the raw grid to records using ONLY the column header names SAP sends.
   ///
-  /// No positional or value-shape guessing: if a required column isn't in the
-  /// header row, the scrape fails with [ScrapeErrorKind.columnsChanged] so the
-  /// user can be told to restore the table layout on the portal.
+  /// Column *identity* always comes from the header name — never from a cell's
+  /// position or the shape of its value. A column the user hid on the portal is
+  /// then reconstructed arithmetically from the ones that are still there, so a
+  /// customised table keeps working without asking anyone to restore it:
+  ///
+  ///  * total   = present + absent
+  ///  * present = total - absent            (or percentage x total)
+  ///  * absent  = total - present
+  ///  * total   = present / percentage      (or absent / (1 - percentage))
+  ///  * percentage = present / total
+  ///
+  /// Only a table with no subject column, or with fewer than two of the four
+  /// numeric columns, is unreadable — that alone raises
+  /// [ScrapeErrorKind.columnsChanged].
   static List<AttendanceRecord> _recordsFromGrid(
     List<String> headers,
     List<List<String>> rows,
@@ -420,42 +431,40 @@ class KiitAttendanceScraper {
       return -1;
     }
 
-    final columns = <String, int>{
-      'Subject': col(RegExp(r'subject|course|paper'), not: RegExp(r'fac')),
-      'No.of Absent': col(RegExp(r'absent')),
-      'No.of Present': col(RegExp(r'present')),
-      'Total No. of Days': col(RegExp(r'total.*day|day.*total')),
-    };
-    final missing = columns.entries
-        .where((e) => e.value < 0)
-        .map((e) => e.key)
-        .toList();
-    if (missing.isNotEmpty) {
-      throw ScrapeException(
-        ScrapeErrorKind.columnsChanged,
-        'Your attendance table on the portal is missing '
-        '${missing.join(', ')}.',
-      );
-    }
-
-    // Optional columns: absent from a customised layout, but derivable or
-    // simply not needed to report attendance.
+    final subjectI = col(RegExp(r'subject|course|paper'), not: RegExp(r'fac'));
+    final absentI = col(RegExp(r'absent'));
+    final presentI = col(RegExp(r'present'));
+    final totalI = col(RegExp(r'total.*day|day.*total'));
     final percentageI = col(RegExp(r'percent'));
     final facultyIdI = col(RegExp(r'fac.*id|faculty.*code'));
     final facultyNameI = col(RegExp(r'fac.*name|teacher.*name'));
     final excusesI = col(RegExp(r'excuse'));
 
-    final subjectI = columns['Subject']!;
-    final absentI = columns['No.of Absent']!;
-    final presentI = columns['No.of Present']!;
-    final totalI = columns['Total No. of Days']!;
+    if (subjectI < 0) {
+      throw const ScrapeException(
+        ScrapeErrorKind.columnsChanged,
+        'Your attendance table on the portal has no subject column, so there '
+        'is nothing to label your attendance with.',
+      );
+    }
+    final numericColumns =
+        [absentI, presentI, totalI, percentageI].where((i) => i >= 0).length;
+    if (numericColumns < 2) {
+      throw const ScrapeException(
+        ScrapeErrorKind.columnsChanged,
+        'Your attendance table on the portal is showing too few columns to '
+        'work out your attendance from.',
+      );
+    }
 
     String at(List<String> cells, int i) =>
         (i >= 0 && i < cells.length) ? cells[i] : '';
 
     // Values are read by column position, so a row that doesn't line up with
     // the header row is dropped rather than mapped into plausible nonsense.
-    final widest = [subjectI, absentI, presentI, totalI].reduce(max) + 1;
+    final widest = [subjectI, absentI, presentI, totalI, percentageI]
+        .reduce(max) +
+        1;
     var misaligned = 0;
 
     final letter = RegExp(r'[A-Za-z]');
@@ -472,19 +481,20 @@ class KiitAttendanceScraper {
         continue;
       }
 
-      final present = _cellToInt(at(cells, presentI));
-      final total = _cellToInt(at(cells, totalI));
-      final absent = _cellToInt(at(cells, absentI));
-      final percentage = percentageI >= 0
-          ? _cellToDouble(at(cells, percentageI))
-          : (total > 0 ? (present / total * 10000).round() / 100 : 0.0);
+      final counts = _countsFor(
+        present: _cellToNullableInt(at(cells, presentI)),
+        absent: _cellToNullableInt(at(cells, absentI)),
+        total: _cellToNullableInt(at(cells, totalI)),
+        percentage: _cellToNullableDouble(at(cells, percentageI)),
+      );
+      if (counts == null) continue;
 
       out.add(AttendanceRecord(
         subject: subject,
-        present: present,
-        totalDays: total,
-        absent: absent,
-        percentage: percentage,
+        present: counts.present,
+        totalDays: counts.total,
+        absent: counts.absent,
+        percentage: counts.percentage,
         facultyId: at(cells, facultyIdI).trim(),
         facultyName: at(cells, facultyNameI).trim(),
         excuses: _cellToInt(at(cells, excusesI)),
@@ -501,12 +511,66 @@ class KiitAttendanceScraper {
     return out;
   }
 
+  /// Fills in whichever of present/absent/total/percentage the portal isn't
+  /// showing, using the others. Returns null when the row holds too little to
+  /// reconstruct.
+  static _RowCounts? _countsFor({
+    int? present,
+    int? absent,
+    int? total,
+    double? percentage,
+  }) {
+    if (total == null && present != null && absent != null) {
+      total = present + absent;
+    }
+    if (present == null && total != null && absent != null) {
+      present = total - absent;
+    }
+    if (absent == null && total != null && present != null) {
+      absent = total - present;
+    }
+
+    // Only a percentage plus one count: scale one into the other.
+    final fraction = percentage == null ? null : percentage / 100;
+    if (fraction != null && fraction > 0 && fraction <= 1) {
+      if (total == null && present != null) {
+        total = (present / fraction).round();
+        absent = total - present;
+      } else if (total == null && absent != null && fraction < 1) {
+        total = (absent / (1 - fraction)).round();
+        present = total - absent;
+      } else if (total != null && present == null) {
+        present = (fraction * total).round();
+        absent = total - present;
+      }
+    }
+
+    if (present == null || absent == null || total == null) return null;
+    if (present < 0) present = 0;
+    if (absent < 0) absent = 0;
+    if (total <= 0) return null;
+    if (present > total) present = total;
+
+    return _RowCounts(
+      present: present,
+      absent: absent,
+      total: total,
+      percentage:
+          percentage ?? (present / total * 10000).round() / 100,
+    );
+  }
+
   /// Portal counts render as either "30" or "30.00".
   static int _cellToInt(String cell) =>
       double.tryParse(cell.trim())?.round() ?? 0;
 
-  static double _cellToDouble(String cell) =>
-      double.tryParse(cell.trim()) ?? 0;
+  /// Null when the column is hidden or the cell is blank, so a missing value is
+  /// never confused with a real zero.
+  static int? _cellToNullableInt(String cell) =>
+      double.tryParse(cell.trim())?.round();
+
+  static double? _cellToNullableDouble(String cell) =>
+      double.tryParse(cell.trim());
 
   static ScrapeErrorKind _kindFromCode(String code) {
     switch (code) {
@@ -1161,3 +1225,18 @@ const String _agentTemplate = r'''
   })();
 })();
 ''';
+
+/// One row's attendance counts after any hidden column has been filled in.
+class _RowCounts {
+  const _RowCounts({
+    required this.present,
+    required this.absent,
+    required this.total,
+    required this.percentage,
+  });
+
+  final int present;
+  final int absent;
+  final int total;
+  final double percentage;
+}
