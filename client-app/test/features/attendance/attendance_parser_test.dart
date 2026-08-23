@@ -121,6 +121,89 @@ void main() {
     });
   });
 
+  // The agent keeps blank headers and every cell, so header position lines up
+  // with cell position. These lock that contract in: dropping the blank
+  // selection header while keeping its cell is what silently shifted every
+  // value one column left.
+  group('alignment with the raw payload', () {
+    test('a blank leading header keeps its column aligned', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        h('|$standardHeaders'),
+        [
+          ['', 'Chemistry', '5', '25', '30', '83.33', '12345', 'Dr. X', '2'],
+        ],
+      );
+
+      final rec = recs.first;
+      expect(rec.subject, 'Chemistry');
+      expect(rec.absent, 5);
+      expect(rec.present, 25);
+      expect(rec.totalDays, 30);
+      expect(rec.percentage, closeTo(83.33, 0.01));
+      expect(rec.facultyId, '12345');
+      expect(rec.facultyName, 'Dr. X');
+      expect(rec.excuses, 2);
+    });
+
+    test('a blank header between data columns keeps the rest aligned', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        h('subject||no.of absent|no.of present|total no. of days|'
+            'total percentage'),
+        [
+          ['Physics', '', '2', '28', '30', '93.33'],
+        ],
+      );
+
+      final rec = recs.first;
+      expect(rec.subject, 'Physics');
+      expect(rec.absent, 2);
+      expect(rec.present, 28);
+      expect(rec.totalDays, 30);
+    });
+
+    test('a row shifted out of line is dropped, not mapped to nonsense', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        h(standardHeaders),
+        [
+          // Leading cell present but no matching header: everything shifts and
+          // the subject column lands on a number.
+          ['', 'Chemistry', '5', '25', '30', '83.33', '12345', 'Dr. X'],
+          ['Physics', '2', '28', '30', '93.33', '67890', 'Dr. B', '1'],
+        ],
+      );
+
+      expect(recs, hasLength(1));
+      expect(recs.first.subject, 'Physics');
+      expect(recs.first.present, 28);
+    });
+
+    test('a row too short for its headers is dropped', () {
+      final recs = KiitAttendanceScraper.recordsFromGridForTest(
+        h(standardHeaders),
+        [
+          ['Chemistry', '5'],
+          ['Physics', '2', '28', '30', '93.33', '67890', 'Dr. B', '1'],
+        ],
+      );
+
+      expect(recs, hasLength(1));
+      expect(recs.first.subject, 'Physics');
+    });
+
+    test('reports a layout problem when every row is misaligned', () {
+      expect(
+        () => KiitAttendanceScraper.recordsFromGridForTest(
+          h(standardHeaders),
+          [
+            ['', 'Chemistry', '5', '25', '30', '83.33', '12345', 'Dr. X'],
+          ],
+        ),
+        throwsA(isA<ScrapeException>()
+            .having((e) => e.kind, 'kind', ScrapeErrorKind.columnsChanged)),
+      );
+    });
+  });
+
   group('missing required columns', () {
     void expectReported(String headers, String named) {
       expect(

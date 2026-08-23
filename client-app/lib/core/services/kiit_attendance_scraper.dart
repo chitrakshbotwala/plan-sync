@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
+import 'dart:math' show max;
 import 'dart:ui' show Size;
 
 import 'package:flutter/foundation.dart';
@@ -452,10 +453,24 @@ class KiitAttendanceScraper {
     String at(List<String> cells, int i) =>
         (i >= 0 && i < cells.length) ? cells[i] : '';
 
+    // Values are read by column position, so a row that doesn't line up with
+    // the header row is dropped rather than mapped into plausible nonsense.
+    final widest = [subjectI, absentI, presentI, totalI].reduce(max) + 1;
+    var misaligned = 0;
+
+    final letter = RegExp(r'[A-Za-z]');
     final out = <AttendanceRecord>[];
     for (final cells in rows) {
+      // Tables are padded with blank rows; those aren't a layout problem.
+      if (cells.every((c) => c.trim().isEmpty)) continue;
+
       final subject = at(cells, subjectI).trim();
-      if (subject.isEmpty) continue;
+      // A row that doesn't reach the header row's width, or whose subject
+      // column holds no text, is sitting one or more columns out of line.
+      if (cells.length < widest || !letter.hasMatch(subject)) {
+        misaligned++;
+        continue;
+      }
 
       final present = _cellToInt(at(cells, presentI));
       final total = _cellToInt(at(cells, totalI));
@@ -474,6 +489,14 @@ class KiitAttendanceScraper {
         facultyName: at(cells, facultyNameI).trim(),
         excuses: _cellToInt(at(cells, excusesI)),
       ));
+    }
+
+    if (out.isEmpty && misaligned > 0) {
+      throw const ScrapeException(
+        ScrapeErrorKind.columnsChanged,
+        'The columns on your attendance table did not line up with its '
+        'headers, so nothing could be read from it.',
+      );
     }
     return out;
   }
@@ -849,27 +872,47 @@ const String _agentTemplate = r'''
   // The visible column header labels, in display order, minus the blank
   // selection column. The app maps these names to fields, so a user-reordered
   // column layout is handled entirely app-side.
+  // Header and cell arrays MUST stay positionally aligned: the app maps columns
+  // by header name and reads the cell at that position, so a dropped blank
+  // header (the row-selection column, an icon column) would shift every value
+  // after it into the wrong field. Blanks are kept as '' and, when the grid
+  // exposes aria-colindex, that index places the value exactly.
+  function cellText(el) {
+    var t = (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim();
+    return /select a row|spacebar/i.test(t) ? '' : t;
+  }
+  function placeCells(nodes) {
+    var ordered = [], byIndex = [], useIndex = nodes.length > 0;
+    for (var i = 0; i < nodes.length; i++) {
+      var t = cellText(nodes[i]);
+      ordered.push(t);
+      var ci = parseInt(nodes[i].getAttribute('aria-colindex'), 10);
+      if (isNaN(ci) || ci < 1) { useIndex = false; } else { byIndex[ci - 1] = t; }
+    }
+    if (!useIndex) return ordered;
+    for (var k = 0; k < byIndex.length; k++) {
+      if (byIndex[k] === undefined) byIndex[k] = '';
+    }
+    return byIndex;
+  }
+  function countFilled(arr) {
+    var n = 0;
+    for (var i = 0; i < arr.length; i++) if (arr[i] !== '') n++;
+    return n;
+  }
   function gridHeaders() {
     var rows = document.querySelectorAll('[role=row]');
     for (var i = 0; i < rows.length; i++) {
       var hc = rows[i].querySelectorAll('[role=columnheader]');
       if (hc.length < 4) continue;
-      var headers = [];
-      for (var h = 0; h < hc.length; h++) {
-        var ht = (hc[h].innerText || hc[h].textContent || '').replace(/\s+/g, ' ').trim();
-        if (ht && !/select a row|spacebar/i.test(ht)) headers.push(ht);
-      }
-      if (headers.length >= 4) return headers;
+      var headers = placeCells(hc);
+      if (countFilled(headers) >= 4) return headers;
     }
     // Fallback: a plain HTML <table> header.
     var ths = document.querySelectorAll('th');
     if (ths.length >= 4) {
-      var hs = [];
-      for (var t = 0; t < ths.length; t++) {
-        var x = (ths[t].innerText || ths[t].textContent || '').replace(/\s+/g, ' ').trim();
-        if (x && !/select a row|spacebar/i.test(x)) hs.push(x);
-      }
-      if (hs.length >= 4) return hs;
+      var hs = placeCells(ths);
+      if (countFilled(hs) >= 4) return hs;
     }
     return [];
   }
@@ -887,14 +930,8 @@ const String _agentTemplate = r'''
     for (var i = 0; i < rows.length; i++) {
       var gc = rows[i].querySelectorAll('[role=gridcell]');
       if (!gc.length) continue; // header row has columnheader, not gridcell
-      var cells = [];
-      for (var j = 0; j < gc.length; j++) cells.push((gc[j].innerText || '').trim());
-      if (cells.length && (cells[0] === '' || /select a row|spacebar/i.test(cells[0]))) cells.shift();
-      var clean = [];
-      for (var k = 0; k < cells.length; k++) {
-        if (!/select a row|spacebar/i.test(cells[k])) clean.push(cells[k]);
-      }
-      if (clean.length >= 5) out.push(clean);
+      var cells = placeCells(gc);
+      if (cells.length >= 5) out.push(cells);
     }
     if (out.length) return out;
     // Fallback: plain HTML <table> rows (some WebDynpro tables aren't ARIA grids).
@@ -902,14 +939,8 @@ const String _agentTemplate = r'''
     for (var r = 0; r < trs.length; r++) {
       var tds = trs[r].querySelectorAll('td');
       if (!tds.length) continue;
-      var tcells = [];
-      for (var c = 0; c < tds.length; c++) tcells.push((tds[c].innerText || '').trim());
-      if (tcells.length && (tcells[0] === '' || /select a row|spacebar/i.test(tcells[0]))) tcells.shift();
-      var tclean = [];
-      for (var q = 0; q < tcells.length; q++) {
-        if (!/select a row|spacebar/i.test(tcells[q])) tclean.push(tcells[q]);
-      }
-      if (tclean.length >= 5) out.push(tclean);
+      var tcells = placeCells(tds);
+      if (tcells.length >= 5) out.push(tcells);
     }
     return out;
   }
